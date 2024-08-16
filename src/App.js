@@ -70,6 +70,7 @@ function App() {
           <Box component="main" sx={{ flexGrow: 1, marginTop: '64px', padding: '40px 20px' }}>
             <Routes>
               <Route path="/" element={<HomePage />} />
+              <Route path="/portfolio" element={<HomePage />} />
               <Route path="/about" element={<AboutEducationPage />} />
               <Route path="/contact" element={<ContactPage />} />
               <Route path="/projects" element={<ProjectPage />} />
