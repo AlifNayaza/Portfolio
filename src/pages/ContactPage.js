@@ -7,6 +7,7 @@ import TypingEffect from 'react-typing-effect';
 function ContactPage() {
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm')); // Responsive design for small screens
+  const isDarkMode = theme.palette.mode === 'dark'; // Check if dark mode is enabled
 
   const contactItems = [
     { icon: GitHub, text: 'GitHub', link: 'https://github.com/AlifNayaza' },
@@ -36,7 +37,7 @@ function ContactPage() {
           transition={{ duration: 0.8 }}
           sx={{ textAlign: 'center', mb: 4 }}
         >
-          <Typography variant="h2" gutterBottom sx={{ color: 'black' }}>
+          <Typography variant="h2" gutterBottom sx={{ color: isDarkMode ? 'white' : 'black' }}>
             <TypingEffect
               text={['Contact Me', 'Get in Touch', 'Reach Out']}
               speed={50}
@@ -48,7 +49,7 @@ function ContactPage() {
                 <Typography
                   variant="h2"
                   component="span"
-                  sx={{ color: 'black', fontWeight: 'bold' }}
+                  sx={{ color: isDarkMode ? 'white' : 'black', fontWeight: 'bold' }}
                 >
                   {text}
                 </Typography>
@@ -64,7 +65,7 @@ function ContactPage() {
                   transition={{ delay: 0.2 * index, duration: 0.6 }}
                   whileHover={{
                     scale: 1.1,
-                    boxShadow: '0 8px 16px rgba(0,0,0,0.4)',
+                    boxShadow: `0 8px 16px rgba(0,0,0,0.4)`,
                     backgroundColor: theme.palette.primary.main,
                     color: theme.palette.common.white,
                     transition: 'all 0.3s ease-in-out',
@@ -74,9 +75,9 @@ function ContactPage() {
                     alignItems: 'center',
                     padding: isSmallScreen ? 4 : 8,
                     borderRadius: 12,
-                    boxShadow: '0 6px 12px rgba(0,0,0,0.3)',
-                    backgroundColor: theme.palette.background.paper,
-                    color: 'black', // Set text color to black
+                    boxShadow: `0 6px 12px rgba(0,0,0,0.3)`,
+                    backgroundColor: isDarkMode ? theme.palette.background.paper : theme.palette.background.default,
+                    color: isDarkMode ? 'white' : 'black', // Text color based on dark mode
                   }}
                 >
                   <Link
@@ -92,8 +93,8 @@ function ContactPage() {
                       fontWeight: 'bold',
                     }}
                   >
-                    <item.icon sx={{ mr: 2, fontSize: 24, color: 'black' }} />
-                    <Typography variant={isSmallScreen ? 'body1' : 'h6'} sx={{ color: 'black' }}>
+                    <item.icon sx={{ mr: 2, fontSize: 24, color: isDarkMode ? 'white' : 'black' }} />
+                    <Typography variant={isSmallScreen ? 'body1' : 'h6'} sx={{ color: isDarkMode ? 'white' : 'black' }}>
                       {item.text}
                     </Typography>
                   </Link>
