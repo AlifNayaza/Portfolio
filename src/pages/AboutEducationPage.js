@@ -1,12 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { Typography, Container, Box, Grid, Paper, useTheme, Avatar, Chip } from '@mui/material';
-import { motion } from 'framer-motion';
+import React, { useState, useEffect, useRef } from 'react';
+import { Typography, Container, Box, Grid, Paper, useTheme, Avatar, Chip, Dialog, DialogContent, IconButton } from '@mui/material';
+import { motion, useInView } from 'framer-motion';
 import { School, Work, EmojiEvents } from '@mui/icons-material';
 import { Timeline, TimelineItem, TimelineSeparator, TimelineConnector, TimelineContent, TimelineDot } from '@mui/lab';
-import profileImage from '../images/profil.jpg';
+import profileImage from '../images/profil2.jpg';
+import CloseIcon from '@mui/icons-material/Close';
 
 function AboutEducationPage() {
   const theme = useTheme();
+  const timelineRef = useRef(null);
+  const isInView = useInView(timelineRef, { once: true, amount: 0.2 });
+
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -22,6 +27,28 @@ function AboutEducationPage() {
       opacity: 1, 
       y: 0,
       transition: { duration: 0.5 }
+    }
+  };
+
+  const timelineVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.5
+      }
+    }
+  };
+
+  const timelineItemVariants = {
+    hidden: { opacity: 0, y: 50 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: { 
+        duration: 0.8,
+        ease: "easeOut"
+      }
     }
   };
 
@@ -59,12 +86,19 @@ function AboutEducationPage() {
     return () => clearInterval(subtitleInterval);
   }, [subtitleText]);
 
-  // Skills
   const skills = [
     'JavaScript', 'React', 'Node.js', 'Python', 
     'MySQL', 'Jupyter', 'MongoDB', 
     'HTML', 'CSS'
   ];
+
+  const handleAvatarClick = () => {
+    setDialogOpen(true);
+  };
+
+  const handleCloseDialog = () => {
+    setDialogOpen(false);
+  };
 
   return (
     <Container maxWidth="lg">
@@ -123,13 +157,15 @@ function AboutEducationPage() {
               <Avatar 
                 alt="Profile Picture"
                 src={profileImage}
+                onClick={handleAvatarClick}
                 sx={{ 
-                  width: { xs: 120, sm: 150, md: 180 },
-                  height: { xs: 120, sm: 150, md: 180 },
+                  width: { xs: 180, sm: 220, md: 260 },
+                  height: { xs: 180, sm: 220, md: 260 },
                   border: `8px solid ${theme.palette.primary.main}`,
                   boxShadow: `0 8px 16px ${theme.palette.primary.dark}`,
                   position: 'relative',
                   zIndex: 1,
+                  cursor: 'pointer', // Add cursor pointer to indicate clickability
                   '&::before': {
                     content: '""',
                     position: 'absolute',
@@ -140,9 +176,9 @@ function AboutEducationPage() {
                     borderRadius: '50%',
                     border: `4px solid ${theme.palette.primary.light}`,
                     zIndex: -1,
-                    boxShadow: `0 12px 24px ${theme.palette.primary.dark}`
+                    boxShadow: `0 12px 24px ${theme.palette.primary.dark}`,
                   }
-                }}
+                }} 
               />
             </motion.div>
           </Grid>
@@ -156,14 +192,14 @@ function AboutEducationPage() {
                   mb: 4,
                   position: 'relative',
                   display: 'inline-block',
-                  color: theme.palette.text.primary,
+                  color: theme.palette.primary.main,
                   fontSize: { xs: 'h4.fontSize', sm: 'h3.fontSize', md: 'h2.fontSize' },
                   '&::after': {
                     content: '""',
                     display: 'inline-block',
                     width: '5px',
                     height: '1.2em',
-                    backgroundColor: theme.palette.text.primary,
+                    backgroundColor: theme.palette.primary.main,
                     animation: 'blink 1s step-end infinite',
                     position: 'relative',
                     zIndex: 1
@@ -178,19 +214,23 @@ function AboutEducationPage() {
                 background: theme.palette.mode === 'dark' 
                   ? 'linear-gradient(145deg, #333333, #1c1c1c)' 
                   : 'linear-gradient(145deg, #ffffff, #f0f0f0)',
-                mb: 6
+                mb: 6,
+                transition: 'transform 0.3s ease-in-out',
+                '&:hover': {
+                  transform: 'scale(1.02)',
+                }
               }}>
                 <Typography variant="body1" paragraph sx={{ color: theme.palette.text.primary }}>
-                  Hello! I'm Alif Haikal Nayaza, an enthusiastic Informatics student at Telkom University. My passion lies in exploring the vast world of technology and creating innovative solutions that can make a difference.
+                  Hello! I'm Alif Haikal Nayaza, a passionate Informatics student at Telkom University. I'm dedicated to exploring technology and crafting innovative solutions that create meaningful impact.
                 </Typography>
                 <Typography variant="body1" paragraph sx={{ color: theme.palette.text.primary }}>
-                  My journey in tech has been an exhilarating adventure, filled with continuous learning and growth. From writing my first lines of code to developing complex applications, each step has been a valuable learning experience.
+                  My journey in technology has been exciting and transformative. From my first coding experiences to developing sophisticated applications, each step has contributed to my growth.
                 </Typography>
                 <Typography variant="body1" sx={{ color: theme.palette.text.primary }}>
-                  I believe in the power of technology to transform lives and businesses. My goal is to contribute to this transformation by developing robust, scalable, and user-friendly applications.
+                  I am committed to leveraging technology to improve lives and drive positive change through creating reliable, scalable, and user-centric applications.
                 </Typography>
               </Paper>
-              <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold', color: theme.palette.text.primary }}>
+              <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold', color: theme.palette.primary.main }}>
                 Skills
               </Typography>
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 4 }}>
@@ -198,14 +238,16 @@ function AboutEducationPage() {
                   <Chip 
                     key={index} 
                     label={skill} 
-                    color="primary" 
-                    variant="outlined" 
+                    color="default" // Use default color to control background manually
                     sx={{ 
-                      borderRadius: '16px',
-                      transition: 'all 0.3s',
-                      '&:hover': {
-                        backgroundColor: theme.palette.primary.main,
-                        color: theme.palette.common.white,
+                      mb: 1,
+                      borderRadius: 2,
+                      backgroundColor: theme.palette.mode === 'dark' 
+                        ? theme.palette.background.paper // Light background in dark mode
+                        : theme.palette.grey[200], // Light grey background in light mode
+                      color: theme.palette.text.primary, // Black text
+                      '& .MuiChip-label': {
+                        color: theme.palette.text.primary // Ensure text color is black
                       }
                     }} 
                   />
@@ -213,85 +255,121 @@ function AboutEducationPage() {
               </Box>
             </motion.div>
           </Grid>
-          <Grid item xs={12}>
-            <motion.div variants={itemVariants}>
-              <Typography 
-                variant="h2" 
-                gutterBottom 
-                sx={{ 
-                  fontWeight: 'bold', 
-                  mb: 4,
-                  position: 'relative',
-                  display: 'inline-block',
-                  color: theme.palette.text.primary,
-                  fontSize: { xs: 'h4.fontSize', sm: 'h3.fontSize', md: 'h2.fontSize' },
-                  '&::after': {
-                    content: '""',
-                    display: 'inline-block',
-                    width: '5px',
-                    height: '1.2em',
-                    backgroundColor: theme.palette.text.primary,
-                    animation: 'blink 1s step-end infinite',
-                    position: 'relative',
-                    zIndex: 1
-                  }
-                }}
-              >
-                {typedSubtitle}
-              </Typography>
-              <Timeline align="alternate">
-                <TimelineItem>
-                  <TimelineSeparator>
-                    <TimelineDot color="primary">
-                      <School />
-                    </TimelineDot>
-                    <TimelineConnector />
-                  </TimelineSeparator>
-                  <TimelineContent>
+        </Grid>
+        <Box sx={{ mb: 8 }}>
+          <Typography 
+            variant="h4" 
+            gutterBottom 
+            sx={{ 
+              fontWeight: 'bold', 
+              color: theme.palette.primary.main,
+              mb: 2
+            }}
+          >
+            {typedSubtitle}
+          </Typography>
+          <motion.div 
+            variants={timelineVariants}
+            initial="hidden"
+            animate={isInView ? 'visible' : 'hidden'}
+            ref={timelineRef}
+          >
+            <Timeline>
+              <TimelineItem>
+                <TimelineSeparator>
+                  <TimelineDot color="primary">
+                    <School />
+                  </TimelineDot>
+                  <TimelineConnector />
+                </TimelineSeparator>
+                <TimelineContent>
+                  <motion.div variants={timelineItemVariants}>
                     <Typography variant="h6" component="span" sx={{ fontWeight: 'bold' }}>
-                      Bachelor of Informatics
+                      Bachelor of Science in Informatics
                     </Typography>
                     <Typography variant="body2" color="textSecondary">
-                      Telkom University, Bandung, Indonesia (2021 - Present)
+                      Telkom University
                     </Typography>
-                  </TimelineContent>
-                </TimelineItem>
-                <TimelineItem>
-                  <TimelineSeparator>
-                    <TimelineDot color="primary">
-                      <Work />
-                    </TimelineDot>
-                    <TimelineConnector />
-                  </TimelineSeparator>
-                  <TimelineContent>
+                    <Typography variant="body2" color="textSecondary">
+                      2021- Present
+                    </Typography>
+                  </motion.div>
+                </TimelineContent>
+              </TimelineItem>
+              <TimelineItem>
+                <TimelineSeparator>
+                  <TimelineDot color="primary">
+                    <Work />
+                  </TimelineDot>
+                  <TimelineConnector />
+                </TimelineSeparator>
+                <TimelineContent>
+                  <motion.div variants={timelineItemVariants}>
                     <Typography variant="h6" component="span" sx={{ fontWeight: 'bold' }}>
                       Web Developer Intern
                     </Typography>
                     <Typography variant="body2" color="textSecondary">
-                      ABK Hospital (2024)
+                      Anugerah Bunda Khatulistiwa Hospital
                     </Typography>
-                  </TimelineContent>
-                </TimelineItem>
-                <TimelineItem>
-                  <TimelineSeparator>
-                    <TimelineDot color="primary">
-                      <EmojiEvents />
-                    </TimelineDot>
-                  </TimelineSeparator>
-                  <TimelineContent>
+                    <Typography variant="body2" color="textSecondary">
+                      2024
+                    </Typography>
+                  </motion.div>
+                </TimelineContent>
+              </TimelineItem>
+              <TimelineItem>
+                <TimelineSeparator>
+                  <TimelineDot color="primary">
+                    <EmojiEvents />
+                  </TimelineDot>
+                </TimelineSeparator>
+                <TimelineContent>
+                  <motion.div variants={timelineItemVariants}>
                     <Typography variant="h6" component="span" sx={{ fontWeight: 'bold' }}>
                       Competitive Programming Participant
                     </Typography>
                     <Typography variant="body2" color="textSecondary">
-                      Telkom University (2022)
+                      Telkom University
                     </Typography>
-                  </TimelineContent>
-                </TimelineItem>
-              </Timeline>
-            </motion.div>
-          </Grid>
-        </Grid>
+                    <Typography variant="body2" color="textSecondary">
+                      2022
+                    </Typography>
+                  </motion.div>
+                </TimelineContent>
+              </TimelineItem>
+            </Timeline>
+          </motion.div>
+        </Box>
       </Box>
+
+      {/* Dialog for full-size image */}
+      <Dialog
+        open={dialogOpen}
+        onClose={handleCloseDialog}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogContent>
+          <IconButton
+            edge="end"
+            color="inherit"
+            onClick={handleCloseDialog}
+            aria-label="close"
+            sx={{
+              position: 'absolute',
+              top: 8,
+              right: 8,
+            }}
+          >
+            <CloseIcon />
+          </IconButton>
+          <img 
+            src={profileImage} 
+            alt="Profile" 
+            style={{ width: '100%', height: 'auto' }} 
+          />
+        </DialogContent>
+      </Dialog>
     </Container>
   );
 }

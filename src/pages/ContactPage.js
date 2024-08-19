@@ -1,11 +1,12 @@
 import React from 'react';
-import { Typography, Container, Box, Link, Grid, useTheme } from '@mui/material';
+import { Typography, Container, Box, Link, Grid, useTheme, useMediaQuery } from '@mui/material';
 import { GitHub, Instagram, LinkedIn, Email } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import TypingEffect from 'react-typing-effect';
 
 function ContactPage() {
-  const theme = useTheme(); // Access the current theme
+  const theme = useTheme();
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm')); // Responsive design for small screens
 
   const contactItems = [
     { icon: GitHub, text: 'GitHub', link: 'https://github.com/AlifNayaza' },
@@ -16,66 +17,91 @@ function ContactPage() {
 
   return (
     <Container maxWidth="lg">
-      <Box 
-        component={motion.div}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8 }}
-        sx={{ textAlign: 'center', mb: 4 }}
+      <Box
+        sx={{
+          backgroundColor: theme.palette.background.default, // Preserve background color
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'flex-start', // Align content to the top
+          px: 2,
+          py: 2, // Reduced padding to move content up
+        }}
       >
-        <Typography variant="h2" gutterBottom>
-          <TypingEffect 
-            text={['Contact Me', 'Get in Touch', 'Reach Out']}
-            speed={50}
-            eraseSpeed={30}
-            typingDelay={100}
-            eraseDelay={1000}
-            cursorRenderer={cursor => <span>{cursor}</span>}
-          />
-        </Typography>
-        <Grid container spacing={3} justifyContent="center">
-          {contactItems.map((item, index) => (
-            <Grid item key={index}>
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.2 * index, duration: 0.6 }}
-                whileHover={{
-                  scale: 1.1,
-                  boxShadow: '0 6px 12px rgba(0,0,0,0.3)',
-                  backgroundColor: theme.palette.mode === 'dark' ? theme.palette.primary.light : theme.palette.primary.main,
-                  color: theme.palette.common.white,
-                  transition: 'all 0.3s',
-                }}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  padding: 8,
-                  borderRadius: 8,
-                  boxShadow: '0 4px 8px rgba(0,0,0,0.2)',
-                  border: theme.palette.mode === 'dark' ? `2px solid ${theme.palette.primary.main}` : 'none',
-                  backgroundColor: theme.palette.background.paper, // Initial background color
-                  color: theme.palette.text.primary, // Initial text color
-                }}
-              >
-                <Link 
-                  href={item.link} 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
-                  display="flex" 
-                  alignItems="center" 
-                  sx={{ 
-                    textDecoration: 'none', 
-                    color: 'inherit', 
-                    width: '100%',
+        <Box
+          component={motion.div}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          sx={{ textAlign: 'center', mb: 4 }}
+        >
+          <Typography variant="h2" gutterBottom sx={{ color: 'black' }}>
+            <TypingEffect
+              text={['Contact Me', 'Get in Touch', 'Reach Out']}
+              speed={50}
+              eraseSpeed={30}
+              typingDelay={100}
+              eraseDelay={1000}
+              cursorRenderer={cursor => <span>{cursor}</span>}
+              displayTextRenderer={(text, i) => (
+                <Typography
+                  variant="h2"
+                  component="span"
+                  sx={{ color: 'black', fontWeight: 'bold' }}
+                >
+                  {text}
+                </Typography>
+              )}
+            />
+          </Typography>
+          <Grid container spacing={3} justifyContent="center">
+            {contactItems.map((item, index) => (
+              <Grid item key={index}>
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.2 * index, duration: 0.6 }}
+                  whileHover={{
+                    scale: 1.1,
+                    boxShadow: '0 8px 16px rgba(0,0,0,0.4)',
+                    backgroundColor: theme.palette.primary.main,
+                    color: theme.palette.common.white,
+                    transition: 'all 0.3s ease-in-out',
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: isSmallScreen ? 4 : 8,
+                    borderRadius: 12,
+                    boxShadow: '0 6px 12px rgba(0,0,0,0.3)',
+                    backgroundColor: theme.palette.background.paper,
+                    color: 'black', // Set text color to black
                   }}
                 >
-                  <item.icon sx={{ mr: 1 }} /> {item.text}
-                </Link>
-              </motion.div>
-            </Grid>
-          ))}
-        </Grid>
+                  <Link
+                    href={item.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    display="flex"
+                    alignItems="center"
+                    sx={{
+                      textDecoration: 'none',
+                      color: 'inherit',
+                      width: '100%',
+                      fontWeight: 'bold',
+                    }}
+                  >
+                    <item.icon sx={{ mr: 2, fontSize: 24, color: 'black' }} />
+                    <Typography variant={isSmallScreen ? 'body1' : 'h6'} sx={{ color: 'black' }}>
+                      {item.text}
+                    </Typography>
+                  </Link>
+                </motion.div>
+              </Grid>
+            ))}
+          </Grid>
+        </Box>
       </Box>
     </Container>
   );

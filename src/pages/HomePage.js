@@ -64,7 +64,7 @@ function HomePage() {
           <motion.div variants={itemVariants}>
             <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold', color: theme.palette.primary.main }}>About Me</Typography>
             <Typography variant="body1" paragraph sx={{ color: theme.palette.text.primary }}>
-              Passionate developer crafting innovative solutions. From curious beginner to professional problem-solver. I thrive on challenges and constantly expand my skill set to stay at the forefront of technology.
+              I'm a passionate full-stack developer, dedicated to crafting efficient and innovative solutions. Always eager to learn and adapt, I thrive on challenges that push the boundaries of technology.
             </Typography>
             <Button 
               variant="contained" 
