@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
 import { ThemeProvider, createTheme, CssBaseline, Box } from '@mui/material';
 import Header from './pages/Header';
 import HomePage from './pages/HomePage';
@@ -7,6 +7,17 @@ import AboutEducationPage from './pages/AboutEducationPage';
 import ContactPage from './pages/ContactPage';
 import ProjectPage from './pages/ProjectPage';
 import ThemeToggle from './pages/ThemeToggle';
+
+// Komponen ScrollToTop
+function ScrollToTop() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+
+  return null;
+}
 
 function App() {
   const [darkMode, setDarkMode] = useState(false);
@@ -65,6 +76,8 @@ function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <Router>
+        {/* Panggil ScrollToTop untuk memastikan setiap halaman baru berada di atas */}
+        <ScrollToTop />
         <Box className="App" sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
           <Header />
           <Box component="main" sx={{ flexGrow: 1, marginTop: '64px', padding: '40px 20px' }}>
