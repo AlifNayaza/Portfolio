@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import { toast } from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
@@ -8,7 +8,7 @@ import { usePortfolio } from "../context/PortfolioContext";
 
 const API_URL = "/.netlify/functions/portfolio";
 
-// --- Helper Components untuk Desain Baru ---
+// --- Helper Components (Tidak Berubah) ---
 
 const AdminInput = ({ label, textarea, ...props }) => {
     const Comp = textarea ? "textarea" : "input";
@@ -61,13 +61,14 @@ const listItemVariants = {
     exit: { opacity: 0, transition: { duration: 0.3 } }
 };
 
-
 export default function Admin() {
     const { refreshData } = usePortfolio();
     const [password] = useState(localStorage.getItem("admin_session") || "");
     const [activeTab, setActiveTab] = useState("home");
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    // State baru untuk mengontrol dropdown mobile
+    const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   
     const [formData, setFormData] = useState({
         home: { logoName: "", headline: "", subtitle: "" },
@@ -137,6 +138,8 @@ export default function Admin() {
         { id: "contact", label: "Signal", icon: icons.contact },
     ];
 
+    const activeTabData = tabs.find(t => t.id === activeTab);
+
     return (
         <div className="min-h-screen bg-black text-[#e5e5e5] font-serif">
             <header className="sticky top-0 z-40 bg-black/80 backdrop-blur-sm border-b border-[#333] px-4 md:px-6 py-3 flex justify-between items-center">
@@ -160,13 +163,56 @@ export default function Admin() {
             </header>
 
             <div className="flex flex-col md:flex-row max-w-8xl mx-auto p-4 md:p-6 gap-6">
-                <aside className="w-full md:w-56 flex-shrink-0">
-                    <div className="flex flex-row md:flex-col gap-2 overflow-x-auto md:overflow-x-visible pb-2 -mx-4 px-4 md:mx-0 md:px-0">
+                
+                {/* --- NAVIGASI BARU UNTUK MOBILE --- */}
+                <div className="md:hidden relative mb-2">
+                    <button 
+                        onClick={() => setIsMobileNavOpen(!isMobileNavOpen)}
+                        className="w-full flex justify-between items-center gap-3 px-4 py-3 text-left font-mono text-xs tracking-widest transition-all rounded-md bg-[#9f1239] text-white shadow-md shadow-[#9f1239]/20"
+                    >
+                        <div className="flex items-center gap-3">
+                            {activeTabData.icon}
+                            <span>{activeTabData.label}</span>
+                        </div>
+                        <motion.span animate={{ rotate: isMobileNavOpen ? 180 : 0 }}>
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                        </motion.span>
+                    </button>
+
+                    <AnimatePresence>
+                        {isMobileNavOpen && (
+                            <motion.div
+                                initial={{ opacity: 0, y: -10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -10 }}
+                                className="absolute top-full left-0 w-full mt-2 bg-zinc-900 border border-[#333] rounded-md shadow-lg z-50 p-2 space-y-1"
+                            >
+                                {tabs.map(t => (
+                                    <button 
+                                        key={t.id} 
+                                        onClick={() => {
+                                            setActiveTab(t.id);
+                                            setIsMobileNavOpen(false);
+                                        }} 
+                                        className="w-full flex items-center gap-3 px-3 py-2 text-left font-mono text-xs tracking-widest transition-all rounded-md text-zinc-300 hover:bg-zinc-800 hover:text-white"
+                                    >
+                                        {t.icon}
+                                        <span>{t.label}</span>
+                                    </button>
+                                ))}
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </div>
+
+                {/* --- SIDEBAR LAMA, SEKARANG HANYA UNTUK DESKTOP --- */}
+                <aside className="hidden md:block w-full md:w-56 flex-shrink-0">
+                    <div className="flex flex-col gap-2">
                         {tabs.map(t => (
                             <button 
                                 key={t.id} 
                                 onClick={() => setActiveTab(t.id)} 
-                                className={`flex-shrink-0 w-full flex items-center gap-3 px-4 py-3 text-left font-mono text-xs tracking-widest transition-all rounded-md ${
+                                className={`w-full flex items-center gap-3 px-4 py-3 text-left font-mono text-xs tracking-widest transition-all rounded-md ${
                                     activeTab === t.id 
                                     ? "bg-[#9f1239] text-white shadow-md shadow-[#9f1239]/20" 
                                     : "text-zinc-400 hover:bg-zinc-800 hover:text-white"
@@ -179,7 +225,7 @@ export default function Admin() {
                     </div>
                 </aside>
 
-                <main className="flex-1 min-h-[500px] bg-[#111] border border-[#333] rounded-lg p-6 shadow-inner shadow-black/30">
+                <main className="flex-1 min-h-[500px] bg-[#111] border border-[#333] rounded-lg p-4 md:p-6 shadow-inner shadow-black/30">
                     <AnimatePresence mode="wait">
                         <motion.div
                             key={activeTab}
