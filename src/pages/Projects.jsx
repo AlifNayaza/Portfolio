@@ -3,15 +3,14 @@ import { usePortfolio } from "../context/PortfolioContext";
 import PageTransition from "../components/layout/PageTransition";
 import { motion } from "framer-motion";
 
-// --- VARIAN ANIMASI KREATIF ---
-
+// Varian animasi (tidak berubah)
 const staggerContainer = {
   hidden: { opacity: 0 },
   show: {
     opacity: 1,
     transition: {
       staggerChildren: 0.15,
-      delayChildren: 0.5, // Beri jeda setelah judul muncul
+      delayChildren: 0.5,
     },
   },
 };
@@ -97,27 +96,40 @@ export default function Projects() {
         >
             {data.projects?.map((proj, idx) => (
                 <motion.div key={idx} variants={creativeFadeInUp}>
-                    <Link to={`/project/${idx}`} className="group block border-b border-[#333] hover:bg-[#111] transition-colors py-8">
-                        <div className="grid md:grid-cols-12 gap-8 items-center">
-                            <div className="md:col-span-1 font-mono text-xs text-zinc-600 group-hover:text-[#9f1239]">
-                                {String(idx + 1).padStart(2, '0')}
+                    {/* --- BAGIAN YANG DIPERBARUI --- */}
+                    <Link to={`/project/${idx}`} className="group block border-b border-[#333] hover:bg-[#111] transition-colors py-6 md:py-8">
+                        {/* Menggunakan Flexbox untuk layout yang lebih baik di semua layar */}
+                        <div className="flex justify-between items-center gap-4">
+                            
+                            {/* KIRI: Konten Utama */}
+                            <div className="flex-1 flex items-start gap-4 md:gap-8">
+                                {/* Nomor Indeks */}
+                                <div className="font-mono text-xs md:text-sm text-zinc-600 group-hover:text-[#9f1239] pt-1.5 md:pt-1 transition-colors">
+                                    {String(idx + 1).padStart(2, '0')}
+                                </div>
+
+                                {/* Judul, Deskripsi, dan Metadata */}
+                                <div className="flex-1">
+                                    <h3 className="text-xl md:text-2xl font-display text-white mb-1 md:mb-2 group-hover:translate-x-2 transition-transform duration-500">
+                                        {proj.name}
+                                    </h3>
+                                    <p className="text-zinc-500 font-serif text-sm line-clamp-1 italic max-w-md">
+                                        {proj.description}
+                                    </p>
+                                    {/* Metadata: Disembunyikan di mobile, muncul di desktop */}
+                                    <div className="hidden md:block font-mono text-xs text-zinc-600 uppercase tracking-wider mt-4">
+                                        [ CLASSIFIED DATA ]
+                                    </div>
+                                </div>
                             </div>
-                            <div className="md:col-span-6">
-                                <h3 className="text-2xl font-display text-white mb-2 group-hover:translate-x-2 transition-transform duration-500">
-                                    {proj.name}
-                                </h3>
-                                <p className="text-zinc-500 font-serif text-sm line-clamp-1 italic max-w-md">
-                                    {proj.description}
-                                </p>
-                            </div>
-                            <div className="md:col-span-3 font-mono text-xs text-zinc-600 uppercase tracking-wider text-right md:text-left">
-                                [ CLASSIFIED DATA ]
-                            </div>
-                            <div className="md:col-span-2 text-right">
+
+                            {/* KANAN: Tombol Aksi (Panah) */}
+                            <div className="flex-shrink-0 pl-2">
                                  <span className="font-mono text-xs group-hover:text-white text-zinc-600 transition-colors">
                                      OPEN FILE &rarr;
                                  </span>
                             </div>
+
                         </div>
                     </Link>
                 </motion.div>

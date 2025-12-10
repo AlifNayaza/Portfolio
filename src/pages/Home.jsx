@@ -1,6 +1,6 @@
 import { usePortfolio } from "../context/PortfolioContext";
 import PageTransition from "../components/layout/PageTransition";
-import RevealText from "../components/ui/RevealText"; // Import komponen baru
+import RevealText from "../components/ui/RevealText";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 
@@ -12,12 +12,10 @@ export default function Home() {
     <PageTransition>
       <section className="min-h-[85vh] flex flex-col justify-center relative pl-4 md:pl-16">
         
-        {/* Dekorasi Chapter */}
         <div className="absolute top-0 -left-6 md:-left-12 font-mono text-xs text-[#333] rotate-180 select-none" style={{ writingMode: 'vertical-rl' }}>
             PROLOGUE /// THE BEGINNING
         </div>
 
-        {/* Intro Tag */}
         <motion.div 
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -28,18 +26,16 @@ export default function Home() {
             OPEN TO WORK
         </motion.div>
 
-        {/* HEADLINE DENGAN ANIMASI REVEAL */}
         <h1 className="text-5xl md:text-8xl font-display leading-[1.1] mb-8 text-[#e5e5e5] max-w-6xl">
            <RevealText 
                 text={home?.headline || "The Journey Begins"} 
-                type="word" // Animasi per kata
-                delay={1.5} // Delay menunggu curtain terbuka
-                className="hover-trigger" // Trigger kursor membesar
+                type="word"
+                delay={1.5}
+                className="hover-trigger"
            />
            <span className="text-[#9f1239] animate-pulse">_</span>
         </h1>
 
-        {/* SUBTITLE */}
         <div className="max-w-2xl relative mt-4">
             <motion.div 
                 initial={{ height: 0 }}
@@ -52,15 +48,12 @@ export default function Home() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 2.2, duration: 1 }}
-                // --- PERBAIKAN DI SINI ---
-                // Menambahkan `break-words` agar teks bisa pindah baris di mobile
                 className="pl-8 text-lg md:text-xl text-zinc-400 italic font-serif leading-loose break-words"
             >
                 "{home?.subtitle || "Loading description..."}"
             </motion.p>
         </div>
 
-        {/* NAVIGATION BUTTON */}
         <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -79,7 +72,6 @@ export default function Home() {
             </Link>
         </motion.div>
 
-        {/* --- SKILLS SECTION: ABILITY CARDS --- */}
         <div className="w-full max-w-6xl mx-auto border-t border-[#333] pt-20 mt-20">
           <div className="flex flex-col md:flex-row justify-between items-end mb-12">
               <div>
@@ -91,7 +83,7 @@ export default function Home() {
               </div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             {skills?.map((skill, idx) => {
                const skillName = typeof skill === 'string' ? skill : skill.name;
                const skillLevel = typeof skill === 'string' ? "Intermediate" : skill.level;
@@ -100,42 +92,39 @@ export default function Home() {
                let levelColor = "text-zinc-500";
                let borderColor = "border-[#333]";
                
-               if (skillLevel === "Beginner") { 
-                   levelScore = 1; 
-                   levelColor = "text-zinc-500"; 
-               }
-               if (skillLevel === "Intermediate") { 
-                   levelScore = 2; 
-                   levelColor = "text-yellow-600"; 
-               }
-               if (skillLevel === "Advanced") { 
-                   levelScore = 3; 
-                   levelColor = "text-orange-500"; 
-                   borderColor = "group-hover:border-orange-500/50";
-               }
-               if (skillLevel === "Master") { 
-                   levelScore = 4; 
-                   levelColor = "text-[#9f1239]"; 
-                   borderColor = "group-hover:border-[#9f1239]";
-               }
+               if (skillLevel === "Beginner") { levelScore = 1; levelColor = "text-zinc-500"; }
+               if (skillLevel === "Intermediate") { levelScore = 2; levelColor = "text-yellow-600"; }
+               if (skillLevel === "Advanced") { levelScore = 3; levelColor = "text-orange-500"; borderColor = "group-hover:border-orange-500/50"; }
+               if (skillLevel === "Master") { levelScore = 4; levelColor = "text-[#9f1239]"; borderColor = "group-hover:border-[#9f1239]"; }
 
                return (
-                  <div key={idx} className={`group bg-[#0c0c0c] border border-[#333] ${borderColor} p-6 transition-all duration-500 hover:bg-[#111] relative overflow-hidden`}>
-                      <div className="absolute -right-4 -top-6 text-[100px] font-display text-[#1a1a1a] opacity-50 group-hover:opacity-100 transition-opacity select-none">
+                  <div key={idx} className={`group bg-[#0c0c0c] border border-[#333] ${borderColor} p-4 md:p-6 transition-all duration-500 hover:bg-[#111] relative overflow-hidden`}>
+                      
+                      <div className="absolute -right-2 -top-4 md:-right-4 md:-top-6 text-[80px] md:text-[100px] font-display text-[#1a1a1a] opacity-50 group-hover:opacity-100 transition-opacity select-none">
                           {idx + 1}
                       </div>
+
                       <div className="relative z-10">
-                          <h3 className="text-2xl font-display font-bold text-[#e5e5e5] mb-1 group-hover:translate-x-2 transition-transform">
+                          <h3 className="text-xl md:text-2xl font-display font-bold text-[#e5e5e5] mb-1 group-hover:translate-x-2 transition-transform">
                               {skillName}
                           </h3>
+                          
                           <div className="w-12 h-[1px] bg-[#333] group-hover:w-full group-hover:bg-[#9f1239] transition-all duration-700 my-4"></div>
-                          <div className="flex justify-between items-end">
+
+                          {/* --- BAGIAN YANG DIPERBARUI --- */}
+                          {/* 
+                            - flex-col items-start: Default (mobile) akan menumpuk elemen secara vertikal dan rata kiri.
+                            - gap-2: Memberi jarak antara tumpukan.
+                            - md:flex-row md:items-end md:justify-between: Di layar medium ke atas, kembali ke layout horizontal.
+                          */}
+                          <div className="flex flex-col items-start gap-2 md:flex-row md:items-end md:justify-between">
                               <div className="flex flex-col">
                                   <span className="font-mono text-[9px] text-zinc-600 uppercase tracking-widest mb-1">Rank</span>
                                   <span className={`font-mono text-sm font-bold uppercase tracking-wider ${levelColor}`}>
                                       {skillLevel}
                                   </span>
                               </div>
+
                               <div className="flex gap-1.5">
                                   {[1, 2, 3, 4].map((diamond) => (
                                       <span 
@@ -153,6 +142,7 @@ export default function Home() {
             })}
           </div>
         </div>
+
       </section>
     </PageTransition>
   );
