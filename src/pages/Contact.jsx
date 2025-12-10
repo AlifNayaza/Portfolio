@@ -18,7 +18,7 @@ export default function Contact() {
         </h1>
         
         <p className="font-serif text-zinc-400 italic mb-12 max-w-xl">
-            Cerita ini belum berakhir. Apakah Anda ingin menjadi bagian dari bab selanjutnya? Kirimkan transmisi untuk memulai kolaborasi.
+            The story doesn’t end here. Want to create something together? Send a message and let’s start building it.
         </p>
 
         {contact?.email && (

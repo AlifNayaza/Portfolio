@@ -15,7 +15,7 @@ export default function Projects() {
         <div className="mb-16 border-b border-[#333] pb-8 flex flex-col md:flex-row justify-between items-end gap-4">
             <div>
                 <h1 className="text-4xl md:text-6xl font-display mb-2">Battle Records<span className="text-[#9f1239]">.</span></h1>
-                <p className="font-serif italic text-zinc-500">Kumpulan project dan misi yang telah diselesaikan.</p>
+                <p className="font-serif italic text-zinc-500">A collection of completed projects.</p>
             </div>
             <div className="font-mono text-xs text-zinc-600">
                 TOTAL ENTRIES: {data.projects?.length || 0}

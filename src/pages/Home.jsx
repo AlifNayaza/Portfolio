@@ -83,7 +83,7 @@ export default function Home() {
           <div className="flex flex-col md:flex-row justify-between items-end mb-12">
               <div>
                   <h2 className="text-3xl md:text-4xl font-display mb-2">Arsenal & Abilities<span className="text-[#9f1239]">.</span></h2>
-                  <p className="font-serif italic text-zinc-500">Daftar teknologi dan tingkat kemahiran yang dikuasai.</p>
+                  <p className="font-serif italic text-zinc-500">List of technologies and proficiency levels mastered.</p>
               </div>
               <div className="font-mono text-xs text-[#9f1239] tracking-widest mt-4 md:mt-0">
                   /// SYSTEM ANALYSIS
