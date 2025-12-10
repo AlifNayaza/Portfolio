@@ -1,0 +1,20 @@
+{
+	"geolocation": {
+		"data": {
+			"city": "Jakarta",
+			"country": {
+				"code": "ID",
+				"name": "Indonesia"
+			},
+			"subdivision": {
+				"code": "JK",
+				"name": "Jakarta"
+			},
+			"timezone": "Asia/Jakarta",
+			"latitude": -6.2369,
+			"longitude": 106.853,
+			"postalCode": "12820"
+		},
+		"timestamp": 1765300302164
+	}
+}
