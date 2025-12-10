@@ -52,7 +52,9 @@ export default function Home() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 2.2, duration: 1 }}
-                className="pl-8 text-lg md:text-xl text-zinc-400 italic font-serif leading-loose"
+                // --- PERBAIKAN DI SINI ---
+                // Menambahkan `break-words` agar teks bisa pindah baris di mobile
+                className="pl-8 text-lg md:text-xl text-zinc-400 italic font-serif leading-loose break-words"
             >
                 "{home?.subtitle || "Loading description..."}"
             </motion.p>
@@ -68,7 +70,6 @@ export default function Home() {
             <Link to="/projects" className="group flex items-center gap-6 hover-trigger">
                 <div className="w-16 h-16 border border-[#333] rounded-full flex items-center justify-center group-hover:border-[#9f1239] group-hover:bg-[#9f1239] transition-all duration-500 relative overflow-hidden">
                     <span className="font-mono text-sm relative z-10 group-hover:text-white transition-colors">→</span>
-                    {/* Ripple Effect */}
                     <div className="absolute inset-0 bg-[#9f1239] transform scale-0 group-hover:scale-100 transition-transform duration-300 rounded-full origin-center"></div>
                 </div>
                 <div className="flex flex-col">
@@ -92,11 +93,9 @@ export default function Home() {
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {skills?.map((skill, idx) => {
-               // Normalisasi Data
                const skillName = typeof skill === 'string' ? skill : skill.name;
                const skillLevel = typeof skill === 'string' ? "Intermediate" : skill.level;
 
-               // Logic Level: Warna & Jumlah Diamond
                let levelScore = 2;
                let levelColor = "text-zinc-500";
                let borderColor = "border-[#333]";
@@ -122,22 +121,14 @@ export default function Home() {
 
                return (
                   <div key={idx} className={`group bg-[#0c0c0c] border border-[#333] ${borderColor} p-6 transition-all duration-500 hover:bg-[#111] relative overflow-hidden`}>
-                      
-                      {/* Background Number (Dekorasi) */}
                       <div className="absolute -right-4 -top-6 text-[100px] font-display text-[#1a1a1a] opacity-50 group-hover:opacity-100 transition-opacity select-none">
                           {idx + 1}
                       </div>
-
                       <div className="relative z-10">
-                          {/* Nama Skill (Besar & Jelas) */}
                           <h3 className="text-2xl font-display font-bold text-[#e5e5e5] mb-1 group-hover:translate-x-2 transition-transform">
                               {skillName}
                           </h3>
-                          
-                          {/* Garis Pemisah */}
                           <div className="w-12 h-[1px] bg-[#333] group-hover:w-full group-hover:bg-[#9f1239] transition-all duration-700 my-4"></div>
-
-                          {/* Level Indicator */}
                           <div className="flex justify-between items-end">
                               <div className="flex flex-col">
                                   <span className="font-mono text-[9px] text-zinc-600 uppercase tracking-widest mb-1">Rank</span>
@@ -145,8 +136,6 @@ export default function Home() {
                                       {skillLevel}
                                   </span>
                               </div>
-
-                              {/* Visual Diamonds */}
                               <div className="flex gap-1.5">
                                   {[1, 2, 3, 4].map((diamond) => (
                                       <span 
@@ -164,7 +153,6 @@ export default function Home() {
             })}
           </div>
         </div>
-
       </section>
     </PageTransition>
   );

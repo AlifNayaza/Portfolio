@@ -7,7 +7,6 @@ import { usePortfolio } from "../context/PortfolioContext";
 
 const API_URL = "/.netlify/functions/portfolio";
 
-// Custom Input Component (Internal di file ini agar gaya seragam)
 const AdminInput = ({ label, textarea, ...props }) => {
     const Comp = textarea ? "textarea" : "input";
     return (
@@ -33,7 +32,7 @@ export default function Admin() {
   const [formData, setFormData] = useState({
     home: { logoName: "", headline: "", subtitle: "" },
     profile: { about: "", avatarUrl: "" },
-    music: { url: "", title: "", artist: "" }, 
+    soundtrack: [], // PERUBAHAN: Dari 'music' object menjadi 'soundtrack' array
     skills: [],
     experience: [],
     projects: [],
@@ -43,15 +42,37 @@ export default function Admin() {
   useEffect(() => {
     axios.get(API_URL)
       .then(res => {
-        if(res.data) setFormData(prev => ({ ...prev, ...res.data }));
+        let fetchedData = res.data;
+
+        // --- LOGIKA PERBAIKAN DI SINI ---
+        // Melakukan migrasi data dari format 'music' (object) ke 'soundtrack' (array)
+        // jika data lama masih ada di database.
+        if (fetchedData) {
+          // Kondisi: Jika 'soundtrack' tidak ada, TAPI 'music' yang lama ada
+          if (!fetchedData.soundtrack && fetchedData.music && typeof fetchedData.music === 'object' && fetchedData.music.url) {
+            
+            // 1. Buat field 'soundtrack' baru dari data 'music' yang lama
+            fetchedData.soundtrack = [fetchedData.music];
+            
+            // 2. Hapus field 'music' yang lama agar tidak ada duplikasi saat disimpan
+            delete fetchedData.music;
+          }
+        }
+        // --- AKHIR LOGIKA PERBAIKAN ---
+
+        if(fetchedData) {
+          // Set state dengan data yang sudah bersih dan termigrasi
+          setFormData(prev => ({ ...prev, ...fetchedData }));
+        }
         setLoading(false);
       })
       .catch(err => {
-        console.error(err);
+        console.error("Failed to fetch portfolio data:", err);
         setLoading(false);
+        toast.error("Gagal memuat data dari server.");
       });
   }, []);
-
+  
   const handleSave = async () => {
     setSaving(true);
     try {
@@ -67,21 +88,17 @@ export default function Admin() {
 
   const handleLogout = () => { localStorage.removeItem("admin_session"); window.location.href = "/login"; };
 
-  // Helpers
   const setNest = (sec, f, v) => setFormData(p => ({...p, [sec]: { ...p[sec], [f]: v }}));
-  // Fungsi untuk EDIT item di dalam Array (Update Object)
   const setArrObj = (section, index, field, value) => {
     const newArr = [...(formData[section] || [])];
-    // Copy item lama, lalu ganti field yg diedit
     newArr[index] = { ...newArr[index], [field]: value };
     setFormData(prev => ({ ...prev, [section]: newArr }));
-  };  const addItem = (sec, tpl) => setFormData(p => ({...p, [sec]: [...(p[sec]||[]), tpl]}));
-  // Fungsi untuk HAPUS item dari Array
+  };  
+  const addItem = (sec, tpl) => setFormData(p => ({...p, [sec]: [...(p[sec]||[]), tpl]}));
   const delItem = (section, index) => {
     if(!window.confirm("Yakin ingin menghapus item ini?")) return;
     setFormData(prev => ({
       ...prev,
-      // Filter array, buang item yang index-nya sama dengan yang dipilih
       [section]: prev[section].filter((_, i) => i !== index)
     }));
   };
@@ -94,14 +111,12 @@ export default function Admin() {
     { id: "skills", label: "03 // ABILITIES" },
     { id: "projects", label: "04 // ARCHIVES" },
     { id: "experience", label: "05 // TIMELINE" },
-    { id: "music", label: "06 // SOUNDTRACK" },
+    { id: "soundtrack", label: "06 // SOUNDTRACK" }, // PERUBAHAN NAMA TAB
     { id: "contact", label: "07 // SIGNAL" },
   ];
 
   return (
     <div className="min-h-screen bg-[#0c0c0c] text-[#e5e5e5] pb-20 font-serif">
-      
-      {/* HEADER */}
       <header className="sticky top-0 z-40 bg-[#0c0c0c]/95 border-b border-[#333] px-6 py-4 flex justify-between items-center">
         <div className="flex items-center gap-3">
             <span className="text-[#9f1239] text-xl">§</span>
@@ -116,20 +131,10 @@ export default function Admin() {
       </header>
 
       <div className="flex flex-col md:flex-row max-w-7xl mx-auto mt-12 px-6 gap-12">
-        
-        {/* SIDEBAR */}
         <aside className="w-full md:w-64 flex-shrink-0 border-r border-[#333] pr-6">
           <div className="flex md:flex-col gap-2 overflow-x-auto pb-4">
             {tabs.map(t => (
-              <button 
-                key={t.id} 
-                onClick={()=>setActiveTab(t.id)} 
-                className={`px-4 py-3 text-left font-mono text-xs tracking-widest transition-all ${
-                    activeTab === t.id 
-                    ? "text-[#9f1239] border-l-2 border-[#9f1239] bg-[#111]" 
-                    : "text-zinc-600 hover:text-zinc-300 border-l-2 border-transparent"
-                }`}
-              >
+              <button key={t.id} onClick={()=>setActiveTab(t.id)} className={`px-4 py-3 text-left font-mono text-xs tracking-widest transition-all ${activeTab === t.id ? "text-[#9f1239] border-l-2 border-[#9f1239] bg-[#111]" : "text-zinc-600 hover:text-zinc-300 border-l-2 border-transparent"}`}>
                 {t.label}
               </button>
             ))}
@@ -167,22 +172,53 @@ export default function Admin() {
             </div>
           )}
 
-          {/* --- TAB MUSIC --- */}
-          {activeTab === "music" && (
+          {/* --- TAB SOUNDTRACK (SEBELUMNYA MUSIC) --- */}
+          {activeTab === "soundtrack" && (
             <div className="animate-in fade-in space-y-8">
-               <h2 className="text-3xl font-display mb-8">Background Audio</h2>
-               <div className="p-6 border border-[#333]">
-                   <AdminInput label="Track Title" value={formData.music?.title} onChange={e=>setNest('music','title',e.target.value)} />
-                   <AdminInput label="Artist Name" value={formData.music?.artist} onChange={e=>setNest('music','artist',e.target.value)} />
-                   <div className="mt-6">
-                       <p className="font-mono text-[10px] uppercase text-zinc-500 tracking-widest border-l-2 border-[#9f1239] pl-2 mb-4">Audio File</p>
-                       <AudioUploader currentAudio={formData.music?.url} onUpload={(url) => setNest('music', 'url', url)} onDelete={() => setNest('music', 'url', "")} />
+               <div className="flex justify-between items-end border-b border-[#333] pb-4">
+                  <h2 className="text-3xl font-display">Background Audio</h2>
+                  <button 
+                      onClick={() => addItem('soundtrack', { url: "", title: "", artist: "" })}
+                      className="font-mono text-xs text-[#9f1239] hover:underline hover:bg-[#111] px-2 py-1 border border-transparent hover:border-[#333] transition-all"
+                  >
+                      [ + ADD NEW TRACK ]
+                  </button>
+               </div>
+               
+               {formData.soundtrack?.length === 0 && (
+                   <div className="text-center py-10 border border-dashed border-[#333] font-mono text-xs text-zinc-600">
+                       NO TRACKS FOUND. ADD A NEW ENTRY.
                    </div>
+               )}
+
+               <div className="space-y-6">
+                  {formData.soundtrack?.map((track, i) => (
+                      <div key={i} className="p-6 border border-[#333] bg-[#0c0c0c] hover:border-[#9f1239] transition-colors relative">
+                           <div className="absolute top-2 right-3 font-mono text-[10px] text-[#333]">
+                               TRACK #{String(i + 1).padStart(2, '0')}
+                           </div>
+                           <div className="grid md:grid-cols-2 gap-x-6 gap-y-4">
+                              <AdminInput label="Track Title" value={track.title} onChange={e => setArrObj('soundtrack', i, 'title', e.target.value)} />
+                              <AdminInput label="Artist Name" value={track.artist} onChange={e => setArrObj('soundtrack', i, 'artist', e.target.value)} />
+                           </div>
+                           <div className="mt-6">
+                               <p className="font-mono text-[10px] uppercase text-zinc-500 tracking-widest border-l-2 border-[#9f1239] pl-2 mb-4">Audio File</p>
+                               <AudioUploader 
+                                  currentAudio={track.url} 
+                                  onUpload={url => setArrObj('soundtrack', i, 'url', url)} 
+                                  onDelete={() => setArrObj('soundtrack', i, 'url', "")}
+                                />
+                           </div>
+                           <button onClick={() => delItem('soundtrack', i)} className="mt-4 text-zinc-600 hover:text-red-500 font-mono text-[10px] border-b border-transparent hover:border-red-500 transition-all">
+                              [ DELETE TRACK ]
+                           </button>
+                      </div>
+                  ))}
                </div>
             </div>
           )}
 
-{/* --- TAB SKILLS (ADMIN) --- */}
+          {/* --- TAB SKILLS (ADMIN) --- */}
           {activeTab === "skills" && (
               <div className="animate-in fade-in space-y-8">
                  <div className="flex justify-between items-end border-b border-[#333] pb-4">

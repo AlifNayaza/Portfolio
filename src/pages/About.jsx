@@ -3,61 +3,103 @@ import { usePortfolio } from "../context/PortfolioContext";
 import PageTransition from "../components/layout/PageTransition";
 import { motion, AnimatePresence } from "framer-motion";
 
+// --- VARIAN ANIMASI KREATIF ---
+
+// 1. Container untuk stagger (urutan)
+const staggerContainer = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.3,
+    },
+  },
+};
+
+// 2. Animasi untuk judul (per huruf)
+const titleContainer = {
+  hidden: { opacity: 0 },
+  show: (i = 1) => ({
+    opacity: 1,
+    transition: { staggerChildren: 0.05, delayChildren: i * 0.05 },
+  }),
+};
+
+const titleLetter = {
+  hidden: { opacity: 0, y: 20 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { type: "spring", stiffness: 100, damping: 12 },
+  },
+};
+
+// 3. Animasi untuk blok konten (slide in + skew)
+const creativeFadeInUp = {
+  hidden: { opacity: 0, y: 60, skewY: 5 },
+  show: {
+    opacity: 1,
+    y: 0,
+    skewY: 0,
+    transition: { duration: 0.8, ease: "circOut" },
+  },
+};
+
 export default function About() {
   const { data } = usePortfolio();
   const { profile, experience } = data;
-  
-  // State untuk menangani status Zoom Gambar
   const [isZoomed, setIsZoomed] = useState(false);
+  
+  const headerText = "Background Story.";
 
   return (
     <PageTransition>
-      <section className="py-20 pl-4 md:pl-16 relative">
-        
-        {/* Chapter Marker */}
+      <section className="py-20 pl-4 md:pl-16 relative overflow-hidden">
         <div className="absolute top-20 -left-6 md:-left-12 font-mono text-xs text-[#333] rotate-180 select-none" style={{ writingMode: 'vertical-rl' }}>
             CHAPTER I /// THE CHARACTER
         </div>
 
-        <div className="grid md:grid-cols-12 gap-16">
-            
-            {/* --- LEFT: AVATAR (CLICKABLE) --- */}
-            <div className="md:col-span-5 relative">
+        <motion.div 
+          className="grid md:grid-cols-12 gap-16"
+          variants={staggerContainer}
+          initial="hidden"
+          animate="show"
+        >
+            <motion.div className="md:col-span-5 relative" variants={creativeFadeInUp}>
                 <div 
                     className="aspect-[3/4] border border-[#333] p-2 relative group cursor-zoom-in"
-                    onClick={() => setIsZoomed(true)} // Trigger Zoom
+                    onClick={() => setIsZoomed(true)}
                 >
-                    {/* Dekorasi Frame Sudut */}
                     <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-[#9f1239] transition-all group-hover:w-full group-hover:h-full"></div>
                     <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-[#9f1239] transition-all group-hover:w-full group-hover:h-full"></div>
-                    
-                    {/* Overlay Hover Text */}
                     <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity z-10 flex items-center justify-center">
                         <span className="font-mono text-xs text-white tracking-widest border border-white px-3 py-1">
                             [ INSPECT ]
                         </span>
                     </div>
-
                     {profile?.avatarUrl ? (
-                        <img 
-                            src={profile.avatarUrl} 
-                            alt="Portrait" 
-                            className="w-full h-full object-cover grayscale contrast-125 group-hover:grayscale-0 transition-all duration-700" 
-                        />
+                        <img src={profile.avatarUrl} alt="Portrait" className="w-full h-full object-cover grayscale contrast-125 group-hover:grayscale-0 transition-all duration-700" />
                     ) : (
                         <div className="w-full h-full bg-[#111] flex items-center justify-center font-mono text-xs">NO PORTRAIT</div>
                     )}
                 </div>
-                
                 <div className="mt-4 flex justify-between font-mono text-[10px] text-zinc-500 tracking-widest uppercase">
                     <span>Fig. 01</span>
                     <span>Character</span>
                 </div>
-            </div>
+            </motion.div>
 
-            {/* --- RIGHT: NARRATIVE TEXT --- */}
-            <div className="md:col-span-7">
-                <h1 className="text-4xl md:text-5xl font-display mb-8">Background Story<span className="text-[#9f1239]">.</span></h1>
+            <motion.div className="md:col-span-7" variants={creativeFadeInUp}>
+                <motion.h1 
+                    className="text-4xl md:text-5xl font-display mb-8"
+                    variants={titleContainer}
+                >
+                    {headerText.split('').map((char, index) => (
+                        <motion.span key={index} variants={titleLetter} className={char === '.' ? 'text-[#9f1239]' : ''}>
+                            {char}
+                        </motion.span>
+                    ))}
+                </motion.h1>
                 
                 <div className="prose prose-invert prose-lg text-zinc-400 font-serif leading-loose">
                     <p>
@@ -85,42 +127,31 @@ export default function About() {
                         ))}
                     </div>
                 </div>
-            </div>
+            </motion.div>
+        </motion.div>
 
-        </div>
-
-        {/* --- LIGHTBOX (MODAL ZOOM) --- */}
         <AnimatePresence>
             {isZoomed && profile?.avatarUrl && (
-                <motion.div
+                 <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.3 }}
                     className="fixed inset-0 z-[100] bg-[#0c0c0c]/95 backdrop-blur-sm flex items-center justify-center p-6 cursor-zoom-out"
-                    onClick={() => setIsZoomed(false)} // Klik background untuk close
+                    onClick={() => setIsZoomed(false)}
                 >
-                    {/* Close Button */}
                     <button className="absolute top-8 right-8 font-mono text-xs text-[#9f1239] hover:text-white border border-transparent hover:border-[#9f1239] px-4 py-2 transition-all">
                         [ CLOSE VIEW ]
                     </button>
-
-                    {/* Image Container */}
                     <motion.div
                         initial={{ scale: 0.9, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
                         exit={{ scale: 0.9, opacity: 0 }}
                         transition={{ type: "spring", damping: 20 }}
                         className="relative max-w-full max-h-screen"
-                        onClick={(e) => e.stopPropagation()} // Agar klik gambar tidak menutup modal
+                        onClick={(e) => e.stopPropagation()}
                     >
-                        <img 
-                            src={profile.avatarUrl} 
-                            alt="Full Portrait" 
-                            className="max-h-[80vh] w-auto border-2 border-[#333] shadow-[0_0_50px_rgba(0,0,0,0.8)]"
-                        />
-                        
-                        {/* Technical Label */}
+                        <img src={profile.avatarUrl} alt="Full Portrait" className="max-h-[80vh] w-auto border-2 border-[#333] shadow-[0_0_50px_rgba(0,0,0,0.8)]" />
                         <div className="absolute -bottom-8 left-0 text-zinc-500 font-mono text-[10px] tracking-widest uppercase">
                             /// ORIGINAL FILE : SOURCE_IMG_01.JPG
                         </div>
@@ -128,7 +159,6 @@ export default function About() {
                 </motion.div>
             )}
         </AnimatePresence>
-
       </section>
     </PageTransition>
   );
