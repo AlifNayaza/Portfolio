@@ -64235,11 +64235,13 @@ exports.handler = async (event) => {
         doc = await PortfolioModel.create({
           identifier: "main_portfolio",
           data: {
-            home: { title: "Creative Developer", subtitle: "Building digital experiences." },
-            profile: { about: "Hello World", avatarUrl: "" },
-            skills: ["React", "Node.js"],
+            home: { logoName: "Author", headline: "The Journey Begins", subtitle: "Welcome." },
+            profile: { about: "", avatarUrl: "" },
+            soundtrack: [],
+            skills: [],
             projects: [],
-            contact: { email: "test@example.com" }
+            experience: [],
+            contact: { email: "" }
           }
         });
       }
@@ -64247,10 +64249,16 @@ exports.handler = async (event) => {
     }
     if (event.httpMethod === "POST") {
       const clientSecret = event.headers.authorization;
-      if (clientSecret !== ADMIN_SECRET) {
+      if (!clientSecret || clientSecret !== ADMIN_SECRET) {
         return { statusCode: 401, headers, body: JSON.stringify({ message: "Unauthorized" }) };
       }
       const newData = JSON.parse(event.body);
+      if (newData.music && typeof newData.music === "object" && newData.music.url) {
+        if (!newData.soundtrack || newData.soundtrack.length === 0) {
+          newData.soundtrack = [newData.music];
+        }
+        delete newData.music;
+      }
       const updated = await PortfolioModel.findOneAndUpdate(
         { identifier: "main_portfolio" },
         { data: newData },

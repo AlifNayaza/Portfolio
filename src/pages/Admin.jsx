@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import { toast } from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
@@ -8,8 +8,7 @@ import { usePortfolio } from "../context/PortfolioContext";
 
 const API_URL = "/.netlify/functions/portfolio";
 
-// --- Helper Components (Tidak Berubah) ---
-
+// --- Helper Components (Internal) ---
 const AdminInput = ({ label, textarea, ...props }) => {
     const Comp = textarea ? "textarea" : "input";
     return (
@@ -40,13 +39,8 @@ const SectionHeader = ({ title, onAddItem, buttonLabel }) => (
 );
 
 const icons = {
-  home: <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>,
-  profile: <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>,
-  skills: <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-12v4m-2-2h4m5 10v4m-2-2h4M5 3a2 2 0 00-2 2v1m16 0V5a2 2 0 00-2-2h-1m-4 16l2-2m-2 2l-2-2m-4-16l2 2m-2-2l-2 2" /></svg>,
-  projects: <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>,
-  experience: <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>,
-  soundtrack: <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2z" /></svg>,
-  contact: <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>,
+  home: '📖', profile: '👤', skills: '✨', projects: '💼', 
+  experience: '⏳', soundtrack: '🎵', contact: '📨',
 };
 
 const tabContentVariants = {
@@ -67,7 +61,6 @@ export default function Admin() {
     const [activeTab, setActiveTab] = useState("home");
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-    // State baru untuk mengontrol dropdown mobile
     const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   
     const [formData, setFormData] = useState({
@@ -82,12 +75,15 @@ export default function Admin() {
 
     useEffect(() => {
         axios.get(API_URL).then(res => {
-            let fetchedData = res.data;
+            let fetchedData = res.data || {};
+            
+            // Logic konversi dari data lama 'music' ke 'soundtrack'
             if (fetchedData && !fetchedData.soundtrack && fetchedData.music) {
                 fetchedData.soundtrack = [fetchedData.music];
                 delete fetchedData.music;
             }
-            if(fetchedData) setFormData(prev => ({ ...prev, ...fetchedData }));
+
+            setFormData(prev => ({ ...prev, ...fetchedData }));
             setLoading(false);
         }).catch(err => {
             console.error("Failed to fetch data:", err);
@@ -103,7 +99,7 @@ export default function Admin() {
             toast.success("MANUSCRIPT UPDATED.");
             refreshData();
         } catch (e) {
-            toast.error("ERROR: UNAUTHORIZED.");
+            toast.error("ERROR: UNAUTHORIZED. Please re-login.");
         } finally {
             setSaving(false);
         }
@@ -114,6 +110,7 @@ export default function Admin() {
         window.location.href = "/keyhole";
     };
 
+    // Helper functions
     const setNest = (sec, f, v) => setFormData(p => ({...p, [sec]: { ...p[sec], [f]: v }}));
     const setArrObj = (section, index, field, value) => {
         const newArr = [...(formData[section] || [])];
@@ -122,7 +119,7 @@ export default function Admin() {
     };  
     const addItem = (sec, tpl) => setFormData(p => ({...p, [sec]: [...(p[sec]||[]), tpl]}));
     const delItem = (section, index) => {
-        if(!window.confirm("Are you sure you want to delete this item?")) return;
+        if(!window.confirm("Are you sure?")) return;
         setFormData(prev => ({ ...prev, [section]: prev[section].filter((_, i) => i !== index) }));
     };
   
@@ -154,24 +151,23 @@ export default function Admin() {
                         onClick={handleSave} 
                         disabled={saving} 
                         className="bg-[#9f1239] text-white px-4 py-2 rounded-md shadow-lg shadow-[#9f1239]/30 hover:bg-red-700 transition-colors disabled:opacity-50"
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
+                        whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
                     >
-                        {saving ? "SAVING..." : "SAVE CHANGES"}
+                        {saving ? "SAVING..." : "SAVE"}
                     </motion.button>
                 </div>
             </header>
 
             <div className="flex flex-col md:flex-row max-w-8xl mx-auto p-4 md:p-6 gap-6">
                 
-                {/* --- NAVIGASI BARU UNTUK MOBILE --- */}
+                {/* --- MOBILE DROPDOWN NAV (RESPONSIVE) --- */}
                 <div className="md:hidden relative mb-2">
                     <button 
                         onClick={() => setIsMobileNavOpen(!isMobileNavOpen)}
                         className="w-full flex justify-between items-center gap-3 px-4 py-3 text-left font-mono text-xs tracking-widest transition-all rounded-md bg-[#9f1239] text-white shadow-md shadow-[#9f1239]/20"
                     >
                         <div className="flex items-center gap-3">
-                            {activeTabData.icon}
+                            <span>{activeTabData.icon}</span>
                             <span>{activeTabData.label}</span>
                         </div>
                         <motion.span animate={{ rotate: isMobileNavOpen ? 180 : 0 }}>
@@ -182,21 +178,16 @@ export default function Admin() {
                     <AnimatePresence>
                         {isMobileNavOpen && (
                             <motion.div
-                                initial={{ opacity: 0, y: -10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -10 }}
+                                initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
                                 className="absolute top-full left-0 w-full mt-2 bg-zinc-900 border border-[#333] rounded-md shadow-lg z-50 p-2 space-y-1"
                             >
                                 {tabs.map(t => (
                                     <button 
                                         key={t.id} 
-                                        onClick={() => {
-                                            setActiveTab(t.id);
-                                            setIsMobileNavOpen(false);
-                                        }} 
+                                        onClick={() => { setActiveTab(t.id); setIsMobileNavOpen(false); }} 
                                         className="w-full flex items-center gap-3 px-3 py-2 text-left font-mono text-xs tracking-widest transition-all rounded-md text-zinc-300 hover:bg-zinc-800 hover:text-white"
                                     >
-                                        {t.icon}
+                                        <span>{t.icon}</span>
                                         <span>{t.label}</span>
                                     </button>
                                 ))}
@@ -205,7 +196,7 @@ export default function Admin() {
                     </AnimatePresence>
                 </div>
 
-                {/* --- SIDEBAR LAMA, SEKARANG HANYA UNTUK DESKTOP --- */}
+                {/* --- DESKTOP SIDEBAR --- */}
                 <aside className="hidden md:block w-full md:w-56 flex-shrink-0">
                     <div className="flex flex-col gap-2">
                         {tabs.map(t => (
@@ -218,7 +209,7 @@ export default function Admin() {
                                     : "text-zinc-400 hover:bg-zinc-800 hover:text-white"
                                 }`}
                             >
-                                {t.icon}
+                                <span>{t.icon}</span>
                                 <span>{t.label}</span>
                             </button>
                         ))}
@@ -228,12 +219,11 @@ export default function Admin() {
                 <main className="flex-1 min-h-[500px] bg-[#111] border border-[#333] rounded-lg p-4 md:p-6 shadow-inner shadow-black/30">
                     <AnimatePresence mode="wait">
                         <motion.div
-                            key={activeTab}
-                            variants={tabContentVariants}
-                            initial="hidden"
-                            animate="visible"
-                            exit="exit"
+                            key={activeTab} variants={tabContentVariants}
+                            initial="hidden" animate="visible" exit="exit"
                         >
+                            {/* --- KONTEN TAB (Sama seperti sebelumnya, tidak perlu diubah) --- */}
+                            {/* Home */}
                             {activeTab === "home" && (
                                 <div>
                                     <SectionHeader title="Prologue Settings" />
@@ -245,6 +235,7 @@ export default function Admin() {
                                 </div>
                             )}
 
+                            {/* Profile */}
                             {activeTab === "profile" && (
                                 <div>
                                     <SectionHeader title="Character Sheet" />
@@ -257,7 +248,8 @@ export default function Admin() {
                                     </div>
                                 </div>
                             )}
-
+                            
+                            {/* Soundtrack */}
                             {activeTab === "soundtrack" && (
                                 <div>
                                     <SectionHeader title="Background Audio" onAddItem={() => addItem('soundtrack', { url: "", title: "", artist: "" })} buttonLabel="[ + ADD TRACK ]" />
