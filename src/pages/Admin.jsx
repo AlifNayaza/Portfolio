@@ -2,11 +2,30 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { toast } from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import ImageUploader from "../components/admin/ImageUploader";
 import AudioUploader from "../components/admin/AudioUploader";
 import { usePortfolio } from "../context/PortfolioContext";
 
 const API_URL = "/.netlify/functions/portfolio";
+
+// --- Helper untuk manage auth session ---
+const getAuthToken = () => {
+    return localStorage.getItem("admin_session") || sessionStorage.getItem("admin_session");
+};
+
+const setAuthToken = (token, remember = true) => {
+    if (remember) {
+        localStorage.setItem("admin_session", token);
+    } else {
+        sessionStorage.setItem("admin_session", token);
+    }
+};
+
+const clearAuthToken = () => {
+    localStorage.removeItem("admin_session");
+    sessionStorage.removeItem("admin_session");
+};
 
 // --- Helper Components (Internal) ---
 const AdminInput = ({ label, textarea, ...props }) => {
@@ -56,8 +75,9 @@ const listItemVariants = {
 };
 
 export default function Admin() {
+    const navigate = useNavigate();
     const { refreshData } = usePortfolio();
-    const [password] = useState(localStorage.getItem("admin_session") || "");
+    const [password, setPassword] = useState("");
     const [activeTab, setActiveTab] = useState("home");
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -73,7 +93,20 @@ export default function Admin() {
         contact: { email: "", linkedin: "", github: "", instagram: "", twitter: "" }
     });
 
+    // Validasi auth saat component mount
     useEffect(() => {
+        const token = getAuthToken();
+        if (!token) {
+            toast.error("Session expired. Please login again.");
+            navigate("/keyhole");
+            return;
+        }
+        setPassword(token);
+    }, [navigate]);
+
+    useEffect(() => {
+        if (!password) return;
+
         axios.get(API_URL).then(res => {
             let fetchedData = res.data || {};
             
@@ -90,24 +123,42 @@ export default function Admin() {
             setLoading(false);
             toast.error("Failed to load data.");
         });
-    }, []);
+    }, [password]);
 
     const handleSave = async () => {
+        const currentToken = getAuthToken();
+        
+        if (!currentToken) {
+            toast.error("Session expired. Please login again.");
+            navigate("/keyhole");
+            return;
+        }
+
         setSaving(true);
         try {
-            await axios.post(API_URL, formData, { headers: { Authorization: password } });
+            await axios.post(API_URL, formData, { 
+                headers: { Authorization: currentToken } 
+            });
             toast.success("MANUSCRIPT UPDATED.");
             refreshData();
         } catch (e) {
-            toast.error("ERROR: UNAUTHORIZED. Please re-login.");
+            console.error("Save error:", e);
+            if (e.response?.status === 401) {
+                toast.error("Session expired. Please login again.");
+                clearAuthToken();
+                navigate("/keyhole");
+            } else {
+                toast.error("Failed to save. Please try again.");
+            }
         } finally {
             setSaving(false);
         }
     };
 
     const handleLogout = () => {
-        localStorage.removeItem("admin_session");
-        window.location.href = "/keyhole";
+        clearAuthToken();
+        toast.success("Logged out successfully.");
+        navigate("/keyhole");
     };
 
     // Helper functions
@@ -222,7 +273,6 @@ export default function Admin() {
                             key={activeTab} variants={tabContentVariants}
                             initial="hidden" animate="visible" exit="exit"
                         >
-                            {/* --- KONTEN TAB (Sama seperti sebelumnya, tidak perlu diubah) --- */}
                             {/* Home */}
                             {activeTab === "home" && (
                                 <div>
