@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { toast } from "react-hot-toast";
+import axios from "axios";
 
 // Helper komponen untuk ikon
 const EyeIcon = () => (
@@ -19,7 +20,7 @@ const EyeSlashIcon = () => (
 
 // Path ke dashboard admin
 const ADMIN_PATH = import.meta.env.VITE_ADMIN_PATH || "/adomin";
-const ADMIN_SECRET = import.meta.env.VITE_ADMIN_SECRET;
+const API_URL = "/.netlify/functions/portfolio";
 
 export default function Login() {
   const [input, setInput] = useState("");
@@ -36,32 +37,51 @@ export default function Login() {
     }
 
     setLoading(true);
-    
-    // Simulasi delay untuk UX yang lebih baik
-    await new Promise(resolve => setTimeout(resolve, 600));
 
-    // Validasi password jika ADMIN_SECRET di-set
-    if (ADMIN_SECRET && input !== ADMIN_SECRET) {
-      toast.error("INCORRECT KEY. ACCESS DENIED.");
+    try {
+      // Validasi password dengan backend menggunakan endpoint verify
+      const response = await axios.post(
+        `${API_URL}?action=verify`,
+        {},
+        { 
+          headers: { Authorization: input },
+          timeout: 10000 // 10 detik timeout
+        }
+      );
+
+      if (response.status === 200 && response.data?.authenticated) {
+        // Password benar, simpan session
+        if (rememberMe) {
+          localStorage.setItem("admin_session", input);
+          sessionStorage.removeItem("admin_session");
+        } else {
+          sessionStorage.setItem("admin_session", input);
+          localStorage.removeItem("admin_session");
+        }
+
+        toast.success("ACCESS GRANTED.");
+        navigate(ADMIN_PATH);
+      } else {
+        toast.error("INCORRECT KEY. ACCESS DENIED.");
+        setInput("");
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      
+      if (error.response?.status === 401) {
+        toast.error("INCORRECT KEY. ACCESS DENIED.");
+      } else if (error.code === 'ECONNABORTED') {
+        toast.error("Connection timeout. Please try again.");
+      } else if (error.response?.status === 500) {
+        toast.error("Server error. Please try again later.");
+      } else {
+        toast.error("Failed to connect. Check your connection.");
+      }
+      
       setInput("");
+    } finally {
       setLoading(false);
-      return;
     }
-
-    // Simpan session berdasarkan pilihan "Remember Me"
-    if (rememberMe) {
-      localStorage.setItem("admin_session", input);
-      // Hapus dari sessionStorage jika ada
-      sessionStorage.removeItem("admin_session");
-    } else {
-      sessionStorage.setItem("admin_session", input);
-      // Hapus dari localStorage jika ada
-      localStorage.removeItem("admin_session");
-    }
-
-    toast.success("ACCESS GRANTED.");
-    setLoading(false);
-    navigate(ADMIN_PATH);
   };
 
   const toggleKeyVisibility = () => {
