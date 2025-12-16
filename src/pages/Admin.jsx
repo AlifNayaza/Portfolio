@@ -14,17 +14,57 @@ const getAuthToken = () => {
     return localStorage.getItem("admin_session") || sessionStorage.getItem("admin_session");
 };
 
-const setAuthToken = (token, remember = true) => {
-    if (remember) {
-        localStorage.setItem("admin_session", token);
-    } else {
-        sessionStorage.setItem("admin_session", token);
-    }
-};
-
 const clearAuthToken = () => {
     localStorage.removeItem("admin_session");
     sessionStorage.removeItem("admin_session");
+};
+
+// Helper untuk merge data yang di-fetch dengan default structure
+const mergeWithDefaults = (fetchedData) => {
+    const defaults = {
+        home: { logoName: "", headline: "", subtitle: "" },
+        profile: { about: "", avatarUrl: "" },
+        soundtrack: [],
+        skills: [],
+        experience: [],
+        projects: [],
+        contact: { email: "", linkedin: "", github: "", instagram: "", twitter: "" }
+    };
+
+    // Deep merge untuk memastikan semua field ada
+    const merged = { ...defaults };
+    
+    if (fetchedData) {
+        // Merge home
+        if (fetchedData.home) {
+            merged.home = { ...defaults.home, ...fetchedData.home };
+        }
+        
+        // Merge profile
+        if (fetchedData.profile) {
+            merged.profile = { ...defaults.profile, ...fetchedData.profile };
+        }
+        
+        // Merge contact
+        if (fetchedData.contact) {
+            merged.contact = { ...defaults.contact, ...fetchedData.contact };
+        }
+        
+        // Arrays - gunakan yang dari database jika ada
+        merged.soundtrack = fetchedData.soundtrack || [];
+        merged.skills = fetchedData.skills || [];
+        merged.experience = fetchedData.experience || [];
+        merged.projects = fetchedData.projects || [];
+
+        // Backward compatibility: konversi 'music' ke 'soundtrack'
+        if (fetchedData.music && merged.soundtrack.length === 0) {
+            merged.soundtrack = Array.isArray(fetchedData.music) 
+                ? fetchedData.music 
+                : [fetchedData.music];
+        }
+    }
+
+    return merged;
 };
 
 // --- Helper Components (Internal) ---
@@ -104,25 +144,36 @@ export default function Admin() {
         setPassword(token);
     }, [navigate]);
 
+    // Fetch data dari backend
     useEffect(() => {
         if (!password) return;
 
-        axios.get(API_URL).then(res => {
-            let fetchedData = res.data || {};
-            
-            // Logic konversi dari data lama 'music' ke 'soundtrack'
-            if (fetchedData && !fetchedData.soundtrack && fetchedData.music) {
-                fetchedData.soundtrack = [fetchedData.music];
-                delete fetchedData.music;
-            }
-
-            setFormData(prev => ({ ...prev, ...fetchedData }));
-            setLoading(false);
-        }).catch(err => {
-            console.error("Failed to fetch data:", err);
-            setLoading(false);
-            toast.error("Failed to load data.");
-        });
+        console.log('🔄 Fetching data from backend...');
+        
+        axios.get(API_URL)
+            .then(res => {
+                console.log('✅ Data received:', res.data);
+                console.log('Data keys:', Object.keys(res.data || {}));
+                
+                // Merge dengan defaults untuk memastikan semua field ada
+                const mergedData = mergeWithDefaults(res.data);
+                console.log('✅ Data merged with defaults:', Object.keys(mergedData));
+                
+                setFormData(mergedData);
+                setLoading(false);
+                
+                // Log untuk debugging
+                console.log('Home data:', mergedData.home);
+                console.log('Skills count:', mergedData.skills?.length || 0);
+                console.log('Projects count:', mergedData.projects?.length || 0);
+                console.log('Soundtrack count:', mergedData.soundtrack?.length || 0);
+            })
+            .catch(err => {
+                console.error("❌ Failed to fetch data:", err);
+                console.error("Error response:", err.response?.data);
+                setLoading(false);
+                toast.error("Failed to load data from server.");
+            });
     }, [password]);
 
     const handleSave = async () => {
@@ -134,6 +185,9 @@ export default function Admin() {
             return;
         }
 
+        console.log('💾 Saving data to backend...');
+        console.log('Data to save:', formData);
+
         setSaving(true);
         try {
             const response = await axios.post(API_URL, formData, { 
@@ -141,17 +195,19 @@ export default function Admin() {
                 timeout: 15000
             });
             
-            console.log('Save response:', response.data);
+            console.log('✅ Save response:', response.data);
             toast.success("MANUSCRIPT UPDATED.");
             refreshData();
         } catch (e) {
-            console.error("Save error:", e);
+            console.error("❌ Save error:", e);
+            console.error("Error response:", e.response?.data);
+            
             if (e.response?.status === 401) {
                 toast.error("Session expired. Please login again.");
                 clearAuthToken();
                 navigate("/keyhole");
             } else if (e.response?.status === 500) {
-                toast.error("Server error. Check backend configuration.");
+                toast.error("Server error. Check backend logs.");
             } else if (!e.response) {
                 toast.error("Network error. Please check your connection.");
             } else {
@@ -181,7 +237,21 @@ export default function Admin() {
         setFormData(prev => ({ ...prev, [section]: prev[section].filter((_, i) => i !== index) }));
     };
   
-    if (loading) return <div className="min-h-screen bg-black flex items-center justify-center font-mono text-xs text-white">INITIALIZING WORKBENCH...</div>;
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-black flex items-center justify-center">
+                <div className="text-center">
+                    <div className="font-mono text-xs text-white mb-4">INITIALIZING WORKBENCH...</div>
+                    <div className="flex justify-center">
+                        <svg className="animate-spin h-8 w-8 text-[#9f1239]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     const tabs = [
         { id: "home", label: "Prologue", icon: icons.home },
@@ -285,9 +355,9 @@ export default function Admin() {
                                 <div>
                                     <SectionHeader title="Prologue Settings" />
                                     <div className="space-y-6">
-                                        <AdminInput label="Brand Name (Navbar)" value={formData.home?.logoName} onChange={e=>setNest('home','logoName',e.target.value)} />
-                                        <AdminInput label="Main Headline" value={formData.home?.headline} onChange={e=>setNest('home','headline',e.target.value)} />
-                                        <AdminInput textarea rows={4} label="Subtitle / Intro" value={formData.home?.subtitle} onChange={e=>setNest('home','subtitle',e.target.value)} />
+                                        <AdminInput label="Brand Name (Navbar)" value={formData.home?.logoName || ""} onChange={e=>setNest('home','logoName',e.target.value)} />
+                                        <AdminInput label="Main Headline" value={formData.home?.headline || ""} onChange={e=>setNest('home','headline',e.target.value)} />
+                                        <AdminInput textarea rows={4} label="Subtitle / Intro" value={formData.home?.subtitle || ""} onChange={e=>setNest('home','subtitle',e.target.value)} />
                                     </div>
                                 </div>
                             )}
@@ -297,10 +367,10 @@ export default function Admin() {
                                 <div>
                                     <SectionHeader title="Character Sheet" />
                                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                                        <AdminInput textarea rows={12} label="Biography" value={formData.profile?.about} onChange={e=>setNest('profile','about',e.target.value)} />
+                                        <AdminInput textarea rows={12} label="Biography" value={formData.profile?.about || ""} onChange={e=>setNest('profile','about',e.target.value)} />
                                         <div className="space-y-2">
                                             <label className="block font-mono text-[10px] text-zinc-500 uppercase tracking-widest border-l-2 border-[#9f1239] pl-2">Portrait</label>
-                                            <ImageUploader currentImage={formData.profile?.avatarUrl} onUpload={url => setNest('profile', 'avatarUrl', url)} onDelete={() => setNest('profile', 'avatarUrl', "")} />
+                                            <ImageUploader currentImage={formData.profile?.avatarUrl || ""} onUpload={url => setNest('profile', 'avatarUrl', url)} onDelete={() => setNest('profile', 'avatarUrl', "")} />
                                         </div>
                                     </div>
                                 </div>
@@ -316,10 +386,10 @@ export default function Admin() {
                                                 <motion.div key={i} variants={listItemVariants} initial="hidden" animate="visible" exit="exit" layout className="bg-[#1e1e1e]/50 border border-[#333] rounded-lg p-4 relative">
                                                     <button onClick={() => delItem('soundtrack',i)} className="absolute top-2 right-2 text-zinc-600 hover:text-red-500 text-xl font-bold">&times;</button>
                                                     <div className="grid md:grid-cols-2 gap-4 mb-4">
-                                                        <AdminInput label="Track Title" value={track.title} onChange={e => setArrObj('soundtrack', i, 'title', e.target.value)} />
-                                                        <AdminInput label="Artist Name" value={track.artist} onChange={e => setArrObj('soundtrack', i, 'artist', e.target.value)} />
+                                                        <AdminInput label="Track Title" value={track.title || ""} onChange={e => setArrObj('soundtrack', i, 'title', e.target.value)} />
+                                                        <AdminInput label="Artist Name" value={track.artist || ""} onChange={e => setArrObj('soundtrack', i, 'artist', e.target.value)} />
                                                     </div>
-                                                    <AudioUploader currentAudio={track.url} onUpload={url => setArrObj('soundtrack', i, 'url', url)} onDelete={() => setArrObj('soundtrack', i, 'url', "")} />
+                                                    <AudioUploader currentAudio={track.url || ""} onUpload={url => setArrObj('soundtrack', i, 'url', url)} onDelete={() => setArrObj('soundtrack', i, 'url', "")} />
                                                 </motion.div>
                                             ))}
                                         </AnimatePresence>
@@ -337,10 +407,10 @@ export default function Admin() {
                                                 const skillData = typeof skill === 'string' ? { name: skill, level: "Intermediate" } : skill;
                                                 return (
                                                     <motion.div key={i} variants={listItemVariants} initial="hidden" animate="visible" exit="exit" layout className="bg-[#1e1e1e]/50 border border-[#333] rounded-lg p-4 space-y-4">
-                                                        <AdminInput label="Skill Name" value={skillData.name} onChange={e=>setArrObj('skills',i,'name',e.target.value)} />
+                                                        <AdminInput label="Skill Name" value={skillData.name || ""} onChange={e=>setArrObj('skills',i,'name',e.target.value)} />
                                                         <div>
                                                             <label className="block font-mono text-[10px] text-zinc-500 uppercase tracking-widest mb-2 border-l-2 border-[#9f1239] pl-2">Proficiency</label>
-                                                            <select className="w-full bg-[#1e1e1e] border border-[#333] text-[#e5e5e5] p-3 font-serif focus:border-[#9f1239] focus:outline-none focus:ring-1 focus:ring-[#9f1239]/50 transition-all rounded-md" value={skillData.level} onChange={e=>setArrObj('skills',i,'level',e.target.value)}>
+                                                            <select className="w-full bg-[#1e1e1e] border border-[#333] text-[#e5e5e5] p-3 font-serif focus:border-[#9f1239] focus:outline-none focus:ring-1 focus:ring-[#9f1239]/50 transition-all rounded-md" value={skillData.level || "Intermediate"} onChange={e=>setArrObj('skills',i,'level',e.target.value)}>
                                                                 <option>Beginner</option><option>Intermediate</option><option>Advanced</option><option>Master</option>
                                                             </select>
                                                         </div>
@@ -362,9 +432,9 @@ export default function Admin() {
                                             {formData.experience?.map((exp, i) => (
                                                 <motion.div key={i} variants={listItemVariants} initial="hidden" animate="visible" exit="exit" layout className="bg-[#1e1e1e]/50 border border-[#333] rounded-lg p-4 relative space-y-4">
                                                     <button onClick={() => delItem('experience',i)} className="absolute top-2 right-2 text-zinc-600 hover:text-red-500 text-xl font-bold">&times;</button>
-                                                    <AdminInput label="Role / Title" value={exp.role} onChange={e=>setArrObj('experience',i,'role',e.target.value)} />
-                                                    <AdminInput label="Company / Place" value={exp.company} onChange={e=>setArrObj('experience',i,'company',e.target.value)} />
-                                                    <AdminInput label="Duration / Year" value={exp.year} onChange={e=>setArrObj('experience',i,'year',e.target.value)} />
+                                                    <AdminInput label="Role / Title" value={exp.role || ""} onChange={e=>setArrObj('experience',i,'role',e.target.value)} />
+                                                    <AdminInput label="Company / Place" value={exp.company || ""} onChange={e=>setArrObj('experience',i,'company',e.target.value)} />
+                                                    <AdminInput label="Duration / Year" value={exp.year || ""} onChange={e=>setArrObj('experience',i,'year',e.target.value)} />
                                                 </motion.div>
                                             ))}
                                         </AnimatePresence>
@@ -386,13 +456,13 @@ export default function Admin() {
                                                     </div>
                                                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                                                         <div className="lg:col-span-2 space-y-4">
-                                                            <AdminInput label="Project Name" value={p.name} onChange={e=>setArrObj('projects',i,'name',e.target.value)} />
-                                                            <AdminInput label="Link / URL" value={p.link} onChange={e=>setArrObj('projects',i,'link',e.target.value)} />
-                                                            <AdminInput textarea rows={4} label="Description / Report" value={p.description} onChange={e=>setArrObj('projects',i,'description',e.target.value)} />
+                                                            <AdminInput label="Project Name" value={p.name || ""} onChange={e=>setArrObj('projects',i,'name',e.target.value)} />
+                                                            <AdminInput label="Link / URL" value={p.link || ""} onChange={e=>setArrObj('projects',i,'link',e.target.value)} />
+                                                            <AdminInput textarea rows={4} label="Description / Report" value={p.description || ""} onChange={e=>setArrObj('projects',i,'description',e.target.value)} />
                                                         </div>
                                                         <div className="space-y-2">
                                                             <label className="block font-mono text-[10px] text-zinc-500 uppercase tracking-widest border-l-2 border-[#9f1239] pl-2">Attachment</label>
-                                                            <ImageUploader currentImage={p.image} onUpload={url=>setArrObj('projects',i,'image',url)} onDelete={()=>setArrObj('projects',i,'image',"")} />
+                                                            <ImageUploader currentImage={p.image || ""} onUpload={url=>setArrObj('projects',i,'image',url)} onDelete={()=>setArrObj('projects',i,'image',"")} />
                                                         </div>
                                                     </div>
                                                 </motion.div>
@@ -407,11 +477,11 @@ export default function Admin() {
                                 <div>
                                     <SectionHeader title="Signal Frequencies" />
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <AdminInput label="Email Address" value={formData.contact?.email} onChange={e=>setNest('contact','email',e.target.value)} />
-                                        <AdminInput label="LinkedIn" value={formData.contact?.linkedin} onChange={e=>setNest('contact','linkedin',e.target.value)} />
-                                        <AdminInput label="GitHub" value={formData.contact?.github} onChange={e=>setNest('contact','github',e.target.value)} />
-                                        <AdminInput label="Instagram" value={formData.contact?.instagram} onChange={e=>setNest('contact','instagram',e.target.value)} />
-                                        <AdminInput label="Twitter / X" value={formData.contact?.twitter} onChange={e=>setNest('contact','twitter',e.target.value)} />
+                                        <AdminInput label="Email Address" value={formData.contact?.email || ""} onChange={e=>setNest('contact','email',e.target.value)} />
+                                        <AdminInput label="LinkedIn" value={formData.contact?.linkedin || ""} onChange={e=>setNest('contact','linkedin',e.target.value)} />
+                                        <AdminInput label="GitHub" value={formData.contact?.github || ""} onChange={e=>setNest('contact','github',e.target.value)} />
+                                        <AdminInput label="Instagram" value={formData.contact?.instagram || ""} onChange={e=>setNest('contact','instagram',e.target.value)} />
+                                        <AdminInput label="Twitter / X" value={formData.contact?.twitter || ""} onChange={e=>setNest('contact','twitter',e.target.value)} />
                                     </div>
                                 </div>
                             )}

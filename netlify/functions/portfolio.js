@@ -22,6 +22,57 @@ const connectToDatabase = async () => {
   isConnected = true;
 };
 
+// Helper function untuk normalisasi data dari database
+const normalizeData = (data) => {
+  if (!data) return null;
+
+  // Migrasi 'music' ke 'soundtrack' jika belum dilakukan
+  if (data.music && !data.soundtrack) {
+    data.soundtrack = Array.isArray(data.music) ? data.music : [data.music];
+    delete data.music;
+  }
+
+  // Pastikan soundtrack adalah array
+  if (data.soundtrack && !Array.isArray(data.soundtrack)) {
+    data.soundtrack = [data.soundtrack];
+  }
+
+  // Pastikan semua field yang dibutuhkan ada dengan default values
+  const normalized = {
+    home: data.home || { logoName: "Author", headline: "The Journey Begins", subtitle: "Welcome." },
+    profile: data.profile || { about: "", avatarUrl: "" },
+    soundtrack: data.soundtrack || [],
+    skills: data.skills || [],
+    projects: data.projects || [],
+    experience: data.experience || [],
+    contact: data.contact || { email: "", linkedin: "", github: "", instagram: "", twitter: "" }
+  };
+
+  // Pastikan contact memiliki semua field
+  normalized.contact = {
+    email: normalized.contact.email || "",
+    linkedin: normalized.contact.linkedin || "",
+    github: normalized.contact.github || "",
+    instagram: normalized.contact.instagram || "",
+    twitter: normalized.contact.twitter || ""
+  };
+
+  // Pastikan home memiliki semua field
+  normalized.home = {
+    logoName: normalized.home.logoName || "Author",
+    headline: normalized.home.headline || "The Journey Begins",
+    subtitle: normalized.home.subtitle || "Welcome."
+  };
+
+  // Pastikan profile memiliki semua field
+  normalized.profile = {
+    about: normalized.profile.about || "",
+    avatarUrl: normalized.profile.avatarUrl || ""
+  };
+
+  return normalized;
+};
+
 exports.handler = async (event) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
@@ -79,10 +130,14 @@ exports.handler = async (event) => {
       };
     }
 
-    // GET: Public Read
+    // GET: Public Read - dengan normalisasi data
     if (event.httpMethod === 'GET') {
+      console.log('📖 GET: Fetching portfolio data...');
+      
       let doc = await PortfolioModel.findOne({ identifier: 'main_portfolio' });
+      
       if (!doc) {
+        console.log('⚠️ No data found in database, creating default data...');
         // Data Dummy Awal
         doc = await PortfolioModel.create({
           identifier: 'main_portfolio',
@@ -93,11 +148,25 @@ exports.handler = async (event) => {
             skills: [], 
             projects: [], 
             experience: [],
-            contact: { email: "" }
+            contact: { email: "", linkedin: "", github: "", instagram: "", twitter: "" }
           }
         });
+        console.log('✅ Default data created');
+      } else {
+        console.log('✅ Data found in database');
+        console.log('Raw data structure:', Object.keys(doc.data));
       }
-      return { statusCode: 200, headers, body: JSON.stringify(doc.data) };
+
+      // Normalisasi data sebelum dikirim ke frontend
+      const normalizedData = normalizeData(doc.data);
+      console.log('✅ Data normalized and ready to send');
+      console.log('Normalized structure:', Object.keys(normalizedData));
+      
+      return { 
+        statusCode: 200, 
+        headers, 
+        body: JSON.stringify(normalizedData) 
+      };
     }
 
     // POST: Admin Write (DENGAN VALIDASI PASSWORD)
@@ -125,8 +194,6 @@ exports.handler = async (event) => {
 
       if (clientSecret !== ADMIN_SECRET) {
         console.log('❌ Invalid password attempt');
-        console.log('Received:', clientSecret.substring(0, 5) + '...');
-        console.log('Expected:', ADMIN_SECRET.substring(0, 5) + '...');
         return { 
           statusCode: 401, 
           headers, 
@@ -138,17 +205,13 @@ exports.handler = async (event) => {
       console.log('✅ Valid credentials, updating data...');
       const newData = JSON.parse(event.body);
 
-      // Migrasi data 'music' ke 'soundtrack' (backward compatibility)
-      if (newData.music && typeof newData.music === 'object' && newData.music.url) {
-        if (!newData.soundtrack || newData.soundtrack.length === 0) {
-          newData.soundtrack = [newData.music];
-        }
-        delete newData.music;
-      }
+      // Normalisasi data sebelum disimpan
+      const normalizedData = normalizeData(newData);
+      console.log('Data to save:', Object.keys(normalizedData));
 
       const updated = await PortfolioModel.findOneAndUpdate(
         { identifier: 'main_portfolio' },
-        { data: newData },
+        { data: normalizedData },
         { new: true, upsert: true }
       );
       
@@ -156,7 +219,7 @@ exports.handler = async (event) => {
       return { 
         statusCode: 200, 
         headers, 
-        body: JSON.stringify(updated.data) 
+        body: JSON.stringify(normalizedData) 
       };
     }
 
@@ -172,7 +235,7 @@ exports.handler = async (event) => {
     return { 
       statusCode: 500, 
       headers, 
-      body: JSON.stringify({ error: error.message }) 
+      body: JSON.stringify({ error: error.message, stack: error.stack }) 
     };
   }
 };
