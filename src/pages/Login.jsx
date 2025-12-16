@@ -45,13 +45,11 @@ export default function Login() {
         {},
         { 
           headers: { Authorization: input },
-          timeout: 15000 // 15 detik timeout
+          timeout: 10000 // 10 detik timeout
         }
       );
 
-      console.log('Login response:', response.data);
-
-      if (response.status === 200 && response.data?.authenticated === true) {
+      if (response.status === 200 && response.data?.authenticated) {
         // Password benar, simpan session
         if (rememberMe) {
           localStorage.setItem("admin_session", input);
@@ -75,11 +73,9 @@ export default function Login() {
       } else if (error.code === 'ECONNABORTED') {
         toast.error("Connection timeout. Please try again.");
       } else if (error.response?.status === 500) {
-        toast.error("Server error. Please check ADMIN_SECRET in .env");
-      } else if (!error.response) {
-        toast.error("Network error. Please check your connection.");
+        toast.error("Server error. Please try again later.");
       } else {
-        toast.error("Failed to authenticate. Please try again.");
+        toast.error("Failed to connect. Check your connection.");
       }
       
       setInput("");
