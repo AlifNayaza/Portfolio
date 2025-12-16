@@ -136,9 +136,12 @@ export default function Admin() {
 
         setSaving(true);
         try {
-            await axios.post(API_URL, formData, { 
-                headers: { Authorization: currentToken } 
+            const response = await axios.post(API_URL, formData, { 
+                headers: { Authorization: currentToken },
+                timeout: 15000
             });
+            
+            console.log('Save response:', response.data);
             toast.success("MANUSCRIPT UPDATED.");
             refreshData();
         } catch (e) {
@@ -147,6 +150,10 @@ export default function Admin() {
                 toast.error("Session expired. Please login again.");
                 clearAuthToken();
                 navigate("/keyhole");
+            } else if (e.response?.status === 500) {
+                toast.error("Server error. Check backend configuration.");
+            } else if (!e.response) {
+                toast.error("Network error. Please check your connection.");
             } else {
                 toast.error("Failed to save. Please try again.");
             }

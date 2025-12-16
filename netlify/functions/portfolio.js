@@ -36,6 +36,49 @@ exports.handler = async (event) => {
   try {
     await connectToDatabase();
 
+    // Extract query parameter for action
+    const queryParams = event.queryStringParameters || {};
+    const action = queryParams.action;
+
+    // ENDPOINT VERIFY - untuk validasi password tanpa update data
+    if (action === 'verify' && event.httpMethod === 'POST') {
+      const clientSecret = event.headers.authorization || event.headers.Authorization;
+      
+      if (!clientSecret) {
+        console.log('❌ Verify: No authorization header');
+        return { 
+          statusCode: 401, 
+          headers, 
+          body: JSON.stringify({ authenticated: false, message: "No credentials provided" }) 
+        };
+      }
+
+      if (!ADMIN_SECRET) {
+        console.error('⚠️ ADMIN_SECRET is not set!');
+        return { 
+          statusCode: 500, 
+          headers, 
+          body: JSON.stringify({ authenticated: false, message: "Server configuration error" }) 
+        };
+      }
+
+      if (clientSecret !== ADMIN_SECRET) {
+        console.log('❌ Verify: Invalid password');
+        return { 
+          statusCode: 401, 
+          headers, 
+          body: JSON.stringify({ authenticated: false, message: "Invalid credentials" }) 
+        };
+      }
+
+      console.log('✅ Verify: Password valid');
+      return { 
+        statusCode: 200, 
+        headers, 
+        body: JSON.stringify({ authenticated: true, message: "Valid credentials" }) 
+      };
+    }
+
     // GET: Public Read
     if (event.httpMethod === 'GET') {
       let doc = await PortfolioModel.findOne({ identifier: 'main_portfolio' });

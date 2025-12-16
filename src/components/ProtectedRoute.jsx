@@ -15,6 +15,7 @@ export default function ProtectedRoute() {
       const token = localStorage.getItem("admin_session") || sessionStorage.getItem("admin_session");
       
       if (!token) {
+        console.log('No token found in storage');
         setIsValidating(false);
         setIsAuthenticated(false);
         return;
@@ -22,18 +23,23 @@ export default function ProtectedRoute() {
 
       try {
         // Validasi token dengan backend
+        console.log('Validating session with backend...');
         const response = await axios.post(
           `${API_URL}?action=verify`,
           {},
           { 
             headers: { Authorization: token },
-            timeout: 10000
+            timeout: 15000
           }
         );
 
-        if (response.status === 200 && response.data?.authenticated) {
+        console.log('Validation response:', response.data);
+
+        if (response.status === 200 && response.data?.authenticated === true) {
+          console.log('✅ Session valid');
           setIsAuthenticated(true);
         } else {
+          console.log('❌ Session invalid');
           // Token tidak valid, hapus dari storage
           localStorage.removeItem("admin_session");
           sessionStorage.removeItem("admin_session");
@@ -47,6 +53,10 @@ export default function ProtectedRoute() {
           localStorage.removeItem("admin_session");
           sessionStorage.removeItem("admin_session");
           toast.error("Invalid session. Please login again.");
+        } else if (error.response?.status === 500) {
+          toast.error("Server configuration error. Check ADMIN_SECRET in .env");
+        } else if (!error.response) {
+          toast.error("Network error. Cannot validate session.");
         }
         setIsAuthenticated(false);
       } finally {
