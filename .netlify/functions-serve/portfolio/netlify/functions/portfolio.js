@@ -64220,18 +64220,93 @@ var connectToDatabase = async () => {
   await mongoose.connect(MONGODB_URI);
   isConnected = true;
 };
+var normalizeData = (data) => {
+  if (!data) return null;
+  if (data.music && !data.soundtrack) {
+    data.soundtrack = Array.isArray(data.music) ? data.music : [data.music];
+    delete data.music;
+  }
+  if (data.soundtrack && !Array.isArray(data.soundtrack)) {
+    data.soundtrack = [data.soundtrack];
+  }
+  const normalized = {
+    home: data.home || { logoName: "Author", headline: "The Journey Begins", subtitle: "Welcome." },
+    profile: data.profile || { about: "", avatarUrl: "" },
+    soundtrack: data.soundtrack || [],
+    skills: data.skills || [],
+    projects: data.projects || [],
+    experience: data.experience || [],
+    contact: data.contact || { email: "", linkedin: "", github: "", instagram: "", twitter: "" }
+  };
+  normalized.contact = {
+    email: normalized.contact.email || "",
+    linkedin: normalized.contact.linkedin || "",
+    github: normalized.contact.github || "",
+    instagram: normalized.contact.instagram || "",
+    twitter: normalized.contact.twitter || ""
+  };
+  normalized.home = {
+    logoName: normalized.home.logoName || "Author",
+    headline: normalized.home.headline || "The Journey Begins",
+    subtitle: normalized.home.subtitle || "Welcome."
+  };
+  normalized.profile = {
+    about: normalized.profile.about || "",
+    avatarUrl: normalized.profile.avatarUrl || ""
+  };
+  return normalized;
+};
 exports.handler = async (event) => {
   const headers = {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Headers": "Content-Type, Authorization",
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS"
   };
-  if (event.httpMethod === "OPTIONS") return { statusCode: 200, headers, body: "" };
+  if (event.httpMethod === "OPTIONS") {
+    return { statusCode: 200, headers, body: "" };
+  }
   try {
     await connectToDatabase();
+    const queryParams = event.queryStringParameters || {};
+    const action = queryParams.action;
+    if (action === "verify" && event.httpMethod === "POST") {
+      const clientSecret = event.headers.authorization || event.headers.Authorization;
+      if (!clientSecret) {
+        console.log("\u274C Verify: No authorization header");
+        return {
+          statusCode: 401,
+          headers,
+          body: JSON.stringify({ authenticated: false, message: "No credentials provided" })
+        };
+      }
+      if (!ADMIN_SECRET) {
+        console.error("\u26A0\uFE0F ADMIN_SECRET is not set!");
+        return {
+          statusCode: 500,
+          headers,
+          body: JSON.stringify({ authenticated: false, message: "Server configuration error" })
+        };
+      }
+      if (clientSecret !== ADMIN_SECRET) {
+        console.log("\u274C Verify: Invalid password");
+        return {
+          statusCode: 401,
+          headers,
+          body: JSON.stringify({ authenticated: false, message: "Invalid credentials" })
+        };
+      }
+      console.log("\u2705 Verify: Password valid");
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({ authenticated: true, message: "Valid credentials" })
+      };
+    }
     if (event.httpMethod === "GET") {
+      console.log("\u{1F4D6} GET: Fetching portfolio data...");
       let doc = await PortfolioModel.findOne({ identifier: "main_portfolio" });
       if (!doc) {
+        console.log("\u26A0\uFE0F No data found in database, creating default data...");
         doc = await PortfolioModel.create({
           identifier: "main_portfolio",
           data: {
@@ -64241,33 +64316,77 @@ exports.handler = async (event) => {
             skills: [],
             projects: [],
             experience: [],
-            contact: { email: "" }
+            contact: { email: "", linkedin: "", github: "", instagram: "", twitter: "" }
           }
         });
+        console.log("\u2705 Default data created");
+      } else {
+        console.log("\u2705 Data found in database");
+        console.log("Raw data structure:", Object.keys(doc.data));
       }
-      return { statusCode: 200, headers, body: JSON.stringify(doc.data) };
+      const normalizedData = normalizeData(doc.data);
+      console.log("\u2705 Data normalized and ready to send");
+      console.log("Normalized structure:", Object.keys(normalizedData));
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify(normalizedData)
+      };
     }
     if (event.httpMethod === "POST") {
-      const clientSecret = event.headers.authorization;
-      if (!clientSecret || clientSecret !== ADMIN_SECRET) {
-        return { statusCode: 401, headers, body: JSON.stringify({ message: "Unauthorized" }) };
+      const clientSecret = event.headers.authorization || event.headers.Authorization;
+      if (!clientSecret) {
+        console.log("\u274C No authorization header provided");
+        return {
+          statusCode: 401,
+          headers,
+          body: JSON.stringify({ message: "Unauthorized: No credentials provided" })
+        };
       }
+      if (!ADMIN_SECRET) {
+        console.error("\u26A0\uFE0F ADMIN_SECRET is not set in environment variables!");
+        return {
+          statusCode: 500,
+          headers,
+          body: JSON.stringify({ message: "Server configuration error" })
+        };
+      }
+      if (clientSecret !== ADMIN_SECRET) {
+        console.log("\u274C Invalid password attempt");
+        return {
+          statusCode: 401,
+          headers,
+          body: JSON.stringify({ message: "Unauthorized: Invalid credentials" })
+        };
+      }
+      console.log("\u2705 Valid credentials, updating data...");
       const newData = JSON.parse(event.body);
-      if (newData.music && typeof newData.music === "object" && newData.music.url) {
-        if (!newData.soundtrack || newData.soundtrack.length === 0) {
-          newData.soundtrack = [newData.music];
-        }
-        delete newData.music;
-      }
+      const normalizedData = normalizeData(newData);
+      console.log("Data to save:", Object.keys(normalizedData));
       const updated = await PortfolioModel.findOneAndUpdate(
         { identifier: "main_portfolio" },
-        { data: newData },
+        { data: normalizedData },
         { new: true, upsert: true }
       );
-      return { statusCode: 200, headers, body: JSON.stringify(updated.data) };
+      console.log("\u2705 Data updated successfully");
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify(normalizedData)
+      };
     }
+    return {
+      statusCode: 405,
+      headers,
+      body: JSON.stringify({ message: "Method not allowed" })
+    };
   } catch (error) {
-    return { statusCode: 500, headers, body: JSON.stringify({ error: error.message }) };
+    console.error("\u274C Server error:", error);
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({ error: error.message, stack: error.stack })
+    };
   }
 };
 /*! Bundled license information:

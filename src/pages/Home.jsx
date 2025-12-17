@@ -83,7 +83,8 @@ export default function Home() {
               </div>
           </div>
           
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+          {/* PERBAIKAN: grid-cols-2 untuk mobile (2 card per baris), min-h dan flex untuk card */}
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
             {skills?.map((skill, idx) => {
                const skillName = typeof skill === 'string' ? skill : skill.name;
                const skillLevel = typeof skill === 'string' ? "Intermediate" : skill.level;
@@ -98,38 +99,40 @@ export default function Home() {
                if (skillLevel === "Master") { levelScore = 4; levelColor = "text-[#9f1239]"; borderColor = "group-hover:border-[#9f1239]"; }
 
                return (
-                  <div key={idx} className={`group bg-[#0c0c0c] border border-[#333] ${borderColor} p-4 md:p-6 transition-all duration-500 hover:bg-[#111] relative overflow-hidden`}>
+                  <div 
+                    key={idx} 
+                    className={`group bg-[#0c0c0c] border border-[#333] ${borderColor} p-3 md:p-6 transition-all duration-500 hover:bg-[#111] relative overflow-hidden min-h-[160px] md:min-h-[180px] flex flex-col`}
+                  >
                       
-                      <div className="absolute -right-2 -top-4 md:-right-4 md:-top-6 text-[80px] md:text-[100px] font-display text-[#1a1a1a] opacity-50 group-hover:opacity-100 transition-opacity select-none">
+                      {/* Nomor Background - Ukuran lebih kecil di mobile */}
+                      <div className="absolute -right-1 -top-1 md:-right-4 md:-top-6 text-[50px] md:text-[100px] font-display text-[#1a1a1a] opacity-50 group-hover:opacity-100 transition-opacity select-none pointer-events-none">
                           {idx + 1}
                       </div>
 
-                      <div className="relative z-10">
-                          <h3 className="text-xl md:text-2xl font-display font-bold text-[#e5e5e5] mb-1 group-hover:translate-x-2 transition-transform">
+                      <div className="relative z-10 flex flex-col h-full">
+                          {/* PERBAIKAN: Ukuran font lebih kecil di mobile, break-words untuk teks panjang */}
+                          <h3 className="text-base sm:text-lg md:text-2xl font-display font-bold text-[#e5e5e5] mb-2 md:mb-3 group-hover:translate-x-2 transition-transform break-words hyphens-auto leading-tight">
                               {skillName}
                           </h3>
                           
-                          <div className="w-12 h-[1px] bg-[#333] group-hover:w-full group-hover:bg-[#9f1239] transition-all duration-700 my-4"></div>
+                          <div className="w-8 md:w-12 h-[1px] bg-[#333] group-hover:w-full group-hover:bg-[#9f1239] transition-all duration-700 my-2 md:my-3"></div>
 
-                          {/* --- BAGIAN YANG DIPERBARUI --- */}
-                          {/* 
-                            - flex-col items-start: Default (mobile) akan menumpuk elemen secara vertikal dan rata kiri.
-                            - gap-2: Memberi jarak antara tumpukan.
-                            - md:flex-row md:items-end md:justify-between: Di layar medium ke atas, kembali ke layout horizontal.
-                          */}
-                          <div className="flex flex-col items-start gap-2 md:flex-row md:items-end md:justify-between">
+                          {/* PERBAIKAN: mt-auto untuk push ke bawah, gap lebih kecil di mobile */}
+                          <div className="flex flex-col gap-2 md:gap-3 mt-auto">
+                              {/* Level Text - Ukuran font disesuaikan */}
                               <div className="flex flex-col">
-                                  <span className="font-mono text-[9px] text-zinc-600 uppercase tracking-widest mb-1">Rank</span>
-                                  <span className={`font-mono text-sm font-bold uppercase tracking-wider ${levelColor}`}>
+                                  <span className="font-mono text-[8px] md:text-[9px] text-zinc-600 uppercase tracking-widest mb-1">Rank</span>
+                                  <span className={`font-mono text-[10px] sm:text-xs md:text-sm font-bold uppercase tracking-wider ${levelColor} break-words`}>
                                       {skillLevel}
                                   </span>
                               </div>
 
-                              <div className="flex gap-1.5">
+                              {/* Diamond Indicators - Ukuran lebih kecil di mobile */}
+                              <div className="flex gap-1 md:gap-1.5 flex-wrap">
                                   {[1, 2, 3, 4].map((diamond) => (
                                       <span 
                                         key={diamond} 
-                                        className={`text-sm transition-all duration-300 transform ${diamond <= levelScore ? `${levelColor} scale-110` : "text-[#222]"}`}
+                                        className={`text-xs md:text-sm transition-all duration-300 transform ${diamond <= levelScore ? `${levelColor} scale-110` : "text-[#222]"}`}
                                       >
                                           ◆
                                       </span>
