@@ -97,6 +97,83 @@ const SectionHeader = ({ title, onAddItem, buttonLabel }) => (
     </div>
 );
 
+// --- KOMPONEN BARU: Tech Stack Input ---
+const TechStackInput = ({ technologies = [], onChange, projectIndex }) => {
+    const [inputValue, setInputValue] = useState("");
+
+    const addTech = () => {
+        if (inputValue.trim() && !technologies.includes(inputValue.trim())) {
+            onChange([...technologies, inputValue.trim()]);
+            setInputValue("");
+        }
+    };
+
+    const removeTech = (techToRemove) => {
+        onChange(technologies.filter(tech => tech !== techToRemove));
+    };
+
+    const handleKeyPress = (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            addTech();
+        }
+    };
+
+    return (
+        <div className="space-y-3">
+            <label className="block font-mono text-[10px] text-zinc-500 uppercase tracking-widest border-l-2 border-[#9f1239] pl-2">
+                Technologies Used
+            </label>
+            
+            {/* Input Field */}
+            <div className="flex gap-2">
+                <input
+                    type="text"
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    placeholder="e.g., React, Node.js, MongoDB..."
+                    className="flex-1 bg-[#1e1e1e] border border-[#333] text-[#e5e5e5] p-2 font-mono text-sm focus:border-[#9f1239] focus:outline-none focus:ring-1 focus:ring-[#9f1239]/50 placeholder:text-zinc-600 transition-all rounded-md"
+                />
+                <button
+                    type="button"
+                    onClick={addTech}
+                    className="px-4 py-2 bg-[#9f1239] text-white font-mono text-xs hover:bg-[#7f0e2a] transition-colors rounded-md"
+                >
+                    ADD
+                </button>
+            </div>
+
+            {/* Tech Badges */}
+            {technologies.length > 0 && (
+                <div className="flex flex-wrap gap-2 p-3 bg-[#111] border border-[#333] rounded-md">
+                    {technologies.map((tech, idx) => (
+                        <span
+                            key={idx}
+                            className="inline-flex items-center gap-2 px-3 py-1 bg-[#1e1e1e] border border-[#444] text-[#e5e5e5] font-mono text-xs rounded-full group hover:border-[#9f1239] transition-colors"
+                        >
+                            {tech}
+                            <button
+                                type="button"
+                                onClick={() => removeTech(tech)}
+                                className="text-zinc-500 hover:text-red-500 transition-colors font-bold"
+                            >
+                                ×
+                            </button>
+                        </span>
+                    ))}
+                </div>
+            )}
+
+            {technologies.length === 0 && (
+                <p className="text-xs text-zinc-600 font-mono italic p-3 bg-[#111] border border-[#333] rounded-md">
+                    No technologies added yet. Type and press Enter or click ADD.
+                </p>
+            )}
+        </div>
+    );
+};
+
 const icons = {
   home: '📖', profile: '👤', skills: '✨', projects: '💼', 
   experience: '⏳', soundtrack: '🎵', contact: '📨',
@@ -119,10 +196,6 @@ export default function Admin() {
     const { refreshData } = usePortfolio();
     const [password, setPassword] = useState("");
     const [activeTab, setActiveTab] = useState("home");
-    const [loading, setLoading] = useState(true);
-    const [saving, setSaving] = useState(false);
-    const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
-  
     const [formData, setFormData] = useState({
         home: { logoName: "", headline: "", subtitle: "" },
         profile: { about: "", avatarUrl: "" },
@@ -132,251 +205,205 @@ export default function Admin() {
         projects: [],
         contact: { email: "", linkedin: "", github: "", instagram: "", twitter: "" }
     });
+    const [isLoading, setIsLoading] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
 
-    // Validasi auth saat component mount
     useEffect(() => {
         const token = getAuthToken();
         if (!token) {
-            toast.error("Session expired. Please login again.");
             navigate("/keyhole");
             return;
         }
-        setPassword(token);
+        fetchData();
     }, [navigate]);
 
-    // Fetch data dari backend
-    useEffect(() => {
-        if (!password) return;
-
-        console.log('🔄 Fetching data from backend...');
-        
-        axios.get(API_URL)
-            .then(res => {
-                console.log('✅ Data received:', res.data);
-                console.log('Data keys:', Object.keys(res.data || {}));
-                
-                // Merge dengan defaults untuk memastikan semua field ada
-                const mergedData = mergeWithDefaults(res.data);
-                console.log('✅ Data merged with defaults:', Object.keys(mergedData));
-                
-                setFormData(mergedData);
-                setLoading(false);
-                
-                // Log untuk debugging
-                console.log('Home data:', mergedData.home);
-                console.log('Skills count:', mergedData.skills?.length || 0);
-                console.log('Projects count:', mergedData.projects?.length || 0);
-                console.log('Soundtrack count:', mergedData.soundtrack?.length || 0);
-            })
-            .catch(err => {
-                console.error("❌ Failed to fetch data:", err);
-                console.error("Error response:", err.response?.data);
-                setLoading(false);
-                toast.error("Failed to load data from server.");
-            });
-    }, [password]);
-
-    const handleSave = async () => {
-        const currentToken = getAuthToken();
-        
-        if (!currentToken) {
-            toast.error("Session expired. Please login again.");
-            navigate("/keyhole");
-            return;
-        }
-
-        console.log('💾 Saving data to backend...');
-        console.log('Data to save:', formData);
-
-        setSaving(true);
+    const fetchData = async () => {
         try {
-            const response = await axios.post(API_URL, formData, { 
-                headers: { Authorization: currentToken },
-                timeout: 15000
-            });
-            
-            console.log('✅ Save response:', response.data);
-            toast.success("MANUSCRIPT UPDATED.");
-            refreshData();
-        } catch (e) {
-            console.error("❌ Save error:", e);
-            console.error("Error response:", e.response?.data);
-            
-            if (e.response?.status === 401) {
-                toast.error("Session expired. Please login again.");
-                clearAuthToken();
-                navigate("/keyhole");
-            } else if (e.response?.status === 500) {
-                toast.error("Server error. Check backend logs.");
-            } else if (!e.response) {
-                toast.error("Network error. Please check your connection.");
-            } else {
-                toast.error("Failed to save. Please try again.");
-            }
+            const response = await axios.get(API_URL, { timeout: 10000 });
+            console.log("Data fetched from API:", response.data);
+            const merged = mergeWithDefaults(response.data);
+            setFormData(merged);
+        } catch (error) {
+            console.error("Error fetching data:", error);
+            toast.error("Failed to load data from server");
         } finally {
-            setSaving(false);
+            setIsLoading(false);
         }
     };
 
     const handleLogout = () => {
         clearAuthToken();
-        toast.success("Logged out successfully.");
-        navigate("/keyhole");
+        toast.success("Logged out successfully");
+        navigate("/");
     };
 
-    // Helper functions
-    const setNest = (sec, f, v) => setFormData(p => ({...p, [sec]: { ...p[sec], [f]: v }}));
-    const setArrObj = (section, index, field, value) => {
-        const newArr = [...(formData[section] || [])];
-        newArr[index] = { ...newArr[index], [field]: value };
-        setFormData(prev => ({ ...prev, [section]: newArr }));
-    };  
-    const addItem = (sec, tpl) => setFormData(p => ({...p, [sec]: [...(p[sec]||[]), tpl]}));
-    const delItem = (section, index) => {
-        if(!window.confirm("Are you sure?")) return;
-        setFormData(prev => ({ ...prev, [section]: prev[section].filter((_, i) => i !== index) }));
+    const handleSave = async () => {
+        const token = getAuthToken();
+        if (!token) {
+            toast.error("No authentication token found");
+            navigate("/keyhole");
+            return;
+        }
+
+        setIsSaving(true);
+        try {
+            console.log("Saving data:", formData);
+            const response = await axios.post(API_URL, formData, {
+                headers: { Authorization: token },
+                timeout: 15000
+            });
+
+            console.log("Save response:", response.data);
+            toast.success("✓ Data saved successfully!");
+            await refreshData();
+        } catch (error) {
+            console.error("Save error:", error);
+            if (error.response?.status === 401) {
+                toast.error("Session expired. Please login again.");
+                clearAuthToken();
+                navigate("/keyhole");
+            } else {
+                toast.error("Failed to save data. Check console.");
+            }
+        } finally {
+            setIsSaving(false);
+        }
     };
-  
-    if (loading) {
+
+    const setNest = (parent, key, value) => {
+        setFormData(prev => ({
+            ...prev,
+            [parent]: { ...prev[parent], [key]: value }
+        }));
+    };
+
+    const addItem = (key, obj) => {
+        setFormData(prev => ({
+            ...prev,
+            [key]: [...(prev[key] || []), obj]
+        }));
+    };
+
+    const delItem = (key, index) => {
+        setFormData(prev => ({
+            ...prev,
+            [key]: prev[key].filter((_, i) => i !== index)
+        }));
+    };
+
+    const setArrObj = (key, index, field, value) => {
+        setFormData(prev => {
+            const arr = [...(prev[key] || [])];
+            if (typeof arr[index] === 'string') {
+                arr[index] = { name: arr[index], [field]: value };
+            } else {
+                arr[index] = { ...arr[index], [field]: value };
+            }
+            return { ...prev, [key]: arr };
+        });
+    };
+
+    if (isLoading) {
         return (
-            <div className="min-h-screen bg-black flex items-center justify-center">
-                <div className="text-center">
-                    <div className="font-mono text-xs text-white mb-4">INITIALIZING WORKBENCH...</div>
-                    <div className="flex justify-center">
-                        <svg className="animate-spin h-8 w-8 text-[#9f1239]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                    </div>
+            <div className="min-h-screen bg-[#0c0c0c] flex items-center justify-center">
+                <div className="font-display text-xl tracking-[0.5em] animate-pulse text-white">
+                    LOADING ARCHIVE...
                 </div>
             </div>
         );
     }
 
     const tabs = [
-        { id: "home", label: "Prologue", icon: icons.home },
-        { id: "profile", label: "Character", icon: icons.profile },
-        { id: "skills", label: "Abilities", icon: icons.skills },
-        { id: "projects", label: "Archives", icon: icons.projects },
-        { id: "experience", label: "Timeline", icon: icons.experience },
-        { id: "soundtrack", label: "Soundtrack", icon: icons.soundtrack },
-        { id: "contact", label: "Signal", icon: icons.contact },
+        { id: 'home', label: 'Chronicle', icon: icons.home },
+        { id: 'profile', label: 'Character', icon: icons.profile },
+        { id: 'skills', label: 'Abilities', icon: icons.skills },
+        { id: 'projects', label: 'Archives', icon: icons.projects },
+        { id: 'experience', label: 'Timeline', icon: icons.experience },
+        { id: 'soundtrack', label: 'Soundtrack', icon: icons.soundtrack },
+        { id: 'contact', label: 'Signals', icon: icons.contact }
     ];
 
-    const activeTabData = tabs.find(t => t.id === activeTab);
-
     return (
-        <div className="min-h-screen bg-black text-[#e5e5e5] font-serif">
-            <header className="sticky top-0 z-40 bg-black/80 backdrop-blur-sm border-b border-[#333] px-4 md:px-6 py-3 flex justify-between items-center">
-                <div className="flex items-center gap-3">
-                    <span className="text-[#9f1239] text-2xl">§</span>
-                    <h1 className="font-display font-bold text-lg tracking-widest hidden md:block">ARCHIVIST'S WORKBENCH</h1>
-                    <h1 className="font-display font-bold text-lg tracking-widest md:hidden">A.W.</h1>
-                </div>
-                <div className="flex items-center gap-4 md:gap-6 font-mono text-xs">
-                    <button onClick={handleLogout} className="text-zinc-500 hover:text-red-500 transition-colors">[ LOGOUT ]</button>
-                    <motion.button 
-                        onClick={handleSave} 
-                        disabled={saving} 
-                        className="bg-[#9f1239] text-white px-4 py-2 rounded-md shadow-lg shadow-[#9f1239]/30 hover:bg-red-700 transition-colors disabled:opacity-50"
-                        whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-                    >
-                        {saving ? "SAVING..." : "SAVE"}
-                    </motion.button>
-                </div>
-            </header>
+        <div className="min-h-screen bg-[#0c0c0c] text-[#e5e5e5]">
+            <div className="noise-overlay fixed top-0 left-0 w-full h-full pointer-events-none z-[1] opacity-[0.03]"></div>
+            
+            <div className="flex relative">
+                <aside className="w-64 min-h-screen bg-[#0c0c0c] border-r border-[#333] fixed left-0 top-0 z-40 overflow-y-auto">
+                    <div className="p-6 border-b border-[#333]">
+                        <h1 className="font-display text-2xl text-white mb-1">ARCHIVIST</h1>
+                        <p className="font-mono text-xs text-zinc-600 tracking-widest">CONTROL PANEL</p>
+                    </div>
 
-            <div className="flex flex-col md:flex-row max-w-8xl mx-auto p-4 md:p-6 gap-6">
-                
-                {/* --- MOBILE DROPDOWN NAV (RESPONSIVE) --- */}
-                <div className="md:hidden relative mb-2">
-                    <button 
-                        onClick={() => setIsMobileNavOpen(!isMobileNavOpen)}
-                        className="w-full flex justify-between items-center gap-3 px-4 py-3 text-left font-mono text-xs tracking-widest transition-all rounded-md bg-[#9f1239] text-white shadow-md shadow-[#9f1239]/20"
-                    >
-                        <div className="flex items-center gap-3">
-                            <span>{activeTabData.icon}</span>
-                            <span>{activeTabData.label}</span>
-                        </div>
-                        <motion.span animate={{ rotate: isMobileNavOpen ? 180 : 0 }}>
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-                        </motion.span>
-                    </button>
-
-                    <AnimatePresence>
-                        {isMobileNavOpen && (
-                            <motion.div
-                                initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
-                                className="absolute top-full left-0 w-full mt-2 bg-zinc-900 border border-[#333] rounded-md shadow-lg z-50 p-2 space-y-1"
-                            >
-                                {tabs.map(t => (
-                                    <button 
-                                        key={t.id} 
-                                        onClick={() => { setActiveTab(t.id); setIsMobileNavOpen(false); }} 
-                                        className="w-full flex items-center gap-3 px-3 py-2 text-left font-mono text-xs tracking-widest transition-all rounded-md text-zinc-300 hover:bg-zinc-800 hover:text-white"
-                                    >
-                                        <span>{t.icon}</span>
-                                        <span>{t.label}</span>
-                                    </button>
-                                ))}
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
-                </div>
-
-                {/* --- DESKTOP SIDEBAR --- */}
-                <aside className="hidden md:block w-full md:w-56 flex-shrink-0">
-                    <div className="flex flex-col gap-2">
-                        {tabs.map(t => (
-                            <button 
-                                key={t.id} 
-                                onClick={() => setActiveTab(t.id)} 
-                                className={`w-full flex items-center gap-3 px-4 py-3 text-left font-mono text-xs tracking-widest transition-all rounded-md ${
-                                    activeTab === t.id 
-                                    ? "bg-[#9f1239] text-white shadow-md shadow-[#9f1239]/20" 
-                                    : "text-zinc-400 hover:bg-zinc-800 hover:text-white"
+                    <nav className="p-4 space-y-2">
+                        {tabs.map(tab => (
+                            <button
+                                key={tab.id}
+                                onClick={() => setActiveTab(tab.id)}
+                                className={`w-full text-left px-4 py-3 font-mono text-sm transition-all flex items-center gap-3 ${
+                                    activeTab === tab.id 
+                                        ? 'bg-[#9f1239] text-white border-l-4 border-white' 
+                                        : 'text-zinc-500 hover:text-white hover:bg-[#1e1e1e] border-l-4 border-transparent'
                                 }`}
                             >
-                                <span>{t.icon}</span>
-                                <span>{t.label}</span>
+                                <span className="text-lg">{tab.icon}</span>
+                                {tab.label}
                             </button>
                         ))}
+                    </nav>
+
+                    <div className="p-4 border-t border-[#333] space-y-2">
+                        <button 
+                            onClick={handleSave} 
+                            disabled={isSaving}
+                            className="w-full bg-[#9f1239] hover:bg-[#7f0e2a] text-white py-3 font-mono text-xs tracking-widest transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {isSaving ? 'SAVING...' : '[ COMMIT CHANGES ]'}
+                        </button>
+                        <button 
+                            onClick={handleLogout}
+                            className="w-full border border-[#333] hover:border-[#9f1239] text-zinc-500 hover:text-white py-3 font-mono text-xs tracking-widest transition-colors"
+                        >
+                            [ LOGOUT ]
+                        </button>
                     </div>
                 </aside>
 
-                <main className="flex-1 min-h-[500px] bg-[#111] border border-[#333] rounded-lg p-4 md:p-6 shadow-inner shadow-black/30">
+                <main className="ml-64 flex-1 p-8 relative z-10">
                     <AnimatePresence mode="wait">
-                        <motion.div
-                            key={activeTab} variants={tabContentVariants}
-                            initial="hidden" animate="visible" exit="exit"
+                        <motion.div 
+                            key={activeTab} 
+                            variants={tabContentVariants} 
+                            initial="hidden" 
+                            animate="visible" 
+                            exit="exit"
+                            className="max-w-5xl"
                         >
-                            {/* Home */}
                             {activeTab === "home" && (
                                 <div>
-                                    <SectionHeader title="Prologue Settings" />
+                                    <SectionHeader title="Chronicle Settings" />
                                     <div className="space-y-6">
-                                        <AdminInput label="Brand Name (Navbar)" value={formData.home?.logoName || ""} onChange={e=>setNest('home','logoName',e.target.value)} />
+                                        <AdminInput label="Author Name (Logo)" value={formData.home?.logoName || ""} onChange={e=>setNest('home','logoName',e.target.value)} />
                                         <AdminInput label="Main Headline" value={formData.home?.headline || ""} onChange={e=>setNest('home','headline',e.target.value)} />
-                                        <AdminInput textarea rows={4} label="Subtitle / Intro" value={formData.home?.subtitle || ""} onChange={e=>setNest('home','subtitle',e.target.value)} />
+                                        <AdminInput textarea rows={3} label="Opening Quote / Subtitle" value={formData.home?.subtitle || ""} onChange={e=>setNest('home','subtitle',e.target.value)} />
                                     </div>
                                 </div>
                             )}
 
-                            {/* Profile */}
                             {activeTab === "profile" && (
                                 <div>
-                                    <SectionHeader title="Character Sheet" />
-                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                                        <AdminInput textarea rows={12} label="Biography" value={formData.profile?.about || ""} onChange={e=>setNest('profile','about',e.target.value)} />
-                                        <div className="space-y-2">
-                                            <label className="block font-mono text-[10px] text-zinc-500 uppercase tracking-widest border-l-2 border-[#9f1239] pl-2">Portrait</label>
-                                            <ImageUploader currentImage={formData.profile?.avatarUrl || ""} onUpload={url => setNest('profile', 'avatarUrl', url)} onDelete={() => setNest('profile', 'avatarUrl', "")} />
+                                    <SectionHeader title="Character Profile" />
+                                    <div className="grid md:grid-cols-3 gap-6">
+                                        <div className="md:col-span-2">
+                                            <AdminInput textarea rows={10} label="Biography / Story" value={formData.profile?.about || ""} onChange={e=>setNest('profile','about',e.target.value)} />
+                                        </div>
+                                        <div>
+                                            <label className="block font-mono text-[10px] text-zinc-500 uppercase tracking-widest mb-2 border-l-2 border-[#9f1239] pl-2">Portrait</label>
+                                            <ImageUploader currentImage={formData.profile?.avatarUrl || ""} onUpload={url=>setNest('profile','avatarUrl',url)} onDelete={()=>setNest('profile','avatarUrl',"")} />
                                         </div>
                                     </div>
                                 </div>
                             )}
                             
-                            {/* Soundtrack */}
                             {activeTab === "soundtrack" && (
                                 <div>
                                     <SectionHeader title="Background Audio" onAddItem={() => addItem('soundtrack', { url: "", title: "", artist: "" })} buttonLabel="[ + ADD TRACK ]" />
@@ -443,9 +470,10 @@ export default function Admin() {
                                 </div>
                             )}
 
+                            {/* === BAGIAN PROJECTS DENGAN TEKNOLOGI === */}
                             {activeTab === "projects" && (
                                 <div>
-                                    <SectionHeader title="Archives" onAddItem={()=>addItem('projects', {name:"",description:"",image:"",link:""})} buttonLabel="[ + NEW ENTRY ]" />
+                                    <SectionHeader title="Archives" onAddItem={()=>addItem('projects', {name:"",description:"",image:"",link:"",technologies:[]})} buttonLabel="[ + NEW ENTRY ]" />
                                     <div className="space-y-6">
                                         <AnimatePresence>
                                             {formData.projects?.map((p, i) => (
@@ -459,6 +487,13 @@ export default function Admin() {
                                                             <AdminInput label="Project Name" value={p.name || ""} onChange={e=>setArrObj('projects',i,'name',e.target.value)} />
                                                             <AdminInput label="Link / URL" value={p.link || ""} onChange={e=>setArrObj('projects',i,'link',e.target.value)} />
                                                             <AdminInput textarea rows={4} label="Description / Report" value={p.description || ""} onChange={e=>setArrObj('projects',i,'description',e.target.value)} />
+                                                            
+                                                            {/* === INPUT TEKNOLOGI BARU === */}
+                                                            <TechStackInput 
+                                                                technologies={p.technologies || []} 
+                                                                onChange={(newTechs) => setArrObj('projects', i, 'technologies', newTechs)}
+                                                                projectIndex={i}
+                                                            />
                                                         </div>
                                                         <div className="space-y-2">
                                                             <label className="block font-mono text-[10px] text-zinc-500 uppercase tracking-widest border-l-2 border-[#9f1239] pl-2">Attachment</label>

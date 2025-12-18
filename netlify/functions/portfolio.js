@@ -70,6 +70,18 @@ const normalizeData = (data) => {
     avatarUrl: normalized.profile.avatarUrl || ""
   };
 
+  // === NORMALISASI PROJECTS DENGAN TECHNOLOGIES ===
+  // Pastikan setiap project memiliki field technologies (array)
+  if (normalized.projects && Array.isArray(normalized.projects)) {
+    normalized.projects = normalized.projects.map(project => ({
+      name: project.name || "",
+      description: project.description || "",
+      image: project.image || "",
+      link: project.link || "",
+      technologies: Array.isArray(project.technologies) ? project.technologies : []
+    }));
+  }
+
   return normalized;
 };
 
@@ -138,7 +150,7 @@ exports.handler = async (event) => {
       
       if (!doc) {
         console.log('⚠️ No data found in database, creating default data...');
-        // Data Dummy Awal
+        // Data Dummy Awal (dengan technologies)
         doc = await PortfolioModel.create({
           identifier: 'main_portfolio',
           data: {
@@ -208,6 +220,14 @@ exports.handler = async (event) => {
       // Normalisasi data sebelum disimpan
       const normalizedData = normalizeData(newData);
       console.log('Data to save:', Object.keys(normalizedData));
+      console.log('Projects count:', normalizedData.projects?.length || 0);
+      
+      // Log technologies untuk debugging
+      if (normalizedData.projects && normalizedData.projects.length > 0) {
+        normalizedData.projects.forEach((proj, idx) => {
+          console.log(`Project ${idx} technologies:`, proj.technologies || []);
+        });
+      }
 
       const updated = await PortfolioModel.findOneAndUpdate(
         { identifier: 'main_portfolio' },

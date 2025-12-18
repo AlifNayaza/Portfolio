@@ -64254,6 +64254,15 @@ var normalizeData = (data) => {
     about: normalized.profile.about || "",
     avatarUrl: normalized.profile.avatarUrl || ""
   };
+  if (normalized.projects && Array.isArray(normalized.projects)) {
+    normalized.projects = normalized.projects.map((project) => ({
+      name: project.name || "",
+      description: project.description || "",
+      image: project.image || "",
+      link: project.link || "",
+      technologies: Array.isArray(project.technologies) ? project.technologies : []
+    }));
+  }
   return normalized;
 };
 exports.handler = async (event) => {
@@ -64363,6 +64372,12 @@ exports.handler = async (event) => {
       const newData = JSON.parse(event.body);
       const normalizedData = normalizeData(newData);
       console.log("Data to save:", Object.keys(normalizedData));
+      console.log("Projects count:", normalizedData.projects?.length || 0);
+      if (normalizedData.projects && normalizedData.projects.length > 0) {
+        normalizedData.projects.forEach((proj, idx) => {
+          console.log(`Project ${idx} technologies:`, proj.technologies || []);
+        });
+      }
       const updated = await PortfolioModel.findOneAndUpdate(
         { identifier: "main_portfolio" },
         { data: normalizedData },
