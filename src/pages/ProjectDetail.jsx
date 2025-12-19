@@ -2,13 +2,12 @@ import { useEffect, useState, useRef } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { usePortfolio } from "../context/PortfolioContext";
 import PageTransition from "../components/layout/PageTransition";
-import Button from "../components/ui/Button";
 import { motion, AnimatePresence } from "framer-motion";
 
-// --- CANVAS BACKGROUND EFFECT ---
-const TechParticles = () => {
+// === CANVAS: FLOATING CODE SNIPPETS EFFECT ===
+const CodeParticles = () => {
   const canvasRef = useRef(null);
-  const particles = useRef([]);
+  const particlesRef = useRef([]);
   const animationRef = useRef(null);
 
   useEffect(() => {
@@ -24,73 +23,64 @@ const TechParticles = () => {
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
 
-    class TechParticle {
+    class CodeParticle {
       constructor() {
-        this.reset();
         this.x = Math.random() * canvas.width;
         this.y = Math.random() * canvas.height;
-      }
-
-      reset() {
-        this.x = Math.random() * canvas.width;
-        this.y = -20;
-        this.size = Math.random() * 2 + 0.5;
-        this.speedY = Math.random() * 0.5 + 0.3;
-        this.speedX = Math.random() * 0.4 - 0.2;
+        this.size = Math.random() * 1.5 + 0.5;
+        this.speedX = (Math.random() - 0.5) * 0.1;
+        this.speedY = (Math.random() - 0.5) * 0.1;
         this.color = Math.random() > 0.5 ? '#9f1239' : '#c2410c';
-        this.alpha = Math.random() * 0.3 + 0.1;
+        this.alpha = Math.random() * 0.2 + 0.05;
         this.pulseSpeed = Math.random() * 0.02 + 0.01;
         this.pulsePhase = Math.random() * Math.PI * 2;
+        this.text = ['</>', '{ }', '=>', '[]', '()'][Math.floor(Math.random() * 5)];
       }
 
       update() {
-        this.y += this.speedY;
         this.x += this.speedX;
+        this.y += this.speedY;
         this.pulsePhase += this.pulseSpeed;
         
-        if (this.y > canvas.height + 20 || this.x < -20 || this.x > canvas.width + 20) {
-          this.reset();
-        }
+        if (this.x < 0 || this.x > canvas.width) this.speedX *= -1;
+        if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
       }
 
       draw() {
-        const pulse = Math.sin(this.pulsePhase) * 0.5 + 0.5;
-        ctx.beginPath();
+        const pulse = Math.sin(this.pulsePhase) * 0.3 + 0.7;
+        ctx.font = `${this.size * 4}px monospace`;
         ctx.globalAlpha = this.alpha * pulse;
         ctx.fillStyle = this.color;
-        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.fillText(this.text, this.x, this.y);
       }
     }
 
-    // Create particles
-    const particleCount = window.innerWidth < 768 ? 20 : 35;
+    const particleCount = window.innerWidth < 768 ? 15 : 25;
     for (let i = 0; i < particleCount; i++) {
-      particles.current.push(new TechParticle());
+      particlesRef.current.push(new CodeParticle());
     }
 
     const animate = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       
-      particles.current.forEach(p => {
+      particlesRef.current.forEach(p => {
         p.update();
         p.draw();
       });
 
-      // Draw connection lines
       ctx.globalAlpha = 0.05;
       ctx.strokeStyle = '#9f1239';
       ctx.lineWidth = 0.5;
       
-      for (let i = 0; i < particles.current.length; i++) {
-        for (let j = i + 1; j < particles.current.length; j++) {
-          const p1 = particles.current[i];
-          const p2 = particles.current[j];
+      for (let i = 0; i < particlesRef.current.length; i++) {
+        for (let j = i + 1; j < particlesRef.current.length; j++) {
+          const p1 = particlesRef.current[i];
+          const p2 = particlesRef.current[j];
           const dx = p1.x - p2.x;
           const dy = p1.y - p2.y;
           const distance = Math.sqrt(dx * dx + dy * dy);
           
-          if (distance < 120) {
+          if (distance < 100) {
             ctx.beginPath();
             ctx.moveTo(p1.x, p1.y);
             ctx.lineTo(p2.x, p2.y);
@@ -116,35 +106,57 @@ const TechParticles = () => {
   return (
     <canvas
       ref={canvasRef}
-      className="fixed inset-0 w-full h-full pointer-events-none z-0 opacity-25"
+      className="fixed inset-0 w-full h-full pointer-events-none z-0 opacity-15"
     />
   );
 };
 
-// --- ANIMATION VARIANTS ---
+// === ANIMATION VARIANTS ===
+const fadeInUp = {
+  hidden: { opacity: 0, y: 40 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.6, ease: "easeOut" }
+  }
+};
+
 const staggerContainer = {
   hidden: { opacity: 0 },
   show: {
     opacity: 1,
     transition: {
       staggerChildren: 0.2,
-      delayChildren: 0.4
-    },
-  },
+      delayChildren: 0.3
+    }
+  }
 };
 
-const fadeInUp = {
-  hidden: { opacity: 0, y: 40 },
+const slideInLeft = {
+  hidden: { opacity: 0, x: -40 },
   show: {
     opacity: 1,
-    y: 0,
-    transition: { duration: 0.6, ease: "circOut" },
-  },
+    x: 0,
+    transition: { duration: 0.5, ease: "easeOut" }
+  }
 };
 
-const lineWipe = {
-  hidden: { scaleX: 0, originX: 0 },
-  show: { scaleX: 1, originX: 0, transition: { duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+const slideInRight = {
+  hidden: { opacity: 0, x: 40 },
+  show: {
+    opacity: 1,
+    x: 0,
+    transition: { duration: 0.5, ease: "easeOut" }
+  }
+};
+
+const scaleIn = {
+  hidden: { opacity: 0, scale: 0.9 },
+  show: {
+    opacity: 1,
+    scale: 1,
+    transition: { duration: 0.4 }
+  }
 };
 
 const techBadgeVariant = {
@@ -157,6 +169,97 @@ const techBadgeVariant = {
   }
 };
 
+// === TECH STACK COMPONENT ===
+const TechStackDisplay = ({ technologies }) => {
+  if (!technologies || technologies.length === 0) return null;
+
+  return (
+    <div className="space-y-4">
+      <h3 className="text-xl font-display text-white">Technologies Used</h3>
+      <motion.div 
+        className="grid grid-cols-2 md:grid-cols-3 gap-3"
+        initial="hidden"
+        animate="show"
+        variants={{
+          hidden: { opacity: 0 },
+          show: {
+            opacity: 1,
+            transition: {
+              staggerChildren: 0.05,
+              delayChildren: 0.5
+            }
+          }
+        }}
+      >
+        {technologies.map((tech, idx) => (
+          <motion.div
+            key={idx}
+            variants={techBadgeVariant}
+            whileHover={{ 
+              scale: 1.05, 
+              borderColor: "#9f1239",
+              transition: { duration: 0.2 }
+            }}
+            className="bg-[#111] border border-[#333] p-4 transition-all relative overflow-hidden group"
+          >
+            <div className="relative z-10">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-2 h-2 bg-[#9f1239] rounded-full"></div>
+                <div className="font-mono text-xs text-zinc-500">
+                  TECH #{idx + 1}
+                </div>
+              </div>
+              <div className="font-display text-base text-white group-hover:text-[#9f1239] transition-colors">
+                {tech}
+              </div>
+            </div>
+          </motion.div>
+        ))}
+      </motion.div>
+    </div>
+  );
+};
+
+// === ZOOM MODAL COMPONENT ===
+const ZoomModal = ({ image, alt, onClose }) => {
+  // Close modal on escape key
+  useEffect(() => {
+    const handleEsc = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [onClose]);
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0 }} 
+      animate={{ opacity: 1 }} 
+      exit={{ opacity: 0 }} 
+      className="fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex items-center justify-center p-4 cursor-zoom-out overflow-auto"
+      onClick={onClose}
+    >
+      <button 
+        className="absolute top-6 right-6 bg-black/50 text-white px-4 py-2 font-mono text-sm border border-white/20 hover:bg-[#9f1239] hover:border-[#9f1239] transition-all rounded z-50"
+        onClick={onClose}
+      >
+        Close [ESC]
+      </button>
+      <motion.img 
+        src={image} 
+        alt={alt} 
+        className="max-h-[90vh] w-auto max-w-full object-contain border-2 border-[#9f1239] shadow-2xl cursor-default"
+        initial={{ scale: 0.9, rotate: -1 }}
+        animate={{ scale: 1, rotate: 0 }}
+        exit={{ scale: 0.9, rotate: 1 }}
+        transition={{ type: "spring", damping: 25 }}
+        onClick={(e) => e.stopPropagation()}
+      />
+    </motion.div>
+  );
+};
+
+// === PROJECT DETAIL MAIN COMPONENT ===
 export default function ProjectDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -167,283 +270,344 @@ export default function ProjectDetail() {
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    const timer = setTimeout(() => setCanvasLoaded(true), 800);
+    const timer = setTimeout(() => setCanvasLoaded(true), 600);
     return () => clearTimeout(timer);
   }, [id]);
 
-  if (loading) return <div className="min-h-screen bg-[#0c0c0c]"></div>;
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#0c0c0c]">
+        <motion.div
+          animate={{ opacity: [0.5, 1, 0.5] }}
+          transition={{ duration: 1.5, repeat: Infinity }}
+          className="text-center"
+        >
+          <div className="w-16 h-16 border-4 border-[#9f1239] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="font-mono text-sm text-zinc-500">Loading project details...</p>
+        </motion.div>
+      </div>
+    );
+  }
 
   const projectIndex = parseInt(id);
   const project = data?.projects?.[projectIndex];
 
   if (!project) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center text-center px-6 bg-[#0c0c0c] text-[#e5e5e5]">
-        <h1 className="text-3xl font-display font-bold mb-4 text-[#9f1239]">ARCHIVE NOT FOUND</h1>
-        <Button onClick={() => navigate("/projects")}>RETURN TO LIST</Button>
+      <div className="min-h-screen flex flex-col items-center justify-center text-center px-6 bg-[#0c0c0c] text-white">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="max-w-md"
+        >
+          <h1 className="text-3xl font-display font-bold mb-4 text-[#9f1239]">Project Not Found</h1>
+          <p className="text-zinc-400 mb-6">The project you're looking for doesn't exist or has been removed.</p>
+          <button
+            onClick={() => navigate("/projects")}
+            className="px-6 py-3 bg-[#9f1239] text-white font-medium rounded-lg hover:bg-[#7f0e2a] transition-colors"
+          >
+            Back to Projects
+          </button>
+        </motion.div>
       </div>
     );
   }
 
   const technologies = project.technologies || [];
+  const projectNumber = projectIndex + 1;
 
   return (
     <PageTransition>
-      <div className="min-h-screen pb-20 pt-24 md:pt-32 px-4 md:px-12 bg-[#0c0c0c] overflow-hidden relative">
-        
+      <div className="min-h-screen pb-20 pt-24 md:pt-32 px-4 md:px-8 bg-[#0c0c0c] overflow-hidden relative">
         {/* Canvas Background */}
-        {canvasLoaded && <TechParticles />}
+        {canvasLoaded && <CodeParticles />}
 
-        {/* Header Section */}
-        <motion.div 
-          className="max-w-6xl mx-auto mb-8 md:mb-12 pb-6 md:pb-8 relative z-10"
-          variants={staggerContainer}
-          initial="hidden"
-          animate="show"
+        {/* Zoom Modal */}
+        <AnimatePresence>
+          {isZoomed && project.image && (
+            <ZoomModal 
+              image={project.image} 
+              alt={project.name}
+              onClose={() => setIsZoomed(false)}
+            />
+          )}
+        </AnimatePresence>
+
+        {/* Back Button */}
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="max-w-6xl mx-auto mb-8 relative z-10"
         >
-          <motion.div 
-            className="absolute bottom-0 left-0 w-full h-[1px] bg-[#333]"
-            variants={lineWipe}
-          />
-
-          <motion.div variants={fadeInUp}>
-            <Link 
-              to="/projects" 
-              className="inline-flex items-center gap-2 mb-4 md:mb-6 font-mono text-[10px] md:text-xs text-zinc-500 hover:text-[#9f1239] transition-colors group"
-            >
-              <span className="group-hover:-translate-x-1 transition-transform">←</span>
-              BACK TO ARCHIVES
-            </Link>
-          </motion.div>
-          
-          <motion.div variants={fadeInUp} className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 md:gap-6">
-            <div className="flex-1">
-              <div className="font-mono text-[10px] md:text-xs text-[#9f1239] tracking-[0.2em] mb-2 uppercase">
-                Project File #{String(projectIndex + 1).padStart(2, '0')}
-              </div>
-              <h1 className="text-3xl md:text-6xl font-display font-bold text-[#e5e5e5] leading-tight break-words">
-                {project.name}
-              </h1>
-            </div>
-            
-            {/* Desktop CTA */}
-            <div className="hidden md:block flex-shrink-0">
-              {project.link ? (
-                <a href={project.link} target="_blank" rel="noreferrer">
-                  <Button className="shadow-[0_0_20px_rgba(159,18,57,0.3)] whitespace-nowrap">
-                    LAUNCH SYSTEM ↗
-                  </Button>
-                </a>
-              ) : (
-                <span className="font-mono text-xs text-zinc-600 border border-[#333] px-4 py-2 inline-block">
-                  [ OFFLINE ]
-                </span>
-              )}
-            </div>
-          </motion.div>
+          <Link 
+            to="/projects" 
+            className="inline-flex items-center gap-2 text-zinc-500 hover:text-white font-medium transition-colors group"
+          >
+            <span className="group-hover:-translate-x-1 transition-transform">←</span>
+            Back to all projects
+          </Link>
         </motion.div>
 
-        <motion.div 
-          variants={staggerContainer}
-          initial="hidden"
-          animate="show"
-          className="relative z-10"
-        >
-          {/* Image Section */}
-          <motion.div variants={fadeInUp} className="max-w-6xl mx-auto mb-12 md:mb-16 relative group">
-            {/* Decorative Corners */}
-            {[
-              '-top-1 -left-1 border-t border-l',
-              '-top-1 -right-1 border-t border-r',
-              '-bottom-1 -left-1 border-b border-l',
-              '-bottom-1 -right-1 border-b border-r'
-            ].map((pos, i) => (
-              <div key={i} className={`absolute ${pos} w-4 h-4 border-[#9f1239]`}></div>
-            ))}
-            
-            <div className="bg-[#111] border border-[#333] p-2 md:p-4 rounded-sm overflow-hidden relative">
-              <div className="absolute top-4 md:top-6 right-4 md:right-6 z-10 font-mono text-[9px] md:text-[10px] bg-black/70 backdrop-blur px-2 py-1 text-white border border-white/20">
-                VISUAL_OUTPUT.JPG
+        {/* Main Content */}
+        <div className="max-w-6xl mx-auto relative z-10">
+          {/* Header Section */}
+          <motion.div
+            variants={staggerContainer}
+            initial="hidden"
+            animate="show"
+            className="mb-12"
+          >
+            <motion.div variants={fadeInUp} className="mb-4">
+              <div className="inline-flex items-center gap-2 bg-[#9f1239]/10 border border-[#9f1239]/30 px-3 py-1 rounded-full mb-4">
+                <div className="w-2 h-2 bg-[#9f1239] rounded-full animate-pulse"></div>
+                <span className="font-mono text-xs text-[#9f1239]">
+                  PROJECT #{projectNumber}
+                </span>
               </div>
-              {project.image ? (
-                <img 
-                  src={project.image} 
-                  alt={project.name} 
-                  onClick={() => setIsZoomed(true)} 
-                  className="w-full h-auto object-contain cursor-zoom-in hover:opacity-95 transition-opacity shadow-2xl" 
-                />
-              ) : (
-                <div className="w-full h-48 md:h-64 flex items-center justify-center bg-[#0c0c0c] text-zinc-600 font-mono text-xs border border-dashed border-[#333]">
-                  [ NO VISUAL DATA AVAILABLE ]
-                </div>
-              )}
-            </div>
-            <p className="mt-2 text-center font-mono text-[9px] md:text-[10px] text-zinc-600 uppercase tracking-widest">
-              /// CLICK IMAGE TO INSPECT
-            </p>
+            </motion.div>
+
+            <motion.div variants={fadeInUp}>
+              <h1 className="text-3xl md:text-5xl font-display text-white mb-4">
+                {project.name}
+              </h1>
+              <div className="h-1 w-20 bg-gradient-to-r from-[#9f1239] to-transparent"></div>
+            </motion.div>
           </motion.div>
 
-          {/* Content Grid */}
-          <motion.div variants={fadeInUp} className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
-            
-            {/* LEFT: Description */}
-            <div className="md:col-span-2 space-y-8">
-              <div>
-                <h2 className="font-display text-xl md:text-2xl text-white mb-4 md:mb-6 border-l-4 border-[#9f1239] pl-4">
-                  Report Analysis
-                </h2>
-                <div className="prose prose-invert prose-sm md:prose-lg text-zinc-400 font-serif leading-relaxed whitespace-pre-line">
-                  {project.description || "Data deskripsi tidak tersedia dalam arsip ini."}
+          {/* Main Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-12">
+            {/* Left Column - Image & Description */}
+            <motion.div 
+              className="lg:col-span-8 space-y-8"
+              variants={staggerContainer}
+              initial="hidden"
+              animate="show"
+            >
+              {/* Project Image - FIXED ZOOM */}
+              <motion.div variants={scaleIn} className="group">
+                <div 
+                  className="border-2 border-[#333] rounded-lg overflow-hidden bg-[#111] relative cursor-zoom-in"
+                  onClick={() => project.image && setIsZoomed(true)}
+                >
+                  {project.image ? (
+                    <>
+                      <img 
+                        src={project.image} 
+                        alt={project.name}
+                        className="w-full h-auto object-contain hover:opacity-90 transition-opacity" 
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-4">
+                        <span className="text-white text-sm font-mono bg-black/50 px-3 py-2 rounded border border-white/20">
+                          Click to zoom
+                        </span>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="w-full h-64 md:h-80 flex items-center justify-center text-zinc-600 font-mono border-dashed border-2 border-[#333]">
+                      [ No project image available ]
+                    </div>
+                  )}
                 </div>
-              </div>
+                {project.image && (
+                  <p className="text-center text-sm text-zinc-500 mt-2">
+                    Click image to view full size
+                  </p>
+                )}
+              </motion.div>
+
+              {/* Project Description */}
+              <motion.div variants={slideInLeft} className="space-y-6">
+                <div className="border-l-4 border-[#9f1239] pl-4">
+                  <h2 className="text-2xl font-display text-white mb-4">About This Project</h2>
+                </div>
+                
+                <div className="prose prose-invert max-w-none">
+                  {project.description ? (
+                    <div className="text-zinc-300 leading-relaxed space-y-4">
+                      {project.description.split('\n').map((paragraph, idx) => (
+                        <p key={idx} className="mb-4 last:mb-0">
+                          {paragraph}
+                        </p>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 border-2 border-dashed border-[#333] rounded-lg">
+                      <p className="text-zinc-500">No description provided for this project</p>
+                      <p className="text-zinc-600 text-sm mt-1">
+                        Add a description in the admin panel
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
 
               {/* Technologies Section */}
               {technologies.length > 0 && (
-                <div>
-                  <h2 className="font-display text-xl md:text-2xl text-white mb-4 md:mb-6 border-l-4 border-[#c2410c] pl-4">
-                    Tech Arsenal
-                  </h2>
-                  <motion.div 
-                    className="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-3"
-                    initial="hidden"
-                    animate="show"
-                    variants={{
-                      hidden: { opacity: 0 },
-                      show: {
-                        opacity: 1,
-                        transition: {
-                          staggerChildren: 0.05,
-                          delayChildren: 0.6
-                        }
-                      }
-                    }}
-                  >
-                    {technologies.map((tech, techIdx) => (
-                      <motion.div
-                        key={techIdx}
-                        variants={techBadgeVariant}
-                        whileHover={{ 
-                          scale: 1.05, 
-                          borderColor: "#9f1239",
-                          transition: { duration: 0.2 }
-                        }}
-                        className="group bg-[#111] border border-[#333] p-3 md:p-4 transition-all relative overflow-hidden"
-                      >
-                        {/* Background glow on hover */}
-                        <motion.div 
-                          className="absolute inset-0 bg-gradient-radial from-[#9f1239]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"
-                        />
-                        
-                        <div className="relative z-10">
-                          <div className="font-mono text-[8px] md:text-[9px] text-zinc-600 mb-1">
-                            TECH #{String(techIdx + 1).padStart(2, '0')}
-                          </div>
-                          <div className="font-display text-sm md:text-base font-bold text-[#e5e5e5] group-hover:text-[#9f1239] transition-colors">
-                            {tech}
-                          </div>
-                          
-                          {/* Animated indicator line */}
-                          <motion.div 
-                            className="h-[2px] bg-[#9f1239] mt-2"
-                            initial={{ width: 0 }}
-                            whileInView={{ width: "100%" }}
-                            viewport={{ once: true }}
-                            transition={{ delay: 0.8 + techIdx * 0.05, duration: 0.4 }}
-                          />
-                        </div>
-                        
-                        {/* Corner accent */}
-                        <div className="absolute top-1.5 right-1.5 w-2 h-2 border-t border-r border-[#333] group-hover:border-[#9f1239] transition-colors" />
-                      </motion.div>
-                    ))}
-                  </motion.div>
-                </div>
+                <motion.div variants={slideInLeft} className="pt-8 border-t border-[#333]">
+                  <TechStackDisplay technologies={technologies} />
+                </motion.div>
               )}
-            </div>
+            </motion.div>
 
-            {/* RIGHT: Status Card */}
-            <div className="md:col-span-1 space-y-6 md:space-y-8">
-              <div className="border border-[#333] p-4 md:p-6 bg-[#0c0c0c]">
-                <h3 className="font-mono text-[10px] md:text-xs text-[#9f1239] uppercase tracking-widest mb-4 border-b border-[#333] pb-2">
-                  Status
+            {/* Right Column - Project Info Sidebar */}
+            <motion.div 
+              className="lg:col-span-4 space-y-6"
+              variants={staggerContainer}
+              initial="hidden"
+              animate="show"
+            >
+              {/* Project Info Card */}
+              <motion.div variants={slideInRight} className="bg-[#111] border border-[#333] rounded-lg p-6">
+                <h3 className="text-xl font-display text-white mb-6 pb-3 border-b border-[#333]">
+                  Project Details
                 </h3>
+                
                 <div className="space-y-4">
                   <div>
-                    <span className="block font-serif text-zinc-500 text-xs md:text-sm italic mb-1">Deployed at:</span>
+                    <div className="text-sm text-zinc-500 mb-1">Status</div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                      <span className="text-white font-medium">Completed</span>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <div className="text-sm text-zinc-500 mb-1">Technologies Used</div>
+                    <div className="text-white font-medium">
+                      {technologies.length} different technologies
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <div className="text-sm text-zinc-500 mb-1">Project Link</div>
                     {project.link ? (
                       <a 
                         href={project.link} 
                         target="_blank" 
-                        rel="noreferrer" 
-                        className="text-white hover:text-[#9f1239] hover:underline break-all font-mono text-[10px] md:text-xs block"
+                        rel="noopener noreferrer"
+                        className="text-[#9f1239] hover:text-[#7f0e2a] font-medium break-all block"
                       >
-                        {new URL(project.link).hostname}
+                        Visit Live Project →
                       </a>
                     ) : (
-                      <span className="text-zinc-600 font-mono text-[10px] md:text-xs">Localhost / Offline</span>
-                    )}
-                  </div>
-                  
-                  {/* Mobile CTA */}
-                  <div className="md:hidden pt-4">
-                    {project.link && (
-                      <a href={project.link} target="_blank" rel="noreferrer">
-                        <Button className="w-full text-xs">OPEN LINK ↗</Button>
-                      </a>
+                      <span className="text-zinc-600">No live link available</span>
                     )}
                   </div>
                 </div>
-              </div>
+              </motion.div>
 
-              {/* Tech Count Info */}
+              {/* Tech Stats Card */}
               {technologies.length > 0 && (
-                <div className="border border-[#333] p-4 md:p-6 bg-[#0c0c0c]">
-                  <h3 className="font-mono text-[10px] md:text-xs text-[#c2410c] uppercase tracking-widest mb-3">
-                    Tech Summary
+                <motion.div variants={slideInRight} className="bg-[#111] border border-[#333] rounded-lg p-6">
+                  <h3 className="text-xl font-display text-white mb-6 pb-3 border-b border-[#333]">
+                    Technology Overview
                   </h3>
-                  <div className="flex items-end gap-3">
-                    <div className="text-4xl md:text-5xl font-display text-[#9f1239] leading-none">
-                      {technologies.length}
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="text-sm text-zinc-500">Technologies Used</div>
+                        <div className="text-2xl font-display text-[#9f1239]">{technologies.length}</div>
+                      </div>
+                      <div className="h-1 bg-[#333] rounded-full overflow-hidden">
+                        <motion.div 
+                          className="h-full bg-[#9f1239]"
+                          initial={{ width: 0 }}
+                          animate={{ width: "100%" }}
+                          transition={{ delay: 0.8, duration: 1 }}
+                        />
+                      </div>
                     </div>
-                    <div className="font-serif text-xs md:text-sm text-zinc-500 italic pb-1">
-                      technologies<br/>deployed
+                    
+                    <div className="grid grid-cols-2 gap-4 pt-2">
+                      <div className="text-center">
+                        <div className="text-lg font-display text-white">{technologies.length}</div>
+                        <div className="text-xs text-zinc-500">Total</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-lg font-display text-[#9f1239]">
+                          {Math.min(technologies.length, 5)}
+                        </div>
+                        <div className="text-xs text-zinc-500">Featured</div>
+                      </div>
                     </div>
                   </div>
-                </div>
+                </motion.div>
               )}
+
+              {/* Navigation Card */}
+              <motion.div variants={slideInRight} className="bg-[#111] border border-[#333] rounded-lg p-6">
+                <h3 className="text-xl font-display text-white mb-4">More Projects</h3>
+                
+                <div className="space-y-3">
+                  <p className="text-zinc-400 text-sm">
+                    Check out my other work to see more of what I can do.
+                  </p>
+                  
+                  <Link
+                    to="/projects"
+                    className="block w-full text-center py-3 bg-[#9f1239] text-white font-medium rounded-lg hover:bg-[#7f0e2a] transition-colors"
+                  >
+                    View All Projects
+                  </Link>
+                  
+                  {projectIndex > 0 && (
+                    <Link
+                      to={`/project/${projectIndex - 1}`}
+                      className="block w-full text-center py-3 border border-[#333] text-zinc-400 rounded-lg hover:border-[#9f1239] hover:text-white transition-all"
+                    >
+                      Previous Project
+                    </Link>
+                  )}
+                  
+                  {data?.projects && projectIndex < data.projects.length - 1 && (
+                    <Link
+                      to={`/project/${projectIndex + 1}`}
+                      className="block w-full text-center py-3 border border-[#333] text-zinc-400 rounded-lg hover:border-[#9f1239] hover:text-white transition-all"
+                    >
+                      Next Project
+                    </Link>
+                  )}
+                </div>
+              </motion.div>
+            </motion.div>
+          </div>
+
+          {/* Project Summary */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7 }}
+            className="mt-16 pt-8 border-t border-[#333]"
+          >
+            <div className="text-center max-w-3xl mx-auto">
+              <h3 className="text-2xl font-display text-white mb-4">Project Summary</h3>
+              <p className="text-zinc-400 mb-6">
+                {project.description 
+                  ? `${project.description.substring(0, 150)}...` 
+                  : "This project showcases my skills in web development and problem-solving."}
+              </p>
+              <div className="flex flex-wrap justify-center gap-4">
+                {project.link && (
+                  <a
+                    href={project.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-6 py-3 bg-[#9f1239] text-white font-medium rounded-lg hover:bg-[#7f0e2a] transition-colors"
+                  >
+                    Visit Live Project
+                  </a>
+                )}
+                <Link
+                  to="/contact"
+                  className="px-6 py-3 border-2 border-[#333] text-white font-medium rounded-lg hover:border-[#9f1239] transition-all"
+                >
+                  Get in Touch
+                </Link>
+              </div>
             </div>
           </motion.div>
-        </motion.div>
-
-        {/* Zoomed Image Modal */}
-        <AnimatePresence>
-          {isZoomed && project.image && (
-            <motion.div 
-              initial={{ opacity: 0 }} 
-              animate={{ opacity: 1 }} 
-              exit={{ opacity: 0 }} 
-              className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-md flex items-center justify-center p-4 cursor-zoom-out overflow-auto" 
-              onClick={() => setIsZoomed(false)}
-            >
-              <motion.button 
-                className="absolute top-4 right-4 bg-black/50 text-white px-3 py-2 font-mono text-[10px] md:text-xs border border-white/20 hover:bg-[#9f1239] hover:border-[#9f1239] transition-all"
-                whileTap={{ scale: 0.95 }}
-              >
-                [ CLOSE ]
-              </motion.button>
-              <motion.img 
-                src={project.image} 
-                alt="Zoomed" 
-                className="max-h-[90vh] w-auto max-w-full object-contain border-2 border-[#9f1239] shadow-[0_0_80px_rgba(159,18,57,0.4)]" 
-                initial={{ scale: 0.9, rotate: -2 }} 
-                animate={{ scale: 1, rotate: 0 }} 
-                exit={{ scale: 0.9, rotate: 2 }}
-                transition={{ type: "spring", damping: 25 }}
-                onClick={(e) => e.stopPropagation()} 
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
+        </div>
       </div>
     </PageTransition>
   );

@@ -2,387 +2,758 @@ import { useState, useRef, useEffect } from "react";
 import { usePortfolio } from "../context/PortfolioContext";
 import PageTransition from "../components/layout/PageTransition";
 import { motion, AnimatePresence } from "framer-motion";
+import { Link } from "react-router-dom";
 
-// --- OPTIMIZED INK PARTICLES (Lighter version) ---
-const InkParticles = () => {
-  const canvasRef = useRef(null);
-  const particles = useRef([]);
-  const animationRef = useRef(null);
-  const mousePos = useRef({ x: 0, y: 0 });
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext('2d', { alpha: true });
-    const resizeCanvas = () => {
-      canvas.width = canvas.offsetWidth;
-      canvas.height = canvas.offsetHeight;
-    };
-
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
-
-    // Lighter particle class
-    class Particle {
-      constructor() {
-        this.reset();
-        this.x = Math.random() * canvas.width;
-        this.y = Math.random() * canvas.height;
-      }
-
-      reset() {
-        this.x = Math.random() * canvas.width;
-        this.y = canvas.height + 30;
-        this.size = Math.random() * 1.5 + 0.5;
-        this.speedX = Math.random() * 0.3 - 0.15;
-        this.speedY = Math.random() * -1.5 - 0.8;
-        this.color = Math.random() > 0.7 ? '#9f1239' : '#c2410c';
-        this.alpha = Math.random() * 0.4 + 0.1;
-        this.life = 1;
-        this.decay = Math.random() * 0.01 + 0.005;
-      }
-
-      update() {
-        const dx = mousePos.current.x - this.x;
-        const dy = mousePos.current.y - this.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        
-        if (distance < 80) {
-          const angle = Math.atan2(dy, dx);
-          const force = (80 - distance) / 80 * 0.2;
-          this.speedX -= Math.cos(angle) * force * 0.08;
-          this.speedY -= Math.sin(angle) * force * 0.08;
-        }
-
-        this.x += this.speedX;
-        this.y += this.speedY;
-        this.life -= this.decay;
-
-        if (this.life <= 0 || this.y < -20 || this.x < -20 || this.x > canvas.width + 20) {
-          this.reset();
-        }
-      }
-
-      draw() {
-        ctx.beginPath();
-        ctx.globalAlpha = this.alpha * this.life;
-        ctx.fillStyle = this.color;
-        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-        ctx.fill();
-      }
+// === ANIMATION VARIANTS ===
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.1
     }
+  }
+};
 
-    // Reduced particle count: 30 for mobile, 50 for desktop
-    const particleCount = window.innerWidth < 768 ? 25 : 40;
-    particles.current = [];
-    for (let i = 0; i < particleCount; i++) {
-      setTimeout(() => {
-        particles.current.push(new Particle());
-      }, i * 60);
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      type: "spring",
+      damping: 25,
+      stiffness: 200
     }
+  }
+};
 
-    const animate = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      particles.current.forEach(p => {
-        p.update();
-        p.draw();
+const fadeInUp = {
+  hidden: { opacity: 0, y: 30 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.6,
+      ease: "easeOut"
+    }
+  }
+};
+
+const scaleIn = {
+  hidden: { opacity: 0, scale: 0.95 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    transition: { duration: 0.5 }
+  }
+};
+
+// === SKILL CARD WITH PROJECTS ===
+const SkillCard = ({ skill, projects, index }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  
+  const skillName = typeof skill === 'string' ? skill : skill.name;
+  const skillLevel = typeof skill === 'string' ? "Intermediate" : (skill.level || "Intermediate");
+  
+  const getProjectsUsingSkill = () => {
+    if (!projects || !Array.isArray(projects)) return [];
+    
+    const skillNameLower = skillName.toLowerCase().trim();
+    return projects.filter(project => {
+      if (!project.technologies || !Array.isArray(project.technologies)) return false;
+      
+      return project.technologies.some(tech => {
+        const techLower = tech.toLowerCase().trim();
+        return techLower === skillNameLower || 
+               skillNameLower.includes(techLower) ||
+               techLower.includes(skillNameLower);
       });
-      animationRef.current = requestAnimationFrame(animate);
-    };
-
-    const handleMouseMove = (e) => {
-      const rect = canvas.getBoundingClientRect();
-      mousePos.current = {
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top
-      };
-    };
-
-    const startDelay = setTimeout(() => {
-      animate();
-      canvas.addEventListener('mousemove', handleMouseMove);
-    }, 800);
-
-    return () => {
-      clearTimeout(startDelay);
-      window.removeEventListener('resize', resizeCanvas);
-      canvas.removeEventListener('mousemove', handleMouseMove);
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-      }
-    };
-  }, []);
-
+    });
+  };
+  
+  const projectsUsingSkill = getProjectsUsingSkill();
+  const projectCount = projectsUsingSkill.length;
+  
+  const getLevelColor = (level) => {
+    switch(level?.toLowerCase()) {
+      case 'beginner': return 'bg-blue-500';
+      case 'intermediate': return 'bg-green-500';
+      case 'advanced': return 'bg-orange-500';
+      case 'expert': 
+      case 'master': return 'bg-[#9f1239]';
+      default: return 'bg-[#9f1239]';
+    }
+  };
+  
+  const levelColor = getLevelColor(skillLevel);
+  
   return (
-    <canvas
-      ref={canvasRef}
-      className="fixed inset-0 w-full h-full pointer-events-none z-0 opacity-30"
-    />
+    <motion.div
+      variants={itemVariants}
+      whileHover={{ y: -3 }}
+      className="group cursor-pointer"
+      onClick={() => setIsExpanded(!isExpanded)}
+    >
+      <div className={`bg-[#111] border rounded-lg p-4 transition-all duration-300 ${
+        isExpanded ? 'border-[#9f1239]' : 'border-[#333]'
+      }`}>
+        
+        {/* Skill Header */}
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <h3 className="text-base font-medium text-white truncate">
+                {skillName}
+              </h3>
+              {projectCount > 0 && (
+                <span className="text-xs bg-[#9f1239]/20 text-[#9f1239] px-2 py-0.5 rounded-full">
+                  {projectCount}
+                </span>
+              )}
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <span className={`text-xs px-2 py-0.5 rounded-full ${levelColor} bg-opacity-20 text-${levelColor.replace('bg-', 'text-')}`}>
+                {skillLevel}
+              </span>
+            </div>
+          </div>
+          
+          {/* Expand Button */}
+          <button className="text-zinc-600 hover:text-white transition-colors text-lg">
+            {isExpanded ? '−' : '+'}
+          </button>
+        </div>
+        
+        {/* Progress Bar */}
+        <div className="h-1 bg-[#333] rounded-full overflow-hidden mb-2">
+          <div 
+            className={`h-full ${levelColor}`}
+            style={{
+              width: skillLevel === 'Beginner' ? '25%' :
+                     skillLevel === 'Intermediate' ? '50%' :
+                     skillLevel === 'Advanced' ? '75%' : '100%'
+            }}
+          />
+        </div>
+        
+        {/* Expanded Projects View */}
+        <AnimatePresence>
+          {isExpanded && projectCount > 0 && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="overflow-hidden"
+            >
+              <div className="pt-3 border-t border-[#333]">
+                <div className="space-y-2">
+                  {projectsUsingSkill.map((project, idx) => (
+                    <Link
+                      key={idx}
+                      to={`/project/${projects.indexOf(project)}`}
+                      className="block group/project"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <div className="flex items-center gap-2 p-2 rounded hover:bg-[#1a1a1a] transition-colors">
+                        <div className="w-6 h-6 bg-[#1a1a1a] border border-[#333] rounded flex items-center justify-center flex-shrink-0">
+                          <span className="text-xs text-[#9f1239]">
+                            {idx + 1}
+                          </span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm text-white truncate group-hover/project:text-[#9f1239] transition-colors">
+                            {project.name}
+                          </div>
+                        </div>
+                        <span className="text-zinc-600 group-hover/project:text-[#9f1239] transition-colors">
+                          →
+                        </span>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+        
+        {projectCount === 0 && !isExpanded && (
+          <div className="text-xs text-zinc-600 text-center pt-1">
+            No projects yet
+          </div>
+        )}
+      </div>
+    </motion.div>
   );
 };
 
-// --- ANIMATION VARIANTS ---
-const staggerContainer = {
-  hidden: { opacity: 0 },
-  show: { opacity: 1, transition: { staggerChildren: 0.15, delayChildren: 0.3 } },
+// === EXPERIENCE TIMELINE ===
+const ExperienceTimeline = ({ experience }) => {
+  if (!experience || experience.length === 0) return null;
+  
+  return (
+    <div className="space-y-6">
+      {experience.map((exp, idx) => (
+        <motion.div
+          key={idx}
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: idx * 0.1 }}
+          className="relative pl-8 pb-6 last:pb-0 border-l border-[#333]"
+        >
+          <div className="absolute -left-[9px] top-0 w-4 h-4 bg-[#0c0c0c] border-2 border-[#9f1239] rounded-full"></div>
+          
+          <div className="bg-[#111] border border-[#333] p-5 hover:border-[#9f1239]/50 transition-all">
+            <div className="flex flex-col md:flex-row md:items-start justify-between gap-2 mb-3">
+              <div>
+                <h3 className="text-xl font-display text-white mb-1">
+                  {exp.role || "Position"}
+                </h3>
+                <p className="text-zinc-400">
+                  {exp.company || "Company"}
+                </p>
+              </div>
+              <div className="font-mono text-sm text-[#9f1239] bg-[#9f1239]/10 px-3 py-1 rounded">
+                {exp.year || "Year"}
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      ))}
+    </div>
+  );
 };
 
-const titleContainer = {
-  hidden: { opacity: 0 },
-  show: { opacity: 1, transition: { staggerChildren: 0.04 } },
-};
-
-const titleLetter = {
-  hidden: { opacity: 0, y: 15 },
-  show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 100, damping: 12 } },
-};
-
-const creativeFadeInUp = {
-  hidden: { opacity: 0, y: 40 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "circOut" } },
-};
-
-const itemReveal = {
-  hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "backOut" } },
-};
-
+// === MAIN ABOUT COMPONENT ===
 export default function About() {
   const { data } = usePortfolio();
-  const { profile, experience, skills } = data;
-  const [isZoomed, setIsZoomed] = useState(false);
-  const [activeTab, setActiveTab] = useState("story");
-  const [canvasLoaded, setCanvasLoaded] = useState(false);
-  
-  const headerText = "Background Story.";
+  const { profile, experience, skills, projects, contact } = data || {};
+  const [activeTab, setActiveTab] = useState("about");
+  const [imageLoaded, setImageLoaded] = useState(false);
 
-  const totalExperience = experience?.length || 0;
-  const totalSkills = skills?.length || 0;
-  const masterSkills = skills?.filter(s => (typeof s === 'string' ? false : s.level === "Master")).length || 0;
+  // Calculate total years of experience
+  const calculateTotalExperience = () => {
+    if (!experience || experience.length === 0) return "0";
+    
+    const years = experience.map(exp => {
+      const yearMatch = exp.year?.match(/\d+/g);
+      if (yearMatch) {
+        const years = yearMatch.map(Number);
+        if (years.length === 1) return 1;
+        if (years.length === 2) return years[1] - years[0];
+      }
+      return 1;
+    });
+    
+    const totalYears = years.reduce((sum, year) => sum + year, 0);
+    return totalYears > 3 ? `${totalYears}+` : totalYears.toString();
+  };
 
-  useEffect(() => {
-    const timer = setTimeout(() => setCanvasLoaded(true), 1000);
-    return () => clearTimeout(timer);
-  }, []);
+  // Get skill level distribution
+  const getSkillStats = () => {
+    if (!skills || skills.length === 0) return { beginner: 0, intermediate: 0, advanced: 0, expert: 0 };
+    
+    const stats = { beginner: 0, intermediate: 0, advanced: 0, expert: 0 };
+    
+    skills.forEach(skill => {
+      const level = typeof skill === 'string' ? 'intermediate' : (skill.level || 'intermediate').toLowerCase();
+      if (stats[level] !== undefined) {
+        stats[level]++;
+      } else {
+        stats.intermediate++;
+      }
+    });
+    
+    return stats;
+  };
+
+  const skillStats = getSkillStats();
+  const totalExperience = calculateTotalExperience();
 
   return (
     <PageTransition>
-      <section className="py-8 md:py-20 pl-4 md:pl-16 pr-4 md:pr-0 relative overflow-hidden">
-        {canvasLoaded && <InkParticles />}
-
-        <div className="absolute top-20 -left-6 md:-left-12 font-mono text-xs text-[#333] rotate-180 select-none" style={{ writingMode: 'vertical-rl' }}>
-          CHAPTER I /// THE CHARACTER
-        </div>
-
-        {/* Hero Section */}
-        <motion.div variants={staggerContainer} initial="hidden" animate="show" className="mb-12 md:mb-20 relative z-10">
-          <motion.h1 className="text-3xl md:text-6xl font-display mb-4 md:mb-6 relative break-words leading-tight" variants={titleContainer}>
-            <span className="inline-block">Background</span>
-            {' '}
-            <span className="inline-block">Story<span className="text-[#9f1239]">.</span></span>
-            <motion.div 
-              className="h-[2px] bg-gradient-to-r from-[#9f1239] via-[#c2410c] to-transparent mt-2"
-              initial={{ width: 0 }}
-              animate={{ width: "60%" }}
-              transition={{ delay: 1, duration: 0.8, ease: "easeOut" }}
-            />
-          </motion.h1>
-
-          {/* Stats Cards - Grid responsive untuk mobile */}
-          <div className="grid grid-cols-3 gap-2 md:gap-4 relative z-10 mt-8">
-            {[
-              { label: "Total XP", value: totalExperience, color: "#9f1239", desc: "Years" },
-              { label: "Arsenal", value: totalSkills, color: "#c2410c", desc: "Skills" },
-              { label: "Mastery", value: masterSkills, color: "#d97706", desc: "Master" }
-            ].map((stat, index) => (
-              <motion.div
-                key={index}
-                variants={itemReveal}
-                className="bg-[#111]/80 backdrop-blur-sm border border-[#333] p-2.5 md:p-6 group hover:border-[#9f1239] transition-all"
-              >
-                <div className="font-mono text-[8px] md:text-xs text-zinc-600 uppercase tracking-wider mb-1 md:mb-2 truncate">{stat.label}</div>
-                <div className="text-xl md:text-5xl font-display leading-none" style={{ color: stat.color }}>{stat.value}</div>
-                <div className="font-serif text-[9px] md:text-xs text-zinc-500 italic mt-0.5 md:mt-1">{stat.desc}</div>
-              </motion.div>
-            ))}
-          </div>
+      <div className="min-h-screen py-8 md:py-12 px-4 md:px-8">
+        {/* Header Section */}
+        <motion.div 
+          className="max-w-6xl mx-auto mb-8 md:mb-12"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          <h1 className="text-3xl md:text-4xl font-display text-white mb-4">
+            My Journey
+          </h1>
+          
+          <div className="h-1 w-20 bg-gradient-to-r from-[#9f1239] to-transparent mb-6"></div>
+          
+          <p className="text-lg text-zinc-400 max-w-3xl">
+            A deeper look into who I am, what I've accomplished, and how I can help bring your ideas to life.
+          </p>
         </motion.div>
 
-        {/* Main Content - Responsive Grid */}
-        <motion.div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-12 relative z-10" variants={staggerContainer} initial="hidden" animate="show">
-          
-          {/* LEFT: Portrait */}
-          <motion.div className="md:col-span-5 space-y-4 md:space-y-6" variants={itemReveal}>
-            <div className="relative group">
-              <div className="aspect-[3/4] border border-[#333] p-2 relative cursor-zoom-in overflow-hidden" onClick={() => setIsZoomed(true)}>
-                {/* Corners */}
-                {[
-                  'top-0 left-0 border-t-2 border-l-2',
-                  'top-0 right-0 border-t-2 border-r-2',
-                  'bottom-0 left-0 border-b-2 border-l-2',
-                  'bottom-0 right-0 border-b-2 border-r-2'
-                ].map((pos, i) => (
-                  <motion.div 
-                    key={i}
-                    className={`absolute ${pos} border-[#9f1239] w-0 h-0`}
-                    whileHover={{ width: 40, height: 40 }}
-                    transition={{ duration: 0.4 }}
-                  />
-                ))}
-                
-                <motion.div 
-                  className="absolute inset-2 bg-gradient-to-t from-[#0c0c0c] via-transparent to-transparent opacity-0 z-10 flex items-end justify-center pb-4 md:pb-6"
-                  whileHover={{ opacity: 1 }}
-                >
-                  <div className="flex items-center gap-2 font-mono text-[10px] md:text-xs text-white tracking-widest border border-white px-3 py-1.5 bg-black/50 backdrop-blur-sm">
-                    <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span>
-                    INSPECT
-                  </div>
-                </motion.div>
+        {/* Quick Stats */}
+        <motion.div 
+          className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 md:mb-12 max-w-6xl mx-auto"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          {[
+            { 
+              label: "Experience", 
+              value: totalExperience, 
+              desc: "Years professional",
+              color: "#9f1239"
+            },
+            { 
+              label: "Projects", 
+              value: projects?.length || 0, 
+              desc: "Completed works",
+              color: "#c2410c"
+            },
+            { 
+              label: "Skills", 
+              value: skills?.length || 0, 
+              desc: "Technologies mastered",
+              color: "#d97706"
+            },
+            { 
+              label: "Status", 
+              value: "Available", 
+              desc: "For opportunities",
+              color: "#e5e5e5"
+            }
+          ].map((stat, index) => (
+            <motion.div
+              key={index}
+              variants={itemVariants}
+              className="bg-[#111]/80 border border-[#333] p-4 group hover:border-[#9f1239]/50 transition-all duration-300"
+            >
+              <div 
+                className="text-2xl md:text-3xl font-display mb-2"
+                style={{ color: stat.color }}
+              >
+                {stat.value}
+              </div>
+              <div className="font-mono text-[10px] text-zinc-600 uppercase tracking-wider mb-1">
+                {stat.label}
+              </div>
+              <div className="text-xs text-zinc-500">{stat.desc}</div>
+            </motion.div>
+          ))}
+        </motion.div>
 
+        {/* Main Content Grid */}
+        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
+          
+          {/* Left Column: Profile & Contact */}
+          <motion.div 
+            className="lg:col-span-4 space-y-6"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            {/* Profile Image */}
+            <div className="relative group">
+              <div className="aspect-square border-2 border-[#333] rounded-lg overflow-hidden bg-gradient-to-br from-[#0c0c0c] to-[#1a1a1a]">
                 {profile?.avatarUrl ? (
-                  <motion.img 
-                    src={profile.avatarUrl} 
-                    alt="Portrait" 
-                    className="w-full h-full object-cover grayscale contrast-125"
-                    whileHover={{ grayscale: 0, scale: 1.03 }} 
+                  <img
+                    src={profile.avatarUrl}
+                    alt="Profile"
+                    className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
+                    onLoad={() => setImageLoaded(true)}
                   />
                 ) : (
-                  <div className="w-full h-full bg-[#111] flex items-center justify-center font-mono text-[10px] text-zinc-600">
-                    NO IMAGE
+                  <div className="w-full h-full flex items-center justify-center text-zinc-600 font-mono">
+                    [ Profile Image ]
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Quick Contact Info */}
+            <div className="bg-[#111] border border-[#333] p-6 space-y-4">
+              <h3 className="font-display text-lg text-white mb-4 pb-2 border-b border-[#333]">
+                Quick Info
+              </h3>
+              
+              <div className="space-y-3">
+                <div>
+                  <div className="text-sm text-zinc-500 mb-1">Availability</div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                    <span className="text-white font-medium">Open for work</span>
+                  </div>
+                </div>
+                
+                <div>
+                  <div className="text-sm text-zinc-500 mb-1">Location</div>
+                  <span className="text-white font-medium">Remote • Worldwide</span>
+                </div>
+                
+                <div>
+                  <div className="text-sm text-zinc-500 mb-1">Specialization</div>
+                  <span className="text-[#9f1239] font-medium">Full-Stack Development</span>
+                </div>
+                
+                {contact?.email && (
+                  <div>
+                    <div className="text-sm text-zinc-500 mb-1">Email</div>
+                    <a 
+                      href={`mailto:${contact.email}`}
+                      className="text-white font-medium text-sm hover:text-[#9f1239] transition-colors"
+                    >
+                      {contact.email}
+                    </a>
                   </div>
                 )}
               </div>
 
-              <motion.div className="mt-2 flex justify-between items-center font-mono text-[8px] md:text-[10px] text-zinc-500 uppercase" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.3 }}>
-                <span>/// CHARACTER_FILE.JPG</span>
-                <span className="flex items-center gap-1">
-                  <span className="w-1 h-1 bg-[#9f1239] rounded-full animate-pulse"></span>
-                  ARCHIVED
-                </span>
-              </motion.div>
+              {/* Social Links */}
+              {contact && (
+                <div className="pt-4 border-t border-[#333]">
+                  <div className="text-sm text-zinc-500 mb-3">Connect with me</div>
+                  <div className="flex flex-wrap gap-2">
+                    {contact.github && (
+                      <a 
+                        href={contact.github} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="px-3 py-2 bg-[#1a1a1a] border border-[#333] text-zinc-400 hover:text-white hover:border-[#9f1239] transition-all rounded text-sm"
+                      >
+                        GitHub
+                      </a>
+                    )}
+                    {contact.linkedin && (
+                      <a 
+                        href={contact.linkedin} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="px-3 py-2 bg-[#1a1a1a] border border-[#333] text-zinc-400 hover:text-white hover:border-[#9f1239] transition-all rounded text-sm"
+                      >
+                        LinkedIn
+                      </a>
+                    )}
+                    <Link
+                      to="/contact"
+                      className="px-3 py-2 bg-[#9f1239] text-white hover:bg-[#7f0e2a] transition-colors rounded text-sm"
+                    >
+                      More →
+                    </Link>
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* Info Card */}
-            <motion.div className="bg-[#111] border border-[#333] p-3 md:p-6 space-y-3 md:space-y-4" variants={itemReveal}>
-              <div className="flex items-center justify-between pb-2 md:pb-3 border-b border-[#333]">
-                <h3 className="font-mono text-[10px] md:text-xs text-[#9f1239] uppercase tracking-widest">Character Data</h3>
+            {/* Skill Level Overview */}
+            <div className="bg-[#111] border border-[#333] p-6">
+              <h3 className="font-display text-lg text-white mb-4">Skill Levels</h3>
+              <div className="space-y-3">
+                {Object.entries(skillStats).map(([level, count]) => {
+                  if (count === 0) return null;
+                  
+                  const getLevelColor = (lvl) => {
+                    switch(lvl) {
+                      case 'beginner': return 'bg-blue-500';
+                      case 'intermediate': return 'bg-green-500';
+                      case 'advanced': return 'bg-orange-500';
+                      default: return 'bg-[#9f1239]';
+                    }
+                  };
+                  
+                  const percentage = Math.round((count / skills.length) * 100);
+                  
+                  return (
+                    <div key={level} className="space-y-1">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-zinc-300 capitalize">
+                          {level} ({count})
+                        </span>
+                        <span className="text-xs text-zinc-500">{percentage}%</span>
+                      </div>
+                      <div className="h-1.5 bg-[#222] rounded-full overflow-hidden">
+                        <div 
+                          className={`h-full ${getLevelColor(level)}`}
+                          style={{ width: `${percentage}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-
-              <div className="space-y-2 md:space-y-3 font-mono text-[10px] md:text-xs">
-                {[
-                  { label: "STATUS:", value: "ACTIVE", color: "text-white" },
-                  { label: "CLASS:", value: "FULL-STACK", color: "text-white" },
-                  { label: "LEVEL:", value: "ADVANCED", color: "text-yellow-600" },
-                  { label: "SPECIALTY:", value: "WEB DEV", color: "text-orange-500" }
-                ].map((item, idx) => (
-                  <motion.div key={idx} className="flex justify-between" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 1.5 + idx * 0.1 }}>
-                    <span className="text-zinc-600">{item.label}</span>
-                    <span className={item.color}>{item.value}</span>
-                  </motion.div>
-                ))}
-              </div>
-            </motion.div>
+            </div>
           </motion.div>
 
-          {/* RIGHT: Tabbed Content */}
-          <motion.div className="md:col-span-7" variants={itemReveal}>
-            {/* Tabs */}
-            <div className="relative mb-6 md:mb-8">
-              <div className="flex gap-2 border-b border-[#333] overflow-x-auto scrollbar-hide">
-                {[
-                  { id: "story", label: "Story", icon: "📖" },
-                  { id: "journey", label: "Journey", icon: "⏳" },
-                  { id: "arsenal", label: "Arsenal", icon: "⚔️" }
-                ].map(tab => (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`flex items-center gap-2 px-3 md:px-6 py-2 md:py-3 font-mono text-[10px] md:text-sm uppercase tracking-wider transition-all whitespace-nowrap ${
-                      activeTab === tab.id ? 'text-white' : 'text-zinc-600 hover:text-white'
-                    }`}
-                  >
-                    <span className="text-sm md:text-base">{tab.icon}</span>
-                    {tab.label}
-                  </button>
-                ))}
-              </div>
+          {/* Right Column: Content Tabs */}
+          <motion.div 
+            className="lg:col-span-8"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
+            {/* Tab Navigation */}
+            <div className="flex border-b border-[#333] overflow-x-auto mb-8">
+              {[
+                { id: "about", label: "My Story" },
+                { id: "experience", label: "Journey" },
+                { id: "skills", label: "Capabilities" }
+              ].map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`px-6 py-3 font-medium text-sm md:text-base transition-all whitespace-nowrap ${
+                    activeTab === tab.id 
+                      ? 'text-white border-b-2 border-[#9f1239]' 
+                      : 'text-zinc-500 hover:text-white'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
             </div>
 
             {/* Tab Content */}
-            <AnimatePresence mode="wait">
-              {activeTab === "story" && (
-                <motion.div key="story" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -15 }} transition={{ duration: 0.3 }}>
-                  <motion.p className="text-sm md:text-lg text-zinc-400 font-serif leading-relaxed first-letter:text-4xl md:first-letter:text-7xl first-letter:font-display first-letter:float-left first-letter:pr-2 md:first-letter:pr-4 first-letter:pt-1 md:first-letter:pt-2 first-letter:text-white first-letter:leading-none" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}>
-                    {profile?.about || "The story begins in shadows, where code meets creativity."}
-                  </motion.p>
-                </motion.div>
-              )}
-
-              {activeTab === "journey" && (
-                <motion.div key="journey" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -15 }} transition={{ duration: 0.3 }}>
-                  {experience && experience.length > 0 ? (
-                    <div className="space-y-0 border-l-2 border-[#333] pl-6 md:pl-8 relative">
-                      {experience.map((exp, idx) => (
-                        <motion.div key={idx} initial={{ opacity: 0, x: -15 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.12 }} className="pb-8 md:pb-12 relative group">
-                          <motion.span className="absolute -left-[29px] md:-left-[37px] top-2 w-3 h-3 md:w-4 md:h-4 bg-[#0c0c0c] border-2 border-[#333] rounded-full" whileHover={{ scale: 1.3, borderColor: "#9f1239" }} />
-                          <motion.div className="bg-[#111] border border-[#333] p-3 md:p-6" whileHover={{ borderColor: "#9f1239", y: -3 }}>
-                            <div className="flex items-start justify-between gap-3 mb-2">
-                              <span className="font-mono text-[9px] md:text-[10px] text-[#9f1239] tracking-widest">{exp.year}</span>
-                              <span className="font-mono text-[8px] md:text-[9px] text-zinc-600 border border-[#333] px-2 py-0.5">#{String(idx + 1).padStart(2, '0')}</span>
-                            </div>
-                            <h3 className="text-lg md:text-2xl font-display text-white mb-1">{exp.role}</h3>
-                            <p className="text-zinc-500 italic font-serif text-xs md:text-base">{exp.company}</p>
-                          </motion.div>
-                        </motion.div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-10 border border-dashed border-[#333]">
-                      <p className="text-zinc-600 font-mono text-xs">No journey data</p>
-                    </div>
-                  )}
-                </motion.div>
-              )}
-
-              {activeTab === "arsenal" && (
-                <motion.div key="arsenal" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -15 }} transition={{ duration: 0.3 }} className="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-4">
-                  {skills?.map((skill, idx) => {
-                    const skillName = typeof skill === 'string' ? skill : skill.name;
-                    const skillLevel = typeof skill === 'string' ? "Intermediate" : skill.level;
-                    let levelColor = "text-zinc-500";
+            <div className="min-h-[400px]">
+              <AnimatePresence mode="wait">
+                {activeTab === "about" && (
+                  <motion.div
+                    key="about"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.3 }}
+                    className="space-y-6"
+                  >
+                    <h2 className="text-2xl font-display text-white">
+                      About Me
+                    </h2>
                     
-                    if (skillLevel === "Intermediate") levelColor = "text-yellow-600";
-                    if (skillLevel === "Advanced") levelColor = "text-orange-500";
-                    if (skillLevel === "Master") levelColor = "text-[#9f1239]";
+                    <div className="prose prose-invert max-w-none">
+                      {profile?.about ? (
+                        <div className="text-zinc-300 leading-relaxed space-y-4">
+                          {profile.about.split('\n').map((paragraph, idx) => (
+                            <p key={idx} className="mb-4 last:mb-0">
+                              {paragraph}
+                            </p>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-center py-12 border-2 border-dashed border-[#333] rounded-lg">
+                          <p className="text-zinc-500 mb-2">
+                            No about information yet
+                          </p>
+                          <p className="text-zinc-600 text-sm">
+                            Add your biography in the admin panel
+                          </p>
+                        </div>
+                      )}
+                    </div>
 
-                    return (
-                      <motion.div key={idx} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: idx * 0.04 }} whileHover={{ scale: 1.03 }} className="bg-[#111] border border-[#333] p-2 md:p-4 hover:border-[#9f1239]/50 transition-all">
-                        <div className="font-mono text-[8px] md:text-[9px] text-zinc-600 mb-1">#{String(idx + 1).padStart(2, '0')}</div>
-                        <h4 className={`font-display text-xs md:text-base font-bold mb-1 ${levelColor}`}>{skillName}</h4>
-                        <div className="font-mono text-[7px] md:text-[8px] text-zinc-600 uppercase">{skillLevel}</div>
-                      </motion.div>
-                    );
-                  })}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </motion.div>
-        </motion.div>
+                    {/* Core Values */}
+                    <div className="pt-6 border-t border-[#333]">
+                      <h3 className="text-xl font-display text-white mb-4">My Approach</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {[
+                          {
+                            title: "Problem Solving",
+                            desc: "Breaking down complex challenges into manageable solutions",
+                            icon: "🔍"
+                          },
+                          {
+                            title: "Clean Code",
+                            desc: "Writing maintainable, scalable, and well-documented code",
+                            icon: "✨"
+                          },
+                          {
+                            title: "Continuous Learning",
+                            desc: "Staying updated with latest technologies and best practices",
+                            icon: "📚"
+                          },
+                          {
+                            title: "User Focus",
+                            desc: "Building with the end-user experience as priority",
+                            icon: "🎯"
+                          }
+                        ].map((value, idx) => (
+                          <div key={idx} className="bg-[#111] border border-[#333] p-4 rounded-lg">
+                            <div className="flex items-center gap-3 mb-2">
+                              <span className="text-xl">{value.icon}</span>
+                              <h4 className="font-medium text-white">{value.title}</h4>
+                            </div>
+                            <p className="text-sm text-zinc-400">{value.desc}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
 
-        {/* Zoomed Modal */}
-        <AnimatePresence>
-          {isZoomed && profile?.avatarUrl && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-[#0c0c0c]/98 backdrop-blur-md flex items-center justify-center p-4 cursor-zoom-out" onClick={() => setIsZoomed(false)}>
-              <motion.button className="absolute top-4 right-4 font-mono text-[10px] md:text-xs text-[#9f1239] hover:text-white border border-[#9f1239] hover:bg-[#9f1239] px-3 py-2 transition-all" whileTap={{ scale: 0.95 }}>
-                [ ESC ]
-              </motion.button>
-              <motion.img src={profile.avatarUrl} alt="Full" className="max-h-[85vh] w-auto border-2 border-[#9f1239]" initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }} onClick={(e) => e.stopPropagation()} />
+                {activeTab === "experience" && (
+                  <motion.div
+                    key="experience"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <h2 className="text-2xl font-display text-white mb-6">
+                      Professional Journey
+                    </h2>
+                    
+                    {experience && experience.length > 0 ? (
+                      <ExperienceTimeline experience={experience} />
+                    ) : (
+                      <div className="text-center py-12 border-2 border-dashed border-[#333] rounded-lg">
+                        <p className="text-zinc-500 mb-2">
+                          No experience added yet
+                        </p>
+                        <p className="text-zinc-600 text-sm">
+                          Add your work experience in the admin panel
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Additional Experience Info */}
+                    <div className="mt-8 p-6 border border-[#333] rounded-lg bg-[#111]">
+                      <h3 className="text-lg font-display text-white mb-4">What I Bring</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 bg-[#9f1239] rounded-full"></div>
+                            <span className="text-sm text-white">Project Leadership</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 bg-[#c2410c] rounded-full"></div>
+                            <span className="text-sm text-white">Technical Strategy</span>
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 bg-[#d97706] rounded-full"></div>
+                            <span className="text-sm text-white">Team Collaboration</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                            <span className="text-sm text-white">Agile Development</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+
+                {activeTab === "skills" && (
+                  <motion.div
+                    key="skills"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                      <div>
+                        <h2 className="text-2xl font-display text-white">
+                          Technical Capabilities
+                        </h2>
+                        <p className="text-zinc-400 mt-2">
+                          Skills backed by real project implementation. Click any skill to see projects.
+                        </p>
+                      </div>
+                      <div className="text-sm text-zinc-500 bg-[#111] border border-[#333] px-3 py-2 rounded">
+                        {skills?.length || 0} skills • {projects?.length || 0} projects
+                      </div>
+                    </div>
+                    
+                    {skills && skills.length > 0 ? (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {skills.map((skill, idx) => (
+                          <SkillCard
+                            key={idx}
+                            skill={skill}
+                            projects={projects}
+                            index={idx}
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-12 border-2 border-dashed border-[#333] rounded-lg">
+                        <p className="text-zinc-500 mb-2">
+                          No skills added yet
+                        </p>
+                        <p className="text-zinc-600 text-sm">
+                          Add your skills in the admin panel
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Skills Summary */}
+                    <div className="mt-8 p-6 border border-[#333] rounded-lg bg-[#111]">
+                      <h3 className="text-lg font-display text-white mb-4">Skill Utilization</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div>
+                          <div className="text-3xl font-display text-[#9f1239] mb-2">
+                            {skills?.length || 0}
+                          </div>
+                          <div className="text-sm text-zinc-500">Total Skills</div>
+                        </div>
+                        <div>
+                          <div className="text-3xl font-display text-[#c2410c] mb-2">
+                            {projects?.filter(p => p.technologies?.length > 0).length || 0}
+                          </div>
+                          <div className="text-sm text-zinc-500">Projects with Tech</div>
+                        </div>
+                        <div>
+                          <div className="text-3xl font-display text-white mb-2">
+                            {Array.from(new Set(projects?.flatMap(p => p.technologies || []))).length || 0}
+                          </div>
+                          <div className="text-sm text-zinc-500">Technologies Used</div>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Call to Action */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="mt-12 pt-8 border-t border-[#333]"
+            >
+              <div className="bg-gradient-to-r from-[#9f1239]/10 to-transparent border border-[#9f1239]/20 rounded-xl p-6">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                  <div>
+                    <h3 className="text-xl font-display text-white mb-2">Ready to Collaborate?</h3>
+                    <p className="text-zinc-400 text-sm">
+                      Let's discuss how we can work together on your next project.
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-3">
+                    <Link
+                      to="/contact"
+                      className="px-6 py-3 bg-[#9f1239] text-white font-medium rounded-lg hover:bg-[#7f0e2a] transition-colors"
+                    >
+                      Get in Touch
+                    </Link>
+                    <Link
+                      to="/projects"
+                      className="px-6 py-3 border-2 border-[#333] text-white font-medium rounded-lg hover:border-[#9f1239] transition-all"
+                    >
+                      View Projects
+                    </Link>
+                  </div>
+                </div>
+              </div>
             </motion.div>
-          )}
-        </AnimatePresence>
-      </section>
+          </motion.div>
+        </div>
+      </div>
     </PageTransition>
   );
 }
