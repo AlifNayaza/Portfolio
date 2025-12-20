@@ -4,275 +4,394 @@ import { usePortfolio } from "../context/PortfolioContext";
 import PageTransition from "../components/layout/PageTransition";
 import { motion, AnimatePresence } from "framer-motion";
 
-// === CANVAS: FLOATING CODE SNIPPETS EFFECT ===
-const CodeParticles = () => {
+// ========== FLOATING ORBS BACKGROUND ==========
+const FloatingOrbs = () => {
   const canvasRef = useRef(null);
-  const particlesRef = useRef([]);
-  const animationRef = useRef(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const ctx = canvas.getContext('2d', { alpha: true });
-    const resizeCanvas = () => {
-      canvas.width = canvas.offsetWidth;
-      canvas.height = canvas.offsetHeight;
+    const ctx = canvas.getContext('2d');
+    let animationId;
+    
+    const resize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = Math.max(document.body.scrollHeight, window.innerHeight);
     };
+    
+    resize();
+    window.addEventListener('resize', resize);
 
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
-
-    class CodeParticle {
-      constructor() {
-        this.x = Math.random() * canvas.width;
-        this.y = Math.random() * canvas.height;
-        this.size = Math.random() * 1.5 + 0.5;
-        this.speedX = (Math.random() - 0.5) * 0.1;
-        this.speedY = (Math.random() - 0.5) * 0.1;
-        this.color = Math.random() > 0.5 ? '#9f1239' : '#c2410c';
-        this.alpha = Math.random() * 0.2 + 0.05;
-        this.pulseSpeed = Math.random() * 0.02 + 0.01;
-        this.pulsePhase = Math.random() * Math.PI * 2;
-        this.text = ['</>', '{ }', '=>', '[]', '()'][Math.floor(Math.random() * 5)];
-      }
-
-      update() {
-        this.x += this.speedX;
-        this.y += this.speedY;
-        this.pulsePhase += this.pulseSpeed;
-        
-        if (this.x < 0 || this.x > canvas.width) this.speedX *= -1;
-        if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
-      }
-
-      draw() {
-        const pulse = Math.sin(this.pulsePhase) * 0.3 + 0.7;
-        ctx.font = `${this.size * 4}px monospace`;
-        ctx.globalAlpha = this.alpha * pulse;
-        ctx.fillStyle = this.color;
-        ctx.fillText(this.text, this.x, this.y);
-      }
-    }
-
-    const particleCount = window.innerWidth < 768 ? 15 : 25;
-    for (let i = 0; i < particleCount; i++) {
-      particlesRef.current.push(new CodeParticle());
-    }
+    const orbs = Array.from({ length: 8 }, () => ({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      radius: Math.random() * 100 + 50,
+      vx: (Math.random() - 0.5) * 0.3,
+      vy: (Math.random() - 0.5) * 0.3,
+      color: Math.random() > 0.5 ? '#9f1239' : '#c2410c'
+    }));
 
     const animate = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      
-      particlesRef.current.forEach(p => {
-        p.update();
-        p.draw();
+
+      orbs.forEach(orb => {
+        orb.x += orb.vx;
+        orb.y += orb.vy;
+
+        if (orb.x < -orb.radius || orb.x > canvas.width + orb.radius) orb.vx *= -1;
+        if (orb.y < -orb.radius || orb.y > canvas.height + orb.radius) orb.vy *= -1;
+
+        const gradient = ctx.createRadialGradient(orb.x, orb.y, 0, orb.x, orb.y, orb.radius);
+        gradient.addColorStop(0, orb.color + '08');
+        gradient.addColorStop(1, orb.color + '00');
+
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(orb.x, orb.y, orb.radius, 0, Math.PI * 2);
+        ctx.fill();
       });
 
-      ctx.globalAlpha = 0.05;
-      ctx.strokeStyle = '#9f1239';
-      ctx.lineWidth = 0.5;
-      
-      for (let i = 0; i < particlesRef.current.length; i++) {
-        for (let j = i + 1; j < particlesRef.current.length; j++) {
-          const p1 = particlesRef.current[i];
-          const p2 = particlesRef.current[j];
-          const dx = p1.x - p2.x;
-          const dy = p1.y - p2.y;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-          
-          if (distance < 100) {
-            ctx.beginPath();
-            ctx.moveTo(p1.x, p1.y);
-            ctx.lineTo(p2.x, p2.y);
-            ctx.stroke();
-          }
-        }
-      }
-
-      animationRef.current = requestAnimationFrame(animate);
+      animationId = requestAnimationFrame(animate);
     };
 
-    const startTimer = setTimeout(() => animate(), 500);
+    const timer = setTimeout(() => animate(), 300);
 
     return () => {
-      clearTimeout(startTimer);
-      window.removeEventListener('resize', resizeCanvas);
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-      }
+      clearTimeout(timer);
+      window.removeEventListener('resize', resize);
+      cancelAnimationFrame(animationId);
     };
   }, []);
 
+  return <canvas ref={canvasRef} className="fixed inset-0 pointer-events-none opacity-40" style={{ zIndex: 0 }} />;
+};
+
+// ========== CHAPTER HEADER ==========
+const ChapterHeader = ({ projectNumber, projectName }) => {
   return (
-    <canvas
-      ref={canvasRef}
-      className="fixed inset-0 w-full h-full pointer-events-none z-0 opacity-15"
-    />
+    <motion.div
+      initial={{ opacity: 0, y: -30 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.8 }}
+      className="text-center mb-16"
+    >
+      <motion.div
+        initial={{ width: 0 }}
+        animate={{ width: "100%" }}
+        transition={{ duration: 1.2, delay: 0.3 }}
+        className="h-px bg-gradient-to-r from-transparent via-[#9f1239] to-transparent mb-8"
+      />
+      
+      <div className="inline-block relative">
+        <motion.span
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.4 }}
+          className="font-mono text-xs tracking-[0.5em] text-[#9f1239] uppercase block mb-4"
+        >
+          Chapter {projectNumber}
+        </motion.span>
+        
+        <motion.h1
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+          className="font-display text-4xl md:text-6xl text-white mb-6 leading-tight px-4"
+        >
+          {projectName}
+        </motion.h1>
+        
+        <motion.div
+          initial={{ scaleX: 0 }}
+          animate={{ scaleX: 1 }}
+          transition={{ delay: 0.8, duration: 0.6 }}
+          className="h-1 bg-[#9f1239] mx-auto"
+          style={{ width: '80px' }}
+        />
+      </div>
+      
+      <motion.div
+        initial={{ width: 0 }}
+        animate={{ width: "100%" }}
+        transition={{ duration: 1.2, delay: 1 }}
+        className="h-px bg-gradient-to-r from-transparent via-[#9f1239] to-transparent mt-8"
+      />
+    </motion.div>
   );
 };
 
-// === ANIMATION VARIANTS ===
-const fadeInUp = {
-  hidden: { opacity: 0, y: 40 },
-  show: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.6, ease: "easeOut" }
-  }
+// ========== STORY SECTION ==========
+const StorySection = ({ title, children, icon, delay = 0 }) => {
+  return (
+    <motion.section
+      initial={{ opacity: 0, y: 40 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-100px" }}
+      transition={{ duration: 0.8, delay }}
+      className="mb-20"
+    >
+      <div className="flex items-center gap-4 mb-8">
+        <motion.div
+          whileHover={{ rotate: 360, scale: 1.2 }}
+          transition={{ duration: 0.6 }}
+          className="text-4xl"
+        >
+          {icon}
+        </motion.div>
+        <div className="flex-1">
+          <h2 className="font-display text-2xl md:text-3xl text-white mb-2">{title}</h2>
+          <div className="h-px bg-gradient-to-r from-[#9f1239] to-transparent" />
+        </div>
+      </div>
+      
+      <div className="pl-0 md:pl-16">
+        {children}
+      </div>
+    </motion.section>
+  );
 };
 
-const staggerContainer = {
-  hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.2,
-      delayChildren: 0.3
-    }
-  }
+// ========== IMAGE SHOWCASE ==========
+const ImageShowcase = ({ image, alt, onZoom }) => {
+  const [isHovered, setIsHovered] = useState(false);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.8 }}
+      className="relative group cursor-pointer"
+      onHoverStart={() => setIsHovered(true)}
+      onHoverEnd={() => setIsHovered(false)}
+      onClick={onZoom}
+    >
+      <div className="relative overflow-hidden rounded-2xl border border-[#333] shadow-2xl">
+        <motion.img
+          src={image}
+          alt={alt}
+          className="w-full h-auto"
+          animate={{ scale: isHovered ? 1.05 : 1 }}
+          transition={{ duration: 0.6 }}
+        />
+        
+        <motion.div
+          className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"
+          animate={{ opacity: isHovered ? 1 : 0.6 }}
+          transition={{ duration: 0.3 }}
+        />
+
+        <AnimatePresence>
+          {isHovered && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              className="absolute bottom-6 left-0 right-0 text-center"
+            >
+              <span className="inline-flex items-center gap-2 px-6 py-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-white font-mono text-sm">
+                <span>Click to expand</span>
+                <span className="text-lg">🔍</span>
+              </span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* Decorative corners */}
+      <div className="absolute -top-2 -left-2 w-8 h-8 border-t-2 border-l-2 border-[#9f1239] opacity-0 group-hover:opacity-100 transition-opacity" />
+      <div className="absolute -top-2 -right-2 w-8 h-8 border-t-2 border-r-2 border-[#9f1239] opacity-0 group-hover:opacity-100 transition-opacity" />
+      <div className="absolute -bottom-2 -left-2 w-8 h-8 border-b-2 border-l-2 border-[#9f1239] opacity-0 group-hover:opacity-100 transition-opacity" />
+      <div className="absolute -bottom-2 -right-2 w-8 h-8 border-b-2 border-r-2 border-[#9f1239] opacity-0 group-hover:opacity-100 transition-opacity" />
+    </motion.div>
+  );
 };
 
-const slideInLeft = {
-  hidden: { opacity: 0, x: -40 },
-  show: {
-    opacity: 1,
-    x: 0,
-    transition: { duration: 0.5, ease: "easeOut" }
-  }
-};
-
-const slideInRight = {
-  hidden: { opacity: 0, x: 40 },
-  show: {
-    opacity: 1,
-    x: 0,
-    transition: { duration: 0.5, ease: "easeOut" }
-  }
-};
-
-const scaleIn = {
-  hidden: { opacity: 0, scale: 0.9 },
-  show: {
-    opacity: 1,
-    scale: 1,
-    transition: { duration: 0.4 }
-  }
-};
-
-const techBadgeVariant = {
-  hidden: { opacity: 0, scale: 0.8, y: 10 },
-  show: { 
-    opacity: 1, 
-    scale: 1, 
-    y: 0,
-    transition: { type: "spring", stiffness: 200, damping: 15 }
-  }
-};
-
-// === TECH STACK COMPONENT ===
-const TechStackDisplay = ({ technologies }) => {
+// ========== TECH STACK CARDS ==========
+const TechStack = ({ technologies }) => {
   if (!technologies || technologies.length === 0) return null;
 
   return (
-    <div className="space-y-4">
-      <h3 className="text-xl font-display text-white">Technologies Used</h3>
-      <motion.div 
-        className="grid grid-cols-2 md:grid-cols-3 gap-3"
-        initial="hidden"
-        animate="show"
-        variants={{
-          hidden: { opacity: 0 },
-          show: {
-            opacity: 1,
-            transition: {
-              staggerChildren: 0.05,
-              delayChildren: 0.5
-            }
-          }
-        }}
-      >
-        {technologies.map((tech, idx) => (
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      {technologies.map((tech, idx) => (
+        <motion.div
+          key={idx}
+          initial={{ opacity: 0, scale: 0.8, rotateY: -90 }}
+          whileInView={{ opacity: 1, scale: 1, rotateY: 0 }}
+          viewport={{ once: true }}
+          transition={{
+            duration: 0.6,
+            delay: idx * 0.1,
+            type: "spring",
+            stiffness: 100
+          }}
+          whileHover={{ 
+            scale: 1.05, 
+            boxShadow: "0 10px 40px rgba(159, 18, 57, 0.3)",
+            y: -5
+          }}
+          className="relative bg-gradient-to-br from-[#1a1a1a] to-[#0d0d0d] border border-[#333] rounded-xl p-6 text-center group cursor-pointer overflow-hidden"
+        >
+          {/* Shine effect */}
           <motion.div
-            key={idx}
-            variants={techBadgeVariant}
-            whileHover={{ 
-              scale: 1.05, 
-              borderColor: "#9f1239",
-              transition: { duration: 0.2 }
-            }}
-            className="bg-[#111] border border-[#333] p-4 transition-all relative overflow-hidden group"
-          >
-            <div className="relative z-10">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-2 h-2 bg-[#9f1239] rounded-full"></div>
-                <div className="font-mono text-xs text-zinc-500">
-                  TECH #{idx + 1}
-                </div>
-              </div>
-              <div className="font-display text-base text-white group-hover:text-[#9f1239] transition-colors">
-                {tech}
-              </div>
+            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent"
+            initial={{ x: "-100%" }}
+            whileHover={{ x: "100%" }}
+            transition={{ duration: 0.6 }}
+          />
+
+          <div className="relative z-10">
+            <div className="text-3xl mb-3 filter grayscale group-hover:grayscale-0 transition-all">
+              💎
             </div>
-          </motion.div>
-        ))}
-      </motion.div>
+            <span className="font-mono text-sm text-zinc-400 group-hover:text-white transition-colors">
+              {tech}
+            </span>
+          </div>
+
+          {/* Corner accent */}
+          <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-[#9f1239] opacity-0 group-hover:opacity-100 transition-opacity" />
+        </motion.div>
+      ))}
     </div>
   );
 };
 
-// === ZOOM MODAL COMPONENT ===
-const ZoomModal = ({ image, alt, onClose }) => {
-  // Close modal on escape key
+// ========== NARRATIVE TEXT ==========
+const NarrativeText = ({ text }) => {
+  if (!text) return null;
+  
+  const paragraphs = text.split('\n').filter(p => p.trim());
+
+  return (
+    <div className="space-y-6 text-zinc-300 leading-relaxed">
+      {paragraphs.map((paragraph, idx) => (
+        <motion.p
+          key={idx}
+          initial={{ opacity: 0, x: -20 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: idx * 0.1 }}
+          className="text-base md:text-lg font-serif first:indent-0"
+          style={{ textIndent: idx === 0 ? '0' : '2rem' }}
+        >
+          <span className="text-[#9f1239] text-2xl leading-none">❝</span>
+          {paragraph}
+          <span className="text-[#9f1239] text-2xl leading-none">❞</span>
+        </motion.p>
+      ))}
+    </div>
+  );
+};
+
+// ========== NAVIGATION CARD ==========
+const NavigationCard = ({ direction, projectIndex, totalProjects, projects }) => {
+  const isNext = direction === "next";
+  const isDisabled = (isNext && projectIndex >= totalProjects - 1) || (!isNext && projectIndex <= 0);
+  
+  if (isDisabled) return null;
+
+  const targetIndex = isNext ? projectIndex + 1 : projectIndex - 1;
+  const targetProject = projects[targetIndex];
+
+  return (
+    <Link to={`/project/${targetIndex}`}>
+      <motion.div
+        whileHover={{ x: isNext ? 10 : -10, scale: 1.02 }}
+        className="group relative bg-gradient-to-br from-[#1a1a1a] to-[#0d0d0d] border border-[#333] hover:border-[#9f1239] rounded-xl p-6 overflow-hidden cursor-pointer transition-all"
+      >
+        <div className={`flex items-center gap-4 ${isNext ? 'flex-row' : 'flex-row-reverse'}`}>
+          <div className="flex-1">
+            <span className="font-mono text-xs text-zinc-500 block mb-2">
+              {isNext ? "Next Chapter" : "Previous Chapter"}
+            </span>
+            <span className="font-display text-lg text-white group-hover:text-[#9f1239] transition-colors line-clamp-1">
+              {targetProject?.name || `Project ${targetIndex + 1}`}
+            </span>
+          </div>
+          <motion.div
+            animate={{ x: isNext ? [0, 5, 0] : [0, -5, 0] }}
+            transition={{ duration: 1.5, repeat: Infinity }}
+            className="text-2xl text-[#9f1239]"
+          >
+            {isNext ? "→" : "←"}
+          </motion.div>
+        </div>
+
+        <motion.div
+          className="absolute inset-0 bg-gradient-to-r from-[#9f1239]/0 via-[#9f1239]/5 to-[#9f1239]/0"
+          initial={{ x: "-100%" }}
+          whileHover={{ x: "100%" }}
+          transition={{ duration: 0.6 }}
+        />
+      </motion.div>
+    </Link>
+  );
+};
+
+// ========== IMAGE ZOOM MODAL ==========
+const ImageZoomModal = ({ image, alt, onClose }) => {
   useEffect(() => {
-    const handleEsc = (e) => {
-      if (e.key === 'Escape') onClose();
-    };
+    const handleEsc = (e) => e.key === 'Escape' && onClose();
+    document.body.style.overflow = 'hidden';
     window.addEventListener('keydown', handleEsc);
-    return () => window.removeEventListener('keydown', handleEsc);
+    
+    return () => {
+      document.body.style.overflow = 'unset';
+      window.removeEventListener('keydown', handleEsc);
+    };
   }, [onClose]);
 
   return (
-    <motion.div 
-      initial={{ opacity: 0 }} 
-      animate={{ opacity: 1 }} 
-      exit={{ opacity: 0 }} 
-      className="fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex items-center justify-center p-4 cursor-zoom-out overflow-auto"
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
       onClick={onClose}
+      className="fixed inset-0 z-50 bg-black/95 backdrop-blur-lg flex items-center justify-center p-4 cursor-zoom-out"
     >
-      <button 
-        className="absolute top-6 right-6 bg-black/50 text-white px-4 py-2 font-mono text-sm border border-white/20 hover:bg-[#9f1239] hover:border-[#9f1239] transition-all rounded z-50"
+      <button
         onClick={onClose}
+        className="absolute top-6 right-6 w-12 h-12 bg-white/10 hover:bg-white/20 border border-white/20 rounded-full flex items-center justify-center text-white text-2xl transition-all z-50"
       >
-        Close [ESC]
+        ✕
       </button>
-      <motion.img 
-        src={image} 
-        alt={alt} 
-        className="max-h-[90vh] w-auto max-w-full object-contain border-2 border-[#9f1239] shadow-2xl cursor-default"
-        initial={{ scale: 0.9, rotate: -1 }}
-        animate={{ scale: 1, rotate: 0 }}
-        exit={{ scale: 0.9, rotate: 1 }}
-        transition={{ type: "spring", damping: 25 }}
+
+      <motion.img
+        src={image}
+        alt={alt}
+        initial={{ scale: 0.9, rotateY: -10 }}
+        animate={{ scale: 1, rotateY: 0 }}
+        className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl cursor-default"
         onClick={(e) => e.stopPropagation()}
       />
     </motion.div>
   );
 };
 
-// === PROJECT DETAIL MAIN COMPONENT ===
+// ========== MAIN COMPONENT ==========
 export default function ProjectDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { data, loading } = usePortfolio();
-  
   const [isZoomed, setIsZoomed] = useState(false);
-  const [canvasLoaded, setCanvasLoaded] = useState(false);
+  const [scrollProgress, setScrollProgress] = useState(0);
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    const timer = setTimeout(() => setCanvasLoaded(true), 600);
-    return () => clearTimeout(timer);
   }, [id]);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+      const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+      const scrolled = (winScroll / height) * 100;
+      setScrollProgress(scrolled);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   if (loading) {
     return (
@@ -283,7 +402,7 @@ export default function ProjectDetail() {
           className="text-center"
         >
           <div className="w-16 h-16 border-4 border-[#9f1239] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="font-mono text-sm text-zinc-500">Loading project details...</p>
+          <p className="font-mono text-sm text-zinc-500">Loading chapter...</p>
         </motion.div>
       </div>
     );
@@ -291,322 +410,215 @@ export default function ProjectDetail() {
 
   const projectIndex = parseInt(id);
   const project = data?.projects?.[projectIndex];
+  const projects = data?.projects || [];
 
   if (!project) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center text-center px-6 bg-[#0c0c0c] text-white">
+      <div className="min-h-screen flex items-center justify-center bg-[#0c0c0c] text-white px-4">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="max-w-md"
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center"
         >
-          <h1 className="text-3xl font-display font-bold mb-4 text-[#9f1239]">Project Not Found</h1>
-          <p className="text-zinc-400 mb-6">The project you're looking for doesn't exist or has been removed.</p>
+          <span className="text-6xl mb-6 block">📖</span>
+          <h1 className="font-display text-3xl mb-4">Chapter Not Found</h1>
+          <p className="text-zinc-400 mb-8">This story hasn't been written yet.</p>
           <button
             onClick={() => navigate("/projects")}
             className="px-6 py-3 bg-[#9f1239] text-white font-medium rounded-lg hover:bg-[#7f0e2a] transition-colors"
           >
-            Back to Projects
+            Return to Library
           </button>
         </motion.div>
       </div>
     );
   }
 
-  const technologies = project.technologies || [];
   const projectNumber = projectIndex + 1;
 
   return (
     <PageTransition>
-      <div className="min-h-screen pb-20 pt-24 md:pt-32 px-4 md:px-8 bg-[#0c0c0c] overflow-hidden relative">
-        {/* Canvas Background */}
-        {canvasLoaded && <CodeParticles />}
+      <div className="min-h-screen bg-[#0c0c0c] text-white relative overflow-hidden">
+        <FloatingOrbs />
 
-        {/* Zoom Modal */}
         <AnimatePresence>
           {isZoomed && project.image && (
-            <ZoomModal 
-              image={project.image} 
+            <ImageZoomModal
+              image={project.image}
               alt={project.name}
               onClose={() => setIsZoomed(false)}
             />
           )}
         </AnimatePresence>
 
-        {/* Back Button */}
+        {/* Progress bar */}
         <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="max-w-6xl mx-auto mb-8 relative z-10"
-        >
-          <Link 
-            to="/projects" 
-            className="inline-flex items-center gap-2 text-zinc-500 hover:text-white font-medium transition-colors group"
-          >
-            <span className="group-hover:-translate-x-1 transition-transform">←</span>
-            Back to all projects
-          </Link>
-        </motion.div>
+          className="fixed top-0 left-0 h-1 bg-gradient-to-r from-[#9f1239] to-[#c2410c] z-50"
+          style={{ width: `${scrollProgress}%` }}
+        />
 
-        {/* Main Content */}
-        <div className="max-w-6xl mx-auto relative z-10">
-          {/* Header Section */}
+        <div className="relative z-10">
+          {/* Back Navigation */}
           <motion.div
-            variants={staggerContainer}
-            initial="hidden"
-            animate="show"
-            className="mb-12"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="max-w-6xl mx-auto px-6 pt-8 pb-4"
           >
-            <motion.div variants={fadeInUp} className="mb-4">
-              <div className="inline-flex items-center gap-2 bg-[#9f1239]/10 border border-[#9f1239]/30 px-3 py-1 rounded-full mb-4">
-                <div className="w-2 h-2 bg-[#9f1239] rounded-full animate-pulse"></div>
-                <span className="font-mono text-xs text-[#9f1239]">
-                  PROJECT #{projectNumber}
-                </span>
+            <Link
+              to="/projects"
+              className="inline-flex items-center gap-2 text-zinc-400 hover:text-white font-mono text-sm transition-colors group"
+            >
+              <motion.span
+                animate={{ x: [-2, 0, -2] }}
+                transition={{ duration: 1.5, repeat: Infinity }}
+              >
+                ←
+              </motion.span>
+              <span>Back to Library</span>
+            </Link>
+          </motion.div>
+
+          {/* Main Content */}
+          <div className="max-w-6xl mx-auto px-6 py-12">
+            <ChapterHeader
+              projectNumber={projectNumber}
+              projectName={project.name}
+            />
+
+            {/* Opening Quote */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 1 }}
+              className="text-center mb-20 max-w-3xl mx-auto px-4"
+            >
+              <p className="font-serif italic text-xl text-zinc-400 leading-relaxed">
+                "Every great project begins with a vision and evolves through dedication, 
+                creativity, and countless iterations."
+              </p>
+              <div className="mt-6 flex justify-center gap-2">
+                {[1, 2, 3].map((dot) => (
+                  <motion.div
+                    key={dot}
+                    animate={{
+                      scale: [1, 1.3, 1],
+                      opacity: [0.3, 1, 0.3]
+                    }}
+                    transition={{
+                      duration: 2,
+                      delay: dot * 0.2,
+                      repeat: Infinity
+                    }}
+                    className="w-1 h-1 rounded-full bg-[#9f1239]"
+                  />
+                ))}
               </div>
             </motion.div>
 
-            <motion.div variants={fadeInUp}>
-              <h1 className="text-3xl md:text-5xl font-display text-white mb-4">
-                {project.name}
-              </h1>
-              <div className="h-1 w-20 bg-gradient-to-r from-[#9f1239] to-transparent"></div>
-            </motion.div>
-          </motion.div>
+            {/* Visual Showcase */}
+            <StorySection title="Visual Chronicle" icon="🎨" delay={0.1}>
+              {project.image ? (
+                <ImageShowcase
+                  image={project.image}
+                  alt={project.name}
+                  onZoom={() => setIsZoomed(true)}
+                />
+              ) : (
+                <div className="aspect-video bg-gradient-to-br from-[#1a1a1a] to-[#0d0d0d] rounded-2xl border border-[#333] flex items-center justify-center">
+                  <span className="font-mono text-zinc-600">No preview available</span>
+                </div>
+              )}
+            </StorySection>
 
-          {/* Main Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-12">
-            {/* Left Column - Image & Description */}
-            <motion.div 
-              className="lg:col-span-8 space-y-8"
-              variants={staggerContainer}
-              initial="hidden"
-              animate="show"
-            >
-              {/* Project Image - FIXED ZOOM */}
-              <motion.div variants={scaleIn} className="group">
-                <div 
-                  className="border-2 border-[#333] rounded-lg overflow-hidden bg-[#111] relative cursor-zoom-in"
-                  onClick={() => project.image && setIsZoomed(true)}
+            {/* Project Story */}
+            <StorySection title="The Journey" icon="📜" delay={0.2}>
+              {project.description ? (
+                <NarrativeText text={project.description} />
+              ) : (
+                <p className="text-zinc-400 italic text-center py-12">
+                  The story of this project is yet to be told...
+                </p>
+              )}
+            </StorySection>
+
+            {/* Technologies */}
+            {project.technologies && project.technologies.length > 0 && (
+              <StorySection title="Crafted With" icon="⚙️" delay={0.3}>
+                <TechStack technologies={project.technologies} />
+              </StorySection>
+            )}
+
+            {/* Project Link */}
+            {project.link && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                className="text-center my-20"
+              >
+                <motion.a
+                  href={project.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-[#9f1239] to-[#c2410c] text-white font-display text-lg rounded-full shadow-lg shadow-[#9f1239]/30 hover:shadow-[#9f1239]/50 transition-all"
                 >
-                  {project.image ? (
-                    <>
-                      <img 
-                        src={project.image} 
-                        alt={project.name}
-                        className="w-full h-auto object-contain hover:opacity-90 transition-opacity" 
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-4">
-                        <span className="text-white text-sm font-mono bg-black/50 px-3 py-2 rounded border border-white/20">
-                          Click to zoom
-                        </span>
-                      </div>
-                    </>
-                  ) : (
-                    <div className="w-full h-64 md:h-80 flex items-center justify-center text-zinc-600 font-mono border-dashed border-2 border-[#333]">
-                      [ No project image available ]
-                    </div>
-                  )}
-                </div>
-                {project.image && (
-                  <p className="text-center text-sm text-zinc-500 mt-2">
-                    Click image to view full size
-                  </p>
-                )}
+                  <span>Experience Live</span>
+                  <span className="text-2xl">🚀</span>
+                </motion.a>
               </motion.div>
+            )}
 
-              {/* Project Description */}
-              <motion.div variants={slideInLeft} className="space-y-6">
-                <div className="border-l-4 border-[#9f1239] pl-4">
-                  <h2 className="text-2xl font-display text-white mb-4">About This Project</h2>
-                </div>
-                
-                <div className="prose prose-invert max-w-none">
-                  {project.description ? (
-                    <div className="text-zinc-300 leading-relaxed space-y-4">
-                      {project.description.split('\n').map((paragraph, idx) => (
-                        <p key={idx} className="mb-4 last:mb-0">
-                          {paragraph}
-                        </p>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-8 border-2 border-dashed border-[#333] rounded-lg">
-                      <p className="text-zinc-500">No description provided for this project</p>
-                      <p className="text-zinc-600 text-sm mt-1">
-                        Add a description in the admin panel
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </motion.div>
-
-              {/* Technologies Section */}
-              {technologies.length > 0 && (
-                <motion.div variants={slideInLeft} className="pt-8 border-t border-[#333]">
-                  <TechStackDisplay technologies={technologies} />
-                </motion.div>
-              )}
+            {/* Navigation */}
+            <motion.div
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-20 pt-12 border-t border-[#333]"
+            >
+              <NavigationCard
+                direction="prev"
+                projectIndex={projectIndex}
+                totalProjects={projects.length}
+                projects={projects}
+              />
+              <NavigationCard
+                direction="next"
+                projectIndex={projectIndex}
+                totalProjects={projects.length}
+                projects={projects}
+              />
             </motion.div>
 
-            {/* Right Column - Project Info Sidebar */}
-            <motion.div 
-              className="lg:col-span-4 space-y-6"
-              variants={staggerContainer}
-              initial="hidden"
-              animate="show"
+            {/* Closing */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true }}
+              className="text-center mt-20 pb-12"
             >
-              {/* Project Info Card */}
-              <motion.div variants={slideInRight} className="bg-[#111] border border-[#333] rounded-lg p-6">
-                <h3 className="text-xl font-display text-white mb-6 pb-3 border-b border-[#333]">
-                  Project Details
-                </h3>
-                
-                <div className="space-y-4">
-                  <div>
-                    <div className="text-sm text-zinc-500 mb-1">Status</div>
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                      <span className="text-white font-medium">Completed</span>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <div className="text-sm text-zinc-500 mb-1">Technologies Used</div>
-                    <div className="text-white font-medium">
-                      {technologies.length} different technologies
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <div className="text-sm text-zinc-500 mb-1">Project Link</div>
-                    {project.link ? (
-                      <a 
-                        href={project.link} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-[#9f1239] hover:text-[#7f0e2a] font-medium break-all block"
-                      >
-                        Visit Live Project →
-                      </a>
-                    ) : (
-                      <span className="text-zinc-600">No live link available</span>
-                    )}
-                  </div>
-                </div>
-              </motion.div>
-
-              {/* Tech Stats Card */}
-              {technologies.length > 0 && (
-                <motion.div variants={slideInRight} className="bg-[#111] border border-[#333] rounded-lg p-6">
-                  <h3 className="text-xl font-display text-white mb-6 pb-3 border-b border-[#333]">
-                    Technology Overview
-                  </h3>
-                  
-                  <div className="space-y-4">
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="text-sm text-zinc-500">Technologies Used</div>
-                        <div className="text-2xl font-display text-[#9f1239]">{technologies.length}</div>
-                      </div>
-                      <div className="h-1 bg-[#333] rounded-full overflow-hidden">
-                        <motion.div 
-                          className="h-full bg-[#9f1239]"
-                          initial={{ width: 0 }}
-                          animate={{ width: "100%" }}
-                          transition={{ delay: 0.8, duration: 1 }}
-                        />
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-4 pt-2">
-                      <div className="text-center">
-                        <div className="text-lg font-display text-white">{technologies.length}</div>
-                        <div className="text-xs text-zinc-500">Total</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-lg font-display text-[#9f1239]">
-                          {Math.min(technologies.length, 5)}
-                        </div>
-                        <div className="text-xs text-zinc-500">Featured</div>
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-
-              {/* Navigation Card */}
-              <motion.div variants={slideInRight} className="bg-[#111] border border-[#333] rounded-lg p-6">
-                <h3 className="text-xl font-display text-white mb-4">More Projects</h3>
-                
-                <div className="space-y-3">
-                  <p className="text-zinc-400 text-sm">
-                    Check out my other work to see more of what I can do.
-                  </p>
-                  
-                  <Link
-                    to="/projects"
-                    className="block w-full text-center py-3 bg-[#9f1239] text-white font-medium rounded-lg hover:bg-[#7f0e2a] transition-colors"
-                  >
-                    View All Projects
-                  </Link>
-                  
-                  {projectIndex > 0 && (
-                    <Link
-                      to={`/project/${projectIndex - 1}`}
-                      className="block w-full text-center py-3 border border-[#333] text-zinc-400 rounded-lg hover:border-[#9f1239] hover:text-white transition-all"
-                    >
-                      Previous Project
-                    </Link>
-                  )}
-                  
-                  {data?.projects && projectIndex < data.projects.length - 1 && (
-                    <Link
-                      to={`/project/${projectIndex + 1}`}
-                      className="block w-full text-center py-3 border border-[#333] text-zinc-400 rounded-lg hover:border-[#9f1239] hover:text-white transition-all"
-                    >
-                      Next Project
-                    </Link>
-                  )}
-                </div>
-              </motion.div>
+              <motion.div
+                initial={{ width: 0 }}
+                whileInView={{ width: "100%" }}
+                viewport={{ once: true }}
+                transition={{ duration: 1.2 }}
+                className="h-px bg-gradient-to-r from-transparent via-[#9f1239] to-transparent mb-12"
+              />
+              
+              <p className="font-serif italic text-zinc-500 mb-8">
+                "Thank you for reading this chapter of my journey."
+              </p>
+              
+              <Link
+                to="/contact"
+                className="inline-flex items-center gap-2 font-mono text-sm text-[#9f1239] hover:text-white transition-colors"
+              >
+                <span>Let's create something together</span>
+                <span>→</span>
+              </Link>
             </motion.div>
           </div>
-
-          {/* Project Summary */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.7 }}
-            className="mt-16 pt-8 border-t border-[#333]"
-          >
-            <div className="text-center max-w-3xl mx-auto">
-              <h3 className="text-2xl font-display text-white mb-4">Project Summary</h3>
-              <p className="text-zinc-400 mb-6">
-                {project.description 
-                  ? `${project.description.substring(0, 150)}...` 
-                  : "This project showcases my skills in web development and problem-solving."}
-              </p>
-              <div className="flex flex-wrap justify-center gap-4">
-                {project.link && (
-                  <a
-                    href={project.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-6 py-3 bg-[#9f1239] text-white font-medium rounded-lg hover:bg-[#7f0e2a] transition-colors"
-                  >
-                    Visit Live Project
-                  </a>
-                )}
-                <Link
-                  to="/contact"
-                  className="px-6 py-3 border-2 border-[#333] text-white font-medium rounded-lg hover:border-[#9f1239] transition-all"
-                >
-                  Get in Touch
-                </Link>
-              </div>
-            </div>
-          </motion.div>
         </div>
       </div>
     </PageTransition>

@@ -1,377 +1,414 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
 
 export default function Navbar({ home }) {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [hoveredLink, setHoveredLink] = useState(null);
+  const [visible, setVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
   const location = useLocation();
+  const { scrollY } = useScroll();
+  
+  // Scroll-aware transforms
+  const navOpacity = useTransform(scrollY, [0, 100], [1, 0.95]);
+  const navBlur = useTransform(scrollY, [0, 100], [0, 10]);
 
-  // Detect scroll untuk efek navbar
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  // Tutup menu saat pindah halaman
-  useEffect(() => setIsOpen(false), [location]);
-
-  // Kunci scroll saat menu mobile terbuka
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = "hidden";
-      document.body.style.touchAction = "none";
-    } else {
-      document.body.style.overflow = "unset";
-      document.body.style.touchAction = "auto";
-    }
-  }, [isOpen]);
-
-  const links = [
+  // Navigation items - using dynamic data structure with user-friendly labels
+  const navigationItems = [
     { 
-      name: "Beginning", 
       path: "/", 
       label: "Home", 
-      icon: "✨",
-      description: "Start your journey here"
+      subtitle: "Start Here",
+      icon: "✦",
+      description: "Welcome to my portfolio"
     },
     { 
-      name: "The Story", 
       path: "/about", 
       label: "About Me", 
-      icon: "📖",
-      description: "Learn about my journey"
+      subtitle: "My Story",
+      icon: "◈",
+      description: "Get to know who I am"
     },
     { 
-      name: "My Work", 
       path: "/projects", 
       label: "Projects", 
-      icon: "💻",
+      subtitle: "My Work",
+      icon: "◇",
       description: "Explore what I've built"
     },
     { 
-      name: "Let's Talk", 
       path: "/contact", 
       label: "Contact", 
-      icon: "📨",
-      description: "Get in touch with me"
-    },
+      subtitle: "Get in Touch",
+      icon: "◆",
+      description: "Let's work together"
+    }
   ];
 
   const brandName = home?.logoName || "Portfolio";
 
+  // Detect scroll direction and position
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      
+      setScrolled(currentScrollY > 20);
+      
+      // Hide navbar when scrolling down, show when scrolling up
+      if (currentScrollY > lastScrollY && currentScrollY > 100) {
+        setVisible(false);
+      } else {
+        setVisible(true);
+      }
+      
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [lastScrollY]);
+
+  // Close menu on route change
+  useEffect(() => {
+    setIsOpen(false);
+  }, [location]);
+
+  // Lock body scroll when mobile menu is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [isOpen]);
+
   return (
     <>
       {/* MAIN NAVBAR */}
-      <motion.nav 
-        initial={{ y: -100 }}
-        animate={{ y: 0 }}
-        transition={{ duration: 0.6, ease: "circOut" }}
+      <motion.nav
+        style={{ 
+          opacity: navOpacity,
+          backdropFilter: scrolled ? `blur(${navBlur}px)` : 'blur(0px)'
+        }}
+        animate={{ 
+          y: visible ? 0 : -100,
+          transition: { duration: 0.3, ease: "easeInOut" }
+        }}
         className={`fixed top-0 w-full z-50 transition-all duration-500 ${
           scrolled 
-            ? 'bg-[#0c0c0c]/98 backdrop-blur-xl border-b border-[#333] shadow-lg shadow-black/50' 
-            : 'bg-[#0c0c0c]/95 backdrop-blur-sm border-b border-[#222]'
+            ? 'bg-[#0c0c0c]/90 border-b border-[#333]/50 shadow-2xl shadow-black/50' 
+            : 'bg-transparent border-b border-transparent'
         }`}
       >
-        <div className="max-w-7xl mx-auto px-4 md:px-8 h-16 md:h-20 flex justify-between items-center">
-          
-          {/* LOGO with Animation */}
-          <NavLink to="/" className="group relative z-[60] flex items-center gap-2">
-            <motion.div
-              whileHover={{ rotate: 360 }}
-              transition={{ duration: 0.6 }}
-              className="text-[#9f1239] text-xl md:text-2xl"
-            >
-              §
-            </motion.div>
-            <div className="flex flex-col">
-              <div className="font-display font-bold text-base md:text-xl tracking-widest text-white">
-                {brandName.toUpperCase()}
-              </div>
-              <div className="font-mono text-[8px] text-zinc-600 tracking-widest">
-                DIGITAL STORYTELLER
-              </div>
-            </div>
-            {/* Underline effect */}
-            <motion.span 
-              className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#9f1239]"
-              whileHover={{ width: "100%" }}
-              transition={{ duration: 0.3 }}
-            />
-          </NavLink>
-
-          {/* DESKTOP MENU */}
-          <div className="hidden md:flex items-center gap-4 lg:gap-6">
-            {links.map((link, idx) => (
-              <motion.div
-                key={link.name}
-                onHoverStart={() => setHoveredLink(idx)}
-                onHoverEnd={() => setHoveredLink(null)}
-                className="relative"
+        <div className="max-w-7xl mx-auto px-6 md:px-8">
+          <div className="flex items-center justify-between h-20 md:h-24">
+            
+            {/* BRAND LOGO */}
+            <NavLink to="/" className="relative z-[60] group">
+              <motion.div 
+                className="flex items-center gap-3"
+                whileHover={{ scale: 1.02 }}
+                transition={{ duration: 0.3 }}
               >
+                {/* Animated Icon */}
+                <motion.div
+                  className="relative"
+                  whileHover={{ rotate: 180 }}
+                  transition={{ duration: 0.6, ease: "easeInOut" }}
+                >
+                  <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gradient-to-br from-[#9f1239] to-[#c2410c] flex items-center justify-center shadow-lg shadow-[#9f1239]/30">
+                    <span className="text-white text-xl md:text-2xl font-display">§</span>
+                  </div>
+                  {/* Glow effect */}
+                  <motion.div
+                    className="absolute inset-0 rounded-full bg-[#9f1239] opacity-0 group-hover:opacity-30 blur-xl"
+                    animate={{ scale: [1, 1.2, 1] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  />
+                </motion.div>
+
+                {/* Brand Text */}
+                <div className="flex flex-col">
+                  <span className="font-display font-bold text-base md:text-xl tracking-wider text-white">
+                    {brandName.toUpperCase()}
+                  </span>
+                  <motion.span 
+                    className="font-mono text-[8px] md:text-[9px] tracking-[0.2em] text-zinc-600"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.3 }}
+                  >
+                    DIGITAL STORYTELLER
+                  </motion.span>
+                </div>
+
+                {/* Hover underline */}
+                <motion.div
+                  className="absolute -bottom-1 left-0 h-0.5 bg-gradient-to-r from-[#9f1239] to-transparent"
+                  initial={{ width: 0 }}
+                  whileHover={{ width: "100%" }}
+                  transition={{ duration: 0.3 }}
+                />
+              </motion.div>
+            </NavLink>
+
+            {/* DESKTOP NAVIGATION */}
+            <div className="hidden lg:flex items-center gap-2">
+              {navigationItems.map((item, idx) => (
                 <NavLink
-                  to={link.path}
+                  key={item.path}
+                  to={item.path}
                   className={({ isActive }) =>
-                    `group relative py-2 transition-all duration-300 ${
-                      isActive ? "text-[#9f1239]" : "text-zinc-500 hover:text-white"
+                    `group relative px-5 py-3 transition-all duration-300 ${
+                      isActive ? "text-white" : "text-zinc-500 hover:text-white"
                     }`
                   }
                 >
-                  {/* Hover tooltip */}
-                  <AnimatePresence>
-                    {hoveredLink === idx && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 10 }}
-                        className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-[#0c0c0c] border border-[#333] px-3 py-2 rounded-lg whitespace-nowrap z-50"
-                      >
-                        <div className="flex items-center gap-2">
-                          <span className="text-[#9f1239] text-sm">{link.icon}</span>
-                          <span className="text-xs text-white">{link.description}</span>
+                  {({ isActive }) => (
+                    <div className="relative">
+                      {/* Main Label */}
+                      <div className="flex items-center gap-2">
+                        <motion.span
+                          animate={{ 
+                            rotate: isActive ? [0, 10, -10, 0] : 0,
+                            scale: isActive ? 1.1 : 1
+                          }}
+                          transition={{ duration: 0.5 }}
+                          className={`text-base ${isActive ? 'text-[#9f1239]' : 'text-zinc-600 group-hover:text-[#9f1239]'}`}
+                        >
+                          {item.icon}
+                        </motion.span>
+                        <div className="flex flex-col">
+                          <span className="font-display text-sm tracking-wide">
+                            {item.label}
+                          </span>
+                          <span className="font-mono text-[8px] tracking-wider text-zinc-700 group-hover:text-zinc-600">
+                            {item.subtitle}
+                          </span>
                         </div>
-                        <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-[#0c0c0c] border-b border-r border-[#333] rotate-45"></div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                      </div>
 
-                  {/* Menu item */}
-                  <div className="flex flex-col items-center px-3">
-                    <div className="flex items-center gap-2 font-mono text-xs tracking-wider font-bold">
-                      <motion.span
-                        animate={{ 
-                          rotate: hoveredLink === idx ? [0, 10, -10, 0] : 0,
-                          scale: hoveredLink === idx ? 1.2 : 1
-                        }}
+                      {/* Active indicator */}
+                      <motion.div
+                        className="absolute -bottom-1 left-0 h-0.5 bg-gradient-to-r from-[#9f1239] to-transparent"
+                        initial={{ width: 0 }}
+                        animate={{ width: isActive ? "100%" : 0 }}
+                        whileHover={{ width: "100%" }}
                         transition={{ duration: 0.3 }}
-                        className="text-base"
-                      >
-                        {link.icon}
-                      </motion.span>
-                      {link.label}
+                      />
+
+                      {/* Hover tooltip */}
+                      <AnimatePresence>
+                        <motion.div
+                          initial={{ opacity: 0, y: 10, scale: 0.9 }}
+                          whileHover={{ opacity: 1, y: 0, scale: 1 }}
+                          className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-3 py-2 bg-[#0c0c0c] border border-[#333] rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
+                        >
+                          <span className="text-xs text-zinc-400">{item.description}</span>
+                          <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-[#0c0c0c] border-t border-l border-[#333] rotate-45" />
+                        </motion.div>
+                      </AnimatePresence>
                     </div>
-                    
-                    {/* Chapter name */}
-                    <motion.span 
-                      className="block font-mono text-[9px] tracking-wider mt-1"
-                      initial={{ opacity: 0.5 }}
-                      animate={{ 
-                        opacity: hoveredLink === idx ? 1 : 0.5,
-                        color: hoveredLink === idx ? "#9f1239" : "#666"
-                      }}
-                    >
-                      {link.name}
-                    </motion.span>
-                  </div>
-
-                  {/* Active indicator */}
-                  <motion.span 
-                    className="absolute -bottom-1 left-0 h-0.5 bg-[#9f1239]"
-                    initial={{ width: 0 }}
-                    whileHover={{ width: "100%" }}
-                    transition={{ duration: 0.3 }}
-                  />
+                  )}
                 </NavLink>
-              </motion.div>
-            ))}
-          </div>
-
-          {/* MOBILE MENU BUTTON - Animated Hamburger */}
-          <button 
-            onClick={() => setIsOpen(!isOpen)} 
-            className="md:hidden relative z-[60] w-10 h-10 flex items-center justify-center group"
-            aria-label="Toggle menu"
-          >
-            <div className="w-6 h-5 flex flex-col justify-between">
-              <motion.span
-                animate={isOpen ? { rotate: 45, y: 8 } : { rotate: 0, y: 0 }}
-                transition={{ duration: 0.3 }}
-                className="w-full h-0.5 bg-white origin-center group-hover:bg-[#9f1239] transition-colors"
-              />
-              <motion.span
-                animate={isOpen ? { opacity: 0, x: -10 } : { opacity: 1, x: 0 }}
-                transition={{ duration: 0.3 }}
-                className="w-full h-0.5 bg-white group-hover:bg-[#9f1239] transition-colors"
-              />
-              <motion.span
-                animate={isOpen ? { rotate: -45, y: -8 } : { rotate: 0, y: 0 }}
-                transition={{ duration: 0.3 }}
-                className="w-full h-0.5 bg-white origin-center group-hover:bg-[#9f1239] transition-colors"
-              />
+              ))}
             </div>
-          </button>
+
+            {/* MOBILE MENU BUTTON */}
+            <motion.button
+              onClick={() => setIsOpen(!isOpen)}
+              whileTap={{ scale: 0.95 }}
+              className="lg:hidden relative z-[60] w-12 h-12 flex items-center justify-center"
+              aria-label="Toggle menu"
+            >
+              <div className="w-6 h-5 flex flex-col justify-between">
+                <motion.span
+                  animate={isOpen ? { rotate: 45, y: 8 } : { rotate: 0, y: 0 }}
+                  className="w-full h-0.5 bg-white origin-center"
+                />
+                <motion.span
+                  animate={isOpen ? { opacity: 0, x: -10 } : { opacity: 1, x: 0 }}
+                  className="w-full h-0.5 bg-white"
+                />
+                <motion.span
+                  animate={isOpen ? { rotate: -45, y: -8 } : { rotate: 0, y: 0 }}
+                  className="w-full h-0.5 bg-white origin-center"
+                />
+              </div>
+            </motion.button>
+          </div>
         </div>
+
+        {/* Decorative bottom border animation */}
+        <motion.div
+          className="absolute bottom-0 left-0 h-px bg-gradient-to-r from-transparent via-[#9f1239] to-transparent"
+          initial={{ scaleX: 0 }}
+          animate={{ scaleX: scrolled ? 1 : 0 }}
+          transition={{ duration: 0.5 }}
+          style={{ transformOrigin: "center" }}
+        />
       </motion.nav>
 
       {/* MOBILE MENU OVERLAY */}
       <AnimatePresence>
         {isOpen && (
           <>
-            {/* Backdrop with blur */}
+            {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className="fixed inset-0 z-[55] bg-black/70 backdrop-blur-sm"
+              className="fixed inset-0 z-[55] bg-black/80 backdrop-blur-md lg:hidden"
               onClick={() => setIsOpen(false)}
             />
 
-            {/* Slide-in Menu Panel */}
+            {/* Menu Panel */}
             <motion.div
-              initial={{ x: "100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "100%" }}
+              initial={{ x: "100%", opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: "100%", opacity: 0 }}
               transition={{ type: "spring", damping: 30, stiffness: 300 }}
-              className="fixed top-0 right-0 bottom-0 z-[56] w-full max-w-sm bg-[#0c0c0c] border-l border-[#222] shadow-2xl overflow-y-auto"
+              className="fixed top-0 right-0 bottom-0 z-[56] w-full max-w-md bg-[#0c0c0c] border-l border-[#333] shadow-2xl overflow-y-auto lg:hidden"
             >
-              {/* Menu Header */}
-              <div className="h-16 md:h-20 border-b border-[#222] flex items-center justify-between px-6 bg-gradient-to-r from-[#0a0a0a] to-[#111]">
-                <div className="font-display text-lg text-white flex items-center gap-3">
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 1, ease: "linear" }}
-                    className="text-[#9f1239]"
-                  >
-                    §
-                  </motion.div>
-                  <span>Navigation</span>
+              {/* Header */}
+              <div className="h-20 border-b border-[#333] flex items-center justify-between px-6 bg-gradient-to-r from-[#0a0a0a] to-[#0c0c0c]">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#9f1239] to-[#c2410c] flex items-center justify-center">
+                    <span className="text-white text-lg">§</span>
+                  </div>
+                  <span className="font-display text-lg text-white">Navigation</span>
                 </div>
                 <motion.button
                   onClick={() => setIsOpen(false)}
-                  className="text-zinc-500 hover:text-white transition-colors text-2xl w-8 h-8 flex items-center justify-center rounded-full border border-[#333] hover:border-[#9f1239]"
-                  aria-label="Close menu"
-                  whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
+                  className="w-10 h-10 flex items-center justify-center rounded-full border border-[#333] hover:border-[#9f1239] text-zinc-500 hover:text-white transition-colors"
                 >
-                  ×
+                  ✕
                 </motion.button>
               </div>
 
               {/* Welcome Message */}
-              <div className="p-6 border-b border-[#222] bg-gradient-to-r from-[#111] to-[#0a0a0a]">
-                <p className="text-zinc-400 text-sm">
-                  Welcome to my digital space. Where would you like to go?
-                </p>
+              <div className="p-6 border-b border-[#333] bg-gradient-to-b from-[#0c0c0c] to-[#0a0a0a]">
+                <motion.p
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className="text-zinc-400 text-sm leading-relaxed"
+                >
+                  Welcome! Navigate through my portfolio and discover my work.
+                </motion.p>
               </div>
 
-              {/* Menu Items with Cards */}
+              {/* Navigation Items */}
               <div className="p-4 space-y-3">
-                {links.map((link, idx) => (
+                {navigationItems.map((item, idx) => (
                   <motion.div
-                    key={link.name}
+                    key={item.path}
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.05 * idx, type: "spring" }}
+                    transition={{ delay: 0.1 * idx, type: "spring", stiffness: 200 }}
                   >
                     <NavLink
-                      to={link.path}
+                      to={item.path}
                       onClick={() => setIsOpen(false)}
                       className={({ isActive }) =>
-                        `group block p-5 border transition-all duration-300 relative overflow-hidden rounded-xl ${
-                          isActive 
-                            ? "bg-gradient-to-br from-[#9f1239]/20 to-[#c2410c]/10 border-[#9f1239] shadow-lg shadow-[#9f1239]/20" 
-                            : "bg-[#0a0a0a] border-[#222] hover:bg-[#111] hover:border-[#333] active:scale-95"
-                        }`
+                        `group block relative overflow-hidden rounded-xl transition-all duration-300 ${
+                          isActive
+                            ? "bg-gradient-to-br from-[#9f1239]/20 to-[#c2410c]/10 border-[#9f1239] shadow-lg shadow-[#9f1239]/20"
+                            : "bg-[#0a0a0a] hover:bg-[#111]"
+                        } border p-6`
                       }
                     >
-                      {/* Content */}
-                      <div className="flex items-start gap-4">
-                        {/* Icon */}
-                        <motion.div 
-                          className="text-2xl"
-                          whileHover={{ scale: 1.2, rotate: 10 }}
-                          transition={{ type: "spring", stiffness: 300 }}
-                        >
-                          {link.icon}
-                        </motion.div>
-                        
-                        {/* Text */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between mb-2">
-                            <div>
-                              <div className="font-display text-xl text-white group-hover:text-[#9f1239] transition-colors mb-1">
-                                {link.label}
-                              </div>
-                              <div className="font-mono text-[10px] text-zinc-600 tracking-wider">
-                                {link.name}
-                              </div>
-                            </div>
-                            <motion.span 
-                              className="text-zinc-600 group-hover:text-[#9f1239] transition-colors text-lg"
-                              initial={{ x: 0 }}
-                              whileHover={{ x: 5 }}
+                      {({ isActive }) => (
+                        <>
+                          {/* Content */}
+                          <div className="relative z-10 flex items-start gap-4">
+                            {/* Chapter Number */}
+                            <motion.div
+                              whileHover={{ scale: 1.1, rotate: 10 }}
+                              className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center border-2 ${
+                                isActive
+                                  ? "border-[#9f1239] bg-[#9f1239]/20"
+                                  : "border-[#333] bg-[#0c0c0c]"
+                              }`}
                             >
-                              →
-                            </motion.span>
+                              <span className={`text-2xl ${isActive ? "text-[#9f1239]" : "text-zinc-600"}`}>
+                                {item.icon}
+                              </span>
+                            </motion.div>
+
+                            {/* Text */}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-start justify-between mb-2">
+                                <div>
+                                  <h3 className={`font-display text-xl mb-1 transition-colors ${
+                                    isActive ? "text-[#9f1239]" : "text-white group-hover:text-[#9f1239]"
+                                  }`}>
+                                    {item.label}
+                                  </h3>
+                                  <p className="font-mono text-[10px] text-zinc-600 tracking-wider">
+                                    {item.subtitle}
+                                  </p>
+                                </div>
+                                <motion.span
+                                  animate={{ x: isActive ? 5 : 0 }}
+                                  className={`text-xl transition-colors ${
+                                    isActive ? "text-[#9f1239]" : "text-zinc-600 group-hover:text-[#9f1239]"
+                                  }`}
+                                >
+                                  →
+                                </motion.span>
+                              </div>
+                              
+                              <p className="text-xs text-zinc-500 leading-relaxed">
+                                {item.description}
+                              </p>
+                            </div>
                           </div>
-                          
-                          <p className="text-xs text-zinc-500">
-                            {link.description}
-                          </p>
-                        </div>
-                      </div>
 
-                      {/* Progress bar */}
-                      <motion.div
-                        className="h-0.5 bg-gradient-to-r from-[#9f1239] to-transparent mt-3"
-                        initial={{ width: 0 }}
-                        whileInView={{ width: "100%" }}
-                        viewport={{ once: true }}
-                        transition={{ delay: 0.1 * idx, duration: 0.4 }}
-                      />
+                          {/* Progress bar */}
+                          <motion.div
+                            className="h-1 bg-gradient-to-r from-[#9f1239] to-transparent mt-4"
+                            initial={{ width: 0 }}
+                            animate={{ width: isActive ? "100%" : "0%" }}
+                            transition={{ duration: 0.5 }}
+                          />
 
-                      {/* Hover glow effect */}
-                      <motion.div
-                        className="absolute inset-0 bg-gradient-to-r from-[#9f1239]/0 via-[#9f1239]/5 to-[#9f1239]/0 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
-                        animate={{ x: ['-100%', '100%'] }}
-                        transition={{ duration: 2, repeat: Infinity }}
-                      />
+                          {/* Glow effect */}
+                          {isActive && (
+                            <motion.div
+                              className="absolute inset-0 bg-gradient-to-r from-[#9f1239]/5 via-transparent to-transparent"
+                              animate={{ x: ["-100%", "100%"] }}
+                              transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                            />
+                          )}
+                        </>
+                      )}
                     </NavLink>
                   </motion.div>
                 ))}
               </div>
 
-              {/* Quick Stats */}
-              <div className="p-6 border-t border-[#222]">
-                <div className="grid grid-cols-2 gap-3 mb-4">
-                  <div className="bg-[#111] border border-[#333] p-3 rounded-lg text-center">
-                    <div className="text-[#9f1239] text-sm font-bold">Always</div>
-                    <div className="text-xs text-zinc-500">Available</div>
-                  </div>
-                  <div className="bg-[#111] border border-[#333] p-3 rounded-lg text-center">
-                    <div className="text-[#c2410c] text-sm font-bold">Quick</div>
-                    <div className="text-xs text-zinc-500">Response</div>
-                  </div>
-                </div>
-                <p className="text-center text-xs text-zinc-600">
-                  Feel free to explore every section
-                </p>
-              </div>
-
-              {/* Menu Footer */}
-              <div className="mt-auto p-6 border-t border-[#222] bg-[#0a0a0a]">
+              {/* Footer */}
+              <div className="mt-auto p-6 border-t border-[#333] bg-[#0a0a0a]">
                 <div className="text-center space-y-3">
                   <div className="flex items-center justify-center gap-2">
-                    <div className="w-2 h-2 bg-[#9f1239] rounded-full animate-pulse"></div>
-                    <p className="font-mono text-[10px] text-zinc-700 tracking-widest">
-                      NAVIGATION ACTIVE
-                    </p>
+                    <motion.div
+                      animate={{ scale: [1, 1.2, 1] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                      className="w-2 h-2 bg-[#9f1239] rounded-full"
+                    />
+                    <span className="font-mono text-[10px] text-zinc-700 tracking-widest">
+                      SYSTEM ACTIVE
+                    </span>
                   </div>
                   <p className="font-mono text-[9px] text-zinc-800">
-                    Current session • Secure connection
+                    Secure navigation • All paths accessible
                   </p>
-                  
-                  {/* Social prompt */}
-                  <div className="pt-4 border-t border-[#222]/50">
-                    <p className="text-xs text-zinc-600">
-                      Like what you see? Check out my work!
-                    </p>
-                  </div>
                 </div>
               </div>
             </motion.div>
@@ -379,11 +416,11 @@ export default function Navbar({ home }) {
         )}
       </AnimatePresence>
 
-      {/* Scroll progress indicator */}
-      <motion.div 
-        className="fixed top-0 left-0 h-0.5 bg-gradient-to-r from-[#9f1239] to-[#c2410c] z-40"
-        style={{ 
-          width: `${(window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100}%` 
+      {/* Scroll Progress Indicator */}
+      <motion.div
+        className="fixed top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-[#9f1239] via-[#c2410c] to-[#9f1239] z-40 origin-left"
+        style={{
+          scaleX: useTransform(scrollY, [0, document.body.scrollHeight - window.innerHeight], [0, 1])
         }}
       />
     </>
