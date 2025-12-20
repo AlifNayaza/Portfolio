@@ -22,11 +22,11 @@ const connectToDatabase = async () => {
   isConnected = true;
 };
 
-// Helper function untuk normalisasi data dari database
+// Normalisasi data dari database
 const normalizeData = (data) => {
   if (!data) return null;
 
-  // Migrasi 'music' ke 'soundtrack' jika belum dilakukan
+  // Migrasi 'music' ke 'soundtrack'
   if (data.music && !data.soundtrack) {
     data.soundtrack = Array.isArray(data.music) ? data.music : [data.music];
     delete data.music;
@@ -37,10 +37,44 @@ const normalizeData = (data) => {
     data.soundtrack = [data.soundtrack];
   }
 
-  // Pastikan semua field yang dibutuhkan ada dengan default values
+  // Migrasi avatarUrl ke images array untuk multiple profile images
+  if (data.profile) {
+    // Jika ada avatarUrl lama, pindahkan ke images array
+    if (data.profile.avatarUrl && !data.profile.images) {
+      data.profile.images = [data.profile.avatarUrl];
+      delete data.profile.avatarUrl;
+    }
+    // Pastikan images adalah array
+    if (data.profile.images && !Array.isArray(data.profile.images)) {
+      data.profile.images = [data.profile.images];
+    }
+    // Jika tidak ada images, buat array kosong
+    if (!data.profile.images) {
+      data.profile.images = [];
+    }
+  }
+
+  // Default values dengan aboutPage
   const normalized = {
     home: data.home || { logoName: "Author", headline: "The Journey Begins", subtitle: "Welcome." },
-    profile: data.profile || { about: "", avatarUrl: "" },
+    profile: data.profile || { 
+      about: "", 
+      images: [], // Ganti avatarUrl dengan images array
+      socialLinks: data.profile?.socialLinks || {}
+    },
+    aboutPage: data.aboutPage || {  
+      location: "Remote • Worldwide",
+      specialization: "Full-Stack Development",
+      availability: "Available for work",
+      availabilityStatus: "open",
+      coreValues: [
+        { title: "Problem Solving", desc: "Breaking down complex challenges", icon: "🔍" },
+        { title: "Clean Code", desc: "Writing maintainable code", icon: "✨" },
+        { title: "Continuous Learning", desc: "Staying updated", icon: "📚" },
+        { title: "User Focus", desc: "Building user-first", icon: "🎯" }
+      ],
+      strengths: ["Project Leadership", "Technical Strategy", "Team Collaboration", "Agile Development"]
+    },
     soundtrack: data.soundtrack || [],
     skills: data.skills || [],
     projects: data.projects || [],
@@ -48,7 +82,7 @@ const normalizeData = (data) => {
     contact: data.contact || { email: "", linkedin: "", github: "", instagram: "", twitter: "" }
   };
 
-  // Pastikan contact memiliki semua field
+  // Pastikan semua nested objects lengkap
   normalized.contact = {
     email: normalized.contact.email || "",
     linkedin: normalized.contact.linkedin || "",
@@ -57,21 +91,30 @@ const normalizeData = (data) => {
     twitter: normalized.contact.twitter || ""
   };
 
-  // Pastikan home memiliki semua field
   normalized.home = {
     logoName: normalized.home.logoName || "Author",
     headline: normalized.home.headline || "The Journey Begins",
     subtitle: normalized.home.subtitle || "Welcome."
   };
 
-  // Pastikan profile memiliki semua field
+  // Normalisasi profile dengan images array
   normalized.profile = {
     about: normalized.profile.about || "",
-    avatarUrl: normalized.profile.avatarUrl || ""
+    images: Array.isArray(normalized.profile.images) ? normalized.profile.images : [],
+    socialLinks: normalized.profile.socialLinks || {}
   };
 
-  // === NORMALISASI PROJECTS DENGAN TECHNOLOGIES ===
-  // Pastikan setiap project memiliki field technologies (array)
+  // Validasi aboutPage
+  normalized.aboutPage = {
+    location: normalized.aboutPage.location || "Remote • Worldwide",
+    specialization: normalized.aboutPage.specialization || "Full-Stack Development",
+    availability: normalized.aboutPage.availability || "Available for work",
+    availabilityStatus: normalized.aboutPage.availabilityStatus || "open",
+    coreValues: Array.isArray(normalized.aboutPage.coreValues) ? normalized.aboutPage.coreValues : [],
+    strengths: Array.isArray(normalized.aboutPage.strengths) ? normalized.aboutPage.strengths : []
+  };
+
+  // Normalisasi projects dengan technologies
   if (normalized.projects && Array.isArray(normalized.projects)) {
     normalized.projects = normalized.projects.map(project => ({
       name: project.name || "",
@@ -99,16 +142,14 @@ exports.handler = async (event) => {
   try {
     await connectToDatabase();
 
-    // Extract query parameter for action
     const queryParams = event.queryStringParameters || {};
     const action = queryParams.action;
 
-    // ENDPOINT VERIFY - untuk validasi password tanpa update data
+    // VERIFY ENDPOINT
     if (action === 'verify' && event.httpMethod === 'POST') {
       const clientSecret = event.headers.authorization || event.headers.Authorization;
       
       if (!clientSecret) {
-        console.log('❌ Verify: No authorization header');
         return { 
           statusCode: 401, 
           headers, 
@@ -117,7 +158,6 @@ exports.handler = async (event) => {
       }
 
       if (!ADMIN_SECRET) {
-        console.error('⚠️ ADMIN_SECRET is not set!');
         return { 
           statusCode: 500, 
           headers, 
@@ -126,7 +166,6 @@ exports.handler = async (event) => {
       }
 
       if (clientSecret !== ADMIN_SECRET) {
-        console.log('❌ Verify: Invalid password');
         return { 
           statusCode: 401, 
           headers, 
@@ -134,7 +173,6 @@ exports.handler = async (event) => {
         };
       }
 
-      console.log('✅ Verify: Password valid');
       return { 
         statusCode: 200, 
         headers, 
@@ -142,20 +180,27 @@ exports.handler = async (event) => {
       };
     }
 
-    // GET: Public Read - dengan normalisasi data
+    // GET ENDPOINT
     if (event.httpMethod === 'GET') {
-      console.log('📖 GET: Fetching portfolio data...');
+      console.log('📖 Fetching portfolio data...');
       
       let doc = await PortfolioModel.findOne({ identifier: 'main_portfolio' });
       
       if (!doc) {
-        console.log('⚠️ No data found in database, creating default data...');
-        // Data Dummy Awal (dengan technologies)
+        console.log('⚠️ Creating default data...');
         doc = await PortfolioModel.create({
           identifier: 'main_portfolio',
           data: {
             home: { logoName: "Author", headline: "The Journey Begins", subtitle: "Welcome." },
-            profile: { about: "", avatarUrl: "" },
+            profile: { about: "", images: [] }, // Default images array
+            aboutPage: {
+              location: "Remote • Worldwide",
+              specialization: "Full-Stack Development",
+              availability: "Available for work",
+              availabilityStatus: "open",
+              coreValues: [],
+              strengths: []
+            },
             soundtrack: [],
             skills: [], 
             projects: [], 
@@ -163,17 +208,9 @@ exports.handler = async (event) => {
             contact: { email: "", linkedin: "", github: "", instagram: "", twitter: "" }
           }
         });
-        console.log('✅ Default data created');
-      } else {
-        console.log('✅ Data found in database');
-        console.log('Raw data structure:', Object.keys(doc.data));
       }
 
-      // Normalisasi data sebelum dikirim ke frontend
       const normalizedData = normalizeData(doc.data);
-      console.log('✅ Data normalized and ready to send');
-      console.log('Normalized structure:', Object.keys(normalizedData));
-      
       return { 
         statusCode: 200, 
         headers, 
@@ -181,13 +218,11 @@ exports.handler = async (event) => {
       };
     }
 
-    // POST: Admin Write (DENGAN VALIDASI PASSWORD)
+    // POST ENDPOINT
     if (event.httpMethod === 'POST') {
       const clientSecret = event.headers.authorization || event.headers.Authorization;
       
-      // CRITICAL: Validasi password
       if (!clientSecret) {
-        console.log('❌ No authorization header provided');
         return { 
           statusCode: 401, 
           headers, 
@@ -196,7 +231,6 @@ exports.handler = async (event) => {
       }
 
       if (!ADMIN_SECRET) {
-        console.error('⚠️ ADMIN_SECRET is not set in environment variables!');
         return { 
           statusCode: 500, 
           headers, 
@@ -205,7 +239,6 @@ exports.handler = async (event) => {
       }
 
       if (clientSecret !== ADMIN_SECRET) {
-        console.log('❌ Invalid password attempt');
         return { 
           statusCode: 401, 
           headers, 
@@ -213,29 +246,16 @@ exports.handler = async (event) => {
         };
       }
 
-      // Password valid, lanjutkan update
-      console.log('✅ Valid credentials, updating data...');
       const newData = JSON.parse(event.body);
-
-      // Normalisasi data sebelum disimpan
       const normalizedData = normalizeData(newData);
-      console.log('Data to save:', Object.keys(normalizedData));
-      console.log('Projects count:', normalizedData.projects?.length || 0);
       
-      // Log technologies untuk debugging
-      if (normalizedData.projects && normalizedData.projects.length > 0) {
-        normalizedData.projects.forEach((proj, idx) => {
-          console.log(`Project ${idx} technologies:`, proj.technologies || []);
-        });
-      }
-
       const updated = await PortfolioModel.findOneAndUpdate(
         { identifier: 'main_portfolio' },
         { data: normalizedData },
         { new: true, upsert: true }
       );
       
-      console.log('✅ Data updated successfully');
+      console.log('✅ Data saved successfully');
       return { 
         statusCode: 200, 
         headers, 
@@ -243,7 +263,6 @@ exports.handler = async (event) => {
       };
     }
 
-    // Method not allowed
     return {
       statusCode: 405,
       headers,
@@ -255,7 +274,7 @@ exports.handler = async (event) => {
     return { 
       statusCode: 500, 
       headers, 
-      body: JSON.stringify({ error: error.message, stack: error.stack }) 
+      body: JSON.stringify({ error: error.message }) 
     };
   }
 };

@@ -9,8 +9,6 @@ const HomeCanvas = () => {
   const canvasRef = useRef(null);
   const particlesRef = useRef([]);
   const animationRef = useRef(null);
-  const mousePos = useRef({ x: 0, y: 0 });
-  const mouseActive = useRef(false);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -38,33 +36,14 @@ const HomeCanvas = () => {
         this.speedY = (Math.random() - 0.5) * 0.1;
         this.color = Math.random() > 0.7 ? '#9f1239' : '#c2410c';
         this.alpha = Math.random() * 0.15 + 0.05;
-        this.trail = [];
-        this.maxTrail = 5;
         this.oscillation = Math.random() * 0.03;
         this.phase = Math.random() * Math.PI * 2;
       }
 
       update() {
-        if (mouseActive.current) {
-          const dx = mousePos.current.x - this.x;
-          const dy = mousePos.current.y - this.y;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-          
-          if (distance < 100) {
-            const force = (100 - distance) / 100 * 0.08;
-            this.speedX += (dx / distance) * force * 0.05;
-            this.speedY += (dy / distance) * force * 0.05;
-          }
-        }
-
         this.phase += this.oscillation;
         this.x += this.speedX + Math.sin(this.phase) * 0.2;
         this.y += this.speedY + Math.cos(this.phase * 0.5) * 0.2;
-
-        this.trail.unshift({ x: this.x, y: this.y });
-        if (this.trail.length > this.maxTrail) {
-          this.trail.pop();
-        }
 
         if (this.x < -50 || this.x > canvas.width + 50 || this.y < -50 || this.y > canvas.height + 50) {
           this.reset();
@@ -72,17 +51,6 @@ const HomeCanvas = () => {
       }
 
       draw() {
-        for (let i = 0; i < this.trail.length; i++) {
-          const point = this.trail[i];
-          const trailAlpha = this.alpha * (1 - i / this.trail.length) * 0.3;
-          
-          ctx.beginPath();
-          ctx.globalAlpha = trailAlpha;
-          ctx.fillStyle = this.color;
-          ctx.arc(point.x, point.y, this.size * (1 - i / this.trail.length), 0, Math.PI * 2);
-          ctx.fill();
-        }
-
         ctx.beginPath();
         ctx.globalAlpha = this.alpha;
         ctx.fillStyle = this.color;
@@ -107,29 +75,11 @@ const HomeCanvas = () => {
       animationRef.current = requestAnimationFrame(animate);
     };
 
-    const handleMouseMove = (e) => {
-      const rect = canvas.getBoundingClientRect();
-      mousePos.current = {
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top
-      };
-      mouseActive.current = true;
-    };
-
-    const handleMouseLeave = () => {
-      mouseActive.current = false;
-    };
-
-    canvas.addEventListener('mousemove', handleMouseMove);
-    canvas.addEventListener('mouseleave', handleMouseLeave);
-
     const startDelay = setTimeout(() => animate(), 300);
 
     return () => {
       clearTimeout(startDelay);
       window.removeEventListener('resize', resizeCanvas);
-      canvas.removeEventListener('mousemove', handleMouseMove);
-      canvas.removeEventListener('mouseleave', handleMouseLeave);
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
       }
@@ -193,76 +143,237 @@ const scaleIn = {
   }
 };
 
-// === DYNAMIC GREETING TEXT ===
-const DynamicGreeting = ({ home }) => {
-  const parseGreeting = () => {
-    const headline = home?.headline || "";
-    
-    if (headline.includes("I'm") || headline.includes("I am")) {
-      const parts = headline.split(/(I'm|I am)/);
-      if (parts.length >= 2) {
-        return {
-          greeting: parts[0].trim(),
-          name: parts.slice(2).join(" ").trim() || home?.logoName || "Developer"
-        };
-      }
-    }
-    
-    return {
-      greeting: "Hello, I'm",
-      name: home?.logoName || "Developer"
-    };
+// === MOBILE-FRIENDLY PROFILE IMAGE ===
+const ProfileImage = ({ images, profileName }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [touchStartX, setTouchStartX] = useState(0);
+
+  useEffect(() => {
+    if (images.length <= 1) return;
+
+    const interval = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % images.length);
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [images.length]);
+
+  const handleTouchStart = (e) => {
+    setTouchStartX(e.touches[0].clientX);
   };
 
-  const { greeting, name } = parseGreeting();
+  const handleTouchEnd = (e) => {
+    const touchEndX = e.changedTouches[0].clientX;
+    const diff = touchStartX - touchEndX;
+
+    if (Math.abs(diff) > 50 && images.length > 1) {
+      if (diff > 0) {
+        // Swipe left - next
+        setCurrentIndex((prev) => (prev + 1) % images.length);
+      } else {
+        // Swipe right - previous
+        setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
+      }
+    }
+  };
+
+  if (images.length === 0) {
+    return (
+      <div className="relative w-full">
+        <div className="aspect-square rounded-2xl border-2 border-[#333] bg-gradient-to-br from-[#0c0c0c] to-[#1a1a1a] flex items-center justify-center">
+          <div className="text-center p-6">
+            <div className="w-16 h-16 rounded-full bg-[#9f1239]/10 flex items-center justify-center mx-auto mb-4">
+              <span className="text-2xl text-[#9f1239]">+</span>
+            </div>
+            <p className="text-sm text-zinc-500">Add profile images</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-4">
-      <motion.div
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <span className="text-4xl md:text-5xl text-white block mb-2">
-          {greeting}
-        </span>
-        <motion.h1
-          className="text-5xl md:text-7xl lg:text-8xl font-display text-[#9f1239] relative inline-block"
-          animate={{
-            textShadow: [
-              "0 0 0px rgba(159, 18, 57, 0)",
-              "0 0 20px rgba(159, 18, 57, 0.3)",
-              "0 0 0px rgba(159, 18, 57, 0)"
-            ]
-          }}
-          transition={{
-            duration: 3,
-            repeat: Infinity,
-            repeatType: "reverse"
-          }}
-        >
-          {name}
-          <motion.span
-            className="absolute -bottom-2 left-0 h-0.5 bg-gradient-to-r from-[#9f1239] via-[#c2410c] to-transparent"
-            initial={{ width: 0 }}
-            animate={{ width: "100%" }}
-            transition={{ delay: 0.5, duration: 0.8 }}
+    <div 
+      className="relative w-full"
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
+      <div className="aspect-square rounded-2xl overflow-hidden border-2 border-[#333] bg-gradient-to-br from-[#0c0c0c] to-[#1a1a1a] relative">
+        <AnimatePresence mode="wait">
+          <motion.img
+            key={currentIndex}
+            src={images[currentIndex]}
+            alt={`${profileName || 'Profile'} - Image ${currentIndex + 1}`}
+            className="w-full h-full object-cover"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
           />
-        </motion.h1>
-      </motion.div>
+        </AnimatePresence>
+
+        {/* Swipe indicator for mobile */}
+        {images.length > 1 && (
+          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-1">
+            {images.map((_, idx) => (
+              <div
+                key={idx}
+                className={`w-1.5 h-1.5 rounded-full transition-all ${
+                  idx === currentIndex ? 'bg-[#9f1239]' : 'bg-white/30'
+                }`}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Image counter */}
+        {images.length > 1 && (
+          <div className="absolute top-3 right-3 bg-black/50 backdrop-blur-sm text-white text-xs px-2 py-1 rounded-full">
+            {currentIndex + 1}/{images.length}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
 
-// === SKILL CARD COMPONENT ===
-const SkillCard = ({ skill, projects, index, totalSkills }) => {
-  const [isHovered, setIsHovered] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false);
-  
-  const skillName = typeof skill === 'string' ? skill : skill.name;
-  const skillLevel = typeof skill === 'string' ? "Intermediate" : (skill.level || "Intermediate");
-  
-  const getProjectsUsingSkill = () => {
+// === MOBILE-FRIENDLY HERO SECTION ===
+const MobileHero = ({ data }) => {
+  const { home, profile, contact } = data || {};
+
+  return (
+    <div className="py-8 px-4">
+      {/* Profile Image */}
+      <div className="mb-6">
+        <ProfileImage 
+          images={profile?.images || []} 
+          profileName={home?.logoName || "Profile"} 
+        />
+      </div>
+
+      {/* Greeting */}
+      <div className="mb-6">
+        <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#9f1239]/10 border border-[#9f1239]/20 rounded-full mb-4">
+          <div className="w-2 h-2 bg-[#9f1239] rounded-full animate-pulse"></div>
+          <span className="font-mono text-xs text-[#9f1239]">
+            Hello, I'm
+          </span>
+        </div>
+
+        <h1 className="text-4xl font-display text-white mb-2">
+          {home?.logoName || "Developer"}
+        </h1>
+        
+        <p className="text-lg text-[#9f1239] mb-4">
+          {home?.headline?.replace("I'm", "").trim() || "Mobile-First Developer"}
+        </p>
+
+        {home?.subtitle && (
+          <p className="text-zinc-400 text-base leading-relaxed">
+            {home.subtitle}
+          </p>
+        )}
+      </div>
+
+      {/* Quick Stats */}
+      <div className="grid grid-cols-2 gap-3 mb-6">
+        <div className="bg-[#111]/50 backdrop-blur-sm border border-[#333] rounded-lg p-4">
+          <div className="text-2xl font-display text-[#9f1239] mb-1">
+            {data?.projects?.length || 0}
+          </div>
+          <div className="text-xs text-zinc-400">Projects</div>
+        </div>
+        <div className="bg-[#111]/50 backdrop-blur-sm border border-[#333] rounded-lg p-4">
+          <div className="text-2xl font-display text-[#c2410c] mb-1">
+            {data?.skills?.length || 0}
+          </div>
+          <div className="text-xs text-zinc-400">Skills</div>
+        </div>
+      </div>
+
+      {/* Contact Links */}
+      {contact && (
+        <div className="flex flex-wrap gap-2 mb-6">
+          {contact.email && (
+            <a 
+              href={`mailto:${contact.email}`}
+              className="flex-1 min-w-[120px] flex items-center justify-center gap-2 px-4 py-3 bg-[#111] border border-[#333] rounded-lg active:scale-95 transition-all"
+            >
+              <span className="text-[#9f1239]">✉️</span>
+              <span className="text-sm text-white">Email</span>
+            </a>
+          )}
+          {contact.linkedin && (
+            <a 
+              href={contact.linkedin}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 min-w-[120px] flex items-center justify-center gap-2 px-4 py-3 bg-[#111] border border-[#333] rounded-lg active:scale-95 transition-all"
+            >
+              <span className="text-[#9f1239]">💼</span>
+              <span className="text-sm text-white">LinkedIn</span>
+            </a>
+          )}
+        </div>
+      )}
+
+      {/* CTA Buttons */}
+      <div className="flex flex-col gap-3">
+        <Link
+          to="/projects"
+          className="w-full bg-[#9f1239] text-white font-medium py-4 rounded-lg text-center active:scale-95 transition-all flex items-center justify-center gap-2"
+        >
+          <span>View My Work</span>
+          <span>→</span>
+        </Link>
+        
+        <Link
+          to="/about"
+          className="w-full bg-transparent border-2 border-[#333] text-white font-medium py-4 rounded-lg text-center active:scale-95 transition-all"
+        >
+          Learn About Me
+        </Link>
+      </div>
+    </div>
+  );
+};
+
+// === MOBILE-FRIENDLY SKILLS GRID ===
+const MobileSkillsGrid = ({ skills, projects }) => {
+  const [expandedSkill, setExpandedSkill] = useState(null);
+
+  if (!skills || skills.length === 0) {
+    return (
+      <div className="py-8 px-4">
+        <div className="text-center p-8 border-2 border-dashed border-[#333] rounded-lg">
+          <p className="text-zinc-500">No skills added yet</p>
+        </div>
+      </div>
+    );
+  }
+
+  const getSkillName = (skill) => {
+    if (typeof skill === 'string') return skill;
+    return skill.name || skill.title || "Skill";
+  };
+
+  const getSkillLevel = (skill) => {
+    if (typeof skill === 'string') return "Intermediate";
+    return skill.level || "Intermediate";
+  };
+
+  const getLevelColor = (level) => {
+    switch(level?.toLowerCase()) {
+      case 'beginner': return 'bg-blue-500';
+      case 'intermediate': return 'bg-green-500';
+      case 'advanced': return 'bg-orange-500';
+      case 'expert': 
+      case 'master': return 'bg-[#9f1239]';
+      default: return 'bg-[#9f1239]';
+    }
+  };
+
+  const getProjectsUsingSkill = (skillName) => {
     if (!projects || !Array.isArray(projects)) return [];
     
     const skillNameLower = skillName.toLowerCase().trim();
@@ -277,674 +388,192 @@ const SkillCard = ({ skill, projects, index, totalSkills }) => {
       });
     });
   };
-  
-  const projectsUsingSkill = getProjectsUsingSkill();
-  const projectCount = projectsUsingSkill.length;
-  
-  const getLevelColor = (level) => {
-    switch(level?.toLowerCase()) {
-      case 'beginner': return { bg: 'bg-blue-500', text: 'text-blue-400' };
-      case 'intermediate': return { bg: 'bg-green-500', text: 'text-green-400' };
-      case 'advanced': return { bg: 'bg-orange-500', text: 'text-orange-400' };
-      case 'expert': 
-      case 'master': return { bg: 'bg-[#9f1239]', text: 'text-[#9f1239]' };
-      default: return { bg: 'bg-[#9f1239]', text: 'text-[#9f1239]' };
-    }
-  };
-  
-  const getLevelWidth = (level) => {
-    switch(level?.toLowerCase()) {
-      case 'beginner': return '25%';
-      case 'intermediate': return '50%';
-      case 'advanced': return '75%';
-      case 'expert': 
-      case 'master': return '100%';
-      default: return '50%';
-    }
-  };
-  
-  const levelColors = getLevelColor(skillLevel);
-  
+
   return (
-    <motion.div
-      initial="hidden"
-      animate="visible"
-      variants={itemVariants}
-      whileHover={{ y: -4 }}
-      onHoverStart={() => setIsHovered(true)}
-      onHoverEnd={() => setIsHovered(false)}
-      onClick={() => setIsExpanded(!isExpanded)}
-      className="group relative cursor-pointer"
-    >
-      {/* Card */}
-      <div className={`bg-[#0c0c0c] border rounded-lg p-4 transition-all duration-300 ${
-        isHovered || isExpanded ? 'border-[#9f1239]' : 'border-[#333]'
-      }`}>
-        
-        {/* Skill Header */}
-        <div className="flex items-start justify-between mb-3">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-2">
-              <h3 className="text-lg font-display text-white truncate">
-                {skillName}
-              </h3>
-              {projectCount > 0 && (
-                <span className={`text-xs ${levelColors.text} bg-opacity-20 px-2 py-0.5 rounded-full`}>
-                  {projectCount}
-                </span>
-              )}
-            </div>
-            
-            {/* Level Badge */}
-            <div className="flex items-center gap-2">
-              <span className={`text-xs px-2 py-1 rounded-full ${levelColors.bg} bg-opacity-20 ${levelColors.text}`}>
-                {skillLevel}
-              </span>
-              {projectCount > 0 && (
-                <span className="text-xs text-zinc-500">
-                  • {projectCount} project{projectCount !== 1 ? 's' : ''}
-                </span>
-              )}
-            </div>
-          </div>
-          
-          {/* Skill Number */}
-          <div className="font-mono text-xs text-zinc-600 bg-[#111] w-6 h-6 flex items-center justify-center rounded-full flex-shrink-0">
-            {index + 1}
-          </div>
-        </div>
-        
-        {/* Progress Bar */}
-        <div className="h-1.5 bg-[#222] rounded-full overflow-hidden mb-4">
-          <motion.div
-            className={`h-full ${levelColors.bg}`}
-            initial={{ width: 0 }}
-            animate={{ width: getLevelWidth(skillLevel) }}
-            transition={{ delay: 0.5 + index * 0.05, duration: 0.8 }}
-          />
-        </div>
-        
-        {/* Level Indicator Dots */}
-        <div className="flex gap-1 mb-2">
-          {[1, 2, 3, 4].map((dot) => (
-            <div
-              key={dot}
-              className={`w-1.5 h-1.5 rounded-full ${
-                (skillLevel === 'Beginner' && dot <= 1) ||
-                (skillLevel === 'Intermediate' && dot <= 2) ||
-                (skillLevel === 'Advanced' && dot <= 3) ||
-                (skillLevel === 'Expert' && dot <= 4) ||
-                (skillLevel === 'Master' && dot <= 4)
-                  ? levelColors.bg
-                  : 'bg-[#333]'
-              }`}
-            />
-          ))}
-        </div>
-        
-        {/* Project Preview (Hover) */}
-        {isHovered && projectCount > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 10 }}
-            className="absolute z-10 -top-2 left-1/2 transform -translate-x-1/2 -translate-y-full"
-          >
-            <div className="bg-[#0c0c0c] border border-[#9f1239] rounded-lg p-3 w-56 shadow-2xl">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-2 h-2 bg-[#9f1239] rounded-full animate-pulse"></div>
-                <span className="text-xs text-zinc-400">
-                  Used in {projectCount} project{projectCount !== 1 ? 's' : ''}
-                </span>
-              </div>
-              
-              <div className="space-y-2">
-                {projectsUsingSkill.slice(0, 2).map((project, idx) => (
-                  <div key={idx} className="flex items-center gap-2 p-2 rounded hover:bg-[#111] transition-colors">
-                    <div className="w-5 h-5 bg-[#111] border border-[#333] rounded flex items-center justify-center flex-shrink-0">
-                      <span className="text-[10px] text-[#9f1239]">
-                        {idx + 1}
-                      </span>
-                    </div>
-                    <span className="text-sm text-white truncate">
-                      {project.name}
-                    </span>
-                  </div>
-                ))}
-              </div>
-              
-              <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-4 h-4 bg-[#0c0c0c] border-b border-r border-[#9f1239] rotate-45"></div>
-            </div>
-          </motion.div>
-        )}
-        
-        {/* Expanded Projects View */}
-        <AnimatePresence>
-          {isExpanded && projectCount > 0 && (
+    <div className="py-8 px-4">
+      <div className="mb-6">
+        <h2 className="text-2xl font-display text-white mb-2">Skills & Expertise</h2>
+        <p className="text-zinc-400 text-sm">
+          Tap on any skill to see projects where it was used
+        </p>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        {skills.slice(0, 8).map((skill, index) => {
+          const skillName = getSkillName(skill);
+          const skillLevel = getSkillLevel(skill);
+          const levelColor = getLevelColor(skillLevel);
+          const projectsUsingSkill = getProjectsUsingSkill(skillName);
+          const isExpanded = expandedSkill === index;
+
+          return (
             <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className="overflow-hidden mt-4"
+              key={index}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: index * 0.05 }}
+              className={`bg-[#111] border rounded-lg overflow-hidden ${
+                isExpanded ? 'border-[#9f1239]' : 'border-[#333]'
+              }`}
+              onClick={() => setExpandedSkill(isExpanded ? null : index)}
             >
-              <div className="pt-4 border-t border-[#333]">
-                <h4 className="text-sm font-medium text-white mb-3 flex items-center gap-2">
-                  <span className="text-[#9f1239]">↳</span>
-                  Projects using {skillName}:
-                </h4>
-                <div className="space-y-2">
-                  {projectsUsingSkill.map((project, idx) => (
-                    <Link
-                      key={idx}
-                      to={`/project/${projects.indexOf(project)}`}
-                      className="block group/project"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <div className="flex items-center gap-3 p-2 rounded hover:bg-[#111] transition-colors">
-                        <div className="w-8 h-8 bg-[#111] border border-[#333] rounded flex items-center justify-center flex-shrink-0">
-                          <span className="text-xs text-[#9f1239]">
-                            {idx + 1}
-                          </span>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="text-sm text-white truncate group-hover/project:text-[#9f1239] transition-colors">
-                            {project.name}
-                          </div>
-                          {project.technologies && (
-                            <div className="flex flex-wrap gap-1 mt-1">
-                              {project.technologies
-                                .filter(tech => 
-                                  tech.toLowerCase().includes(skillName.toLowerCase()) ||
-                                  skillName.toLowerCase().includes(tech.toLowerCase())
-                                )
-                                .slice(0, 2)
-                                .map((tech, techIdx) => (
-                                  <span
-                                    key={techIdx}
-                                    className="text-[10px] text-zinc-500 border border-[#333] px-1.5 py-0.5 rounded"
-                                  >
-                                    {tech}
-                                  </span>
-                                ))}
-                            </div>
-                          )}
-                        </div>
-                        <span className="text-zinc-600 group-hover/project:text-[#9f1239] transition-colors">
-                          →
-                        </span>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-        
-        {/* Expand Button */}
-        {projectCount > 0 && (
-          <div className="text-center mt-3 pt-3 border-t border-[#333]">
-            <span className="text-xs text-zinc-600">
-              {isExpanded ? 'Click to collapse' : 'Click to see projects'}
-            </span>
-          </div>
-        )}
-      </div>
-    </motion.div>
-  );
-};
-
-// === SKILLS GRID COMPONENT ===
-const SkillsGrid = ({ skills, projects }) => {
-  const [filterLevel, setFilterLevel] = useState("all");
-  
-  if (!skills || skills.length === 0) return null;
-  
-  const filteredSkills = filterLevel === "all" 
-    ? skills
-    : skills.filter(skill => {
-        const level = typeof skill === 'string' ? 'intermediate' : (skill.level || 'intermediate').toLowerCase();
-        return level === filterLevel.toLowerCase();
-      });
-  
-  const getLevelStats = () => {
-    const stats = {
-      beginner: 0,
-      intermediate: 0,
-      advanced: 0,
-      expert: 0,
-      master: 0
-    };
-    
-    skills.forEach(skill => {
-      const level = typeof skill === 'string' ? 'intermediate' : (skill.level || 'intermediate').toLowerCase();
-      if (stats[level] !== undefined) {
-        stats[level]++;
-      } else {
-        stats.intermediate++;
-      }
-    });
-    
-    return stats;
-  };
-  
-  const levelStats = getLevelStats();
-  
-  return (
-    <motion.div 
-      className="py-16 border-t border-[#333]"
-      initial="hidden"
-      animate="visible"
-      variants={containerVariants}
-    >
-      {/* Header */}
-      <div className="mb-12">
-        <motion.div variants={fadeInUp}>
-          <h2 className="text-3xl md:text-4xl font-display text-white mb-4">
-            Skills & Expertise
-          </h2>
-          <div className="h-1 w-20 bg-gradient-to-r from-[#9f1239] to-transparent mb-6"></div>
-          <p className="text-zinc-400 max-w-2xl">
-            My technical toolkit and how I've applied each skill in real projects.
-            Skill levels represent proficiency, not just project count.
-          </p>
-        </motion.div>
-        
-        {/* Level Filters */}
-        <motion.div 
-          className="flex flex-wrap gap-2 mt-6"
-          variants={scaleIn}
-        >
-          <button
-            onClick={() => setFilterLevel("all")}
-            className={`px-4 py-2 rounded-lg border font-mono text-xs transition-all ${
-              filterLevel === "all"
-                ? "bg-[#9f1239] border-[#9f1239] text-white"
-                : "bg-[#111] border-[#333] text-zinc-400 hover:border-[#9f1239]"
-            }`}
-          >
-            All Skills ({skills.length})
-          </button>
-          
-          {Object.entries(levelStats).map(([level, count]) => {
-            if (count === 0) return null;
-            
-            const getLevelColor = (lvl) => {
-              switch(lvl) {
-                case 'beginner': return 'bg-blue-500';
-                case 'intermediate': return 'bg-green-500';
-                case 'advanced': return 'bg-orange-500';
-                case 'expert': 
-                case 'master': return 'bg-[#9f1239]';
-                default: return 'bg-[#9f1239]';
-              }
-            };
-            
-            return (
-              <button
-                key={level}
-                onClick={() => setFilterLevel(level)}
-                className={`px-4 py-2 rounded-lg border font-mono text-xs transition-all flex items-center gap-2 ${
-                  filterLevel === level
-                    ? `bg-opacity-20 border-opacity-50 text-white`
-                    : "bg-[#111] border-[#333] text-zinc-400 hover:border-opacity-50"
-                }`}
-                style={{
-                  backgroundColor: filterLevel === level ? `${getLevelColor(level)}20` : undefined,
-                  borderColor: filterLevel === level ? getLevelColor(level) : undefined
-                }}
-              >
-                <div 
-                  className="w-2 h-2 rounded-full"
-                  style={{ backgroundColor: getLevelColor(level) }}
-                />
-                {level.charAt(0).toUpperCase() + level.slice(1)} ({count})
-              </button>
-            );
-          })}
-        </motion.div>
-      </div>
-      
-      {/* Skills Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredSkills.map((skill, index) => (
-          <SkillCard
-            key={index}
-            skill={skill}
-            projects={projects}
-            index={index}
-            totalSkills={skills.length}
-          />
-        ))}
-      </div>
-      
-      {/* Skills Insights */}
-      <motion.div 
-        className="mt-12 p-6 border border-[#333] rounded-xl bg-[#0c0c0c]"
-        variants={fadeInUp}
-      >
-        <h3 className="text-xl font-display text-white mb-6">Skill Insights</h3>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="space-y-4">
-            <h4 className="text-white font-medium">Understanding Levels</h4>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                  <span className="text-sm text-white">Beginner</span>
-                </div>
-                <span className="text-xs text-zinc-500">Learning & basics</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                  <span className="text-sm text-white">Intermediate</span>
-                </div>
-                <span className="text-xs text-zinc-500">Comfortable & productive</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
-                  <span className="text-sm text-white">Advanced</span>
-                </div>
-                <span className="text-xs text-zinc-500">Deep expertise</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-[#9f1239] rounded-full"></div>
-                  <span className="text-sm text-white">Expert/Master</span>
-                </div>
-                <span className="text-xs text-zinc-500">Can teach others</span>
-              </div>
-            </div>
-          </div>
-          
-          <div className="space-y-4">
-            <h4 className="text-white font-medium">Skill Distribution</h4>
-            <div className="space-y-4">
-              {Object.entries(levelStats).map(([level, count]) => {
-                if (count === 0) return null;
-                
-                const percentage = Math.round((count / skills.length) * 100);
-                const getLevelColor = (lvl) => {
-                  switch(lvl) {
-                    case 'beginner': return 'bg-blue-500';
-                    case 'intermediate': return 'bg-green-500';
-                    case 'advanced': return 'bg-orange-500';
-                    default: return 'bg-[#9f1239]';
-                  }
-                };
-                
-                return (
-                  <div key={level} className="space-y-1">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-zinc-300 capitalize">
-                        {level} ({count})
-                      </span>
-                      <span className="text-xs text-zinc-500">{percentage}%</span>
-                    </div>
-                    <div className="h-2 bg-[#222] rounded-full overflow-hidden">
-                      <motion.div
-                        className={`h-full ${getLevelColor(level)}`}
-                        initial={{ width: 0 }}
-                        animate={{ width: `${percentage}%` }}
-                        transition={{ delay: 0.3, duration: 1 }}
-                      />
-                    </div>
+              {/* Skill Header */}
+              <div className="p-3">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-sm font-medium text-white truncate">
+                      {skillName}
+                    </h3>
                   </div>
-                );
-              })}
-            </div>
-          </div>
-          
-          <div className="space-y-4">
-            <h4 className="text-white font-medium">Project Coverage</h4>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="text-center p-4 bg-[#111] border border-[#333] rounded-lg">
-                <div className="text-2xl font-display text-[#9f1239]">
-                  {skills.length}
+                  <div className={`w-2 h-2 rounded-full ${levelColor}`}></div>
                 </div>
-                <div className="text-xs text-zinc-500">Total Skills</div>
-              </div>
-              <div className="text-center p-4 bg-[#111] border border-[#333] rounded-lg">
-                <div className="text-2xl font-display text-[#c2410c]">
-                  {projects?.length || 0}
+
+                {/* Level indicator */}
+                <div className="h-1 bg-[#222] rounded-full overflow-hidden mb-2">
+                  <div 
+                    className={`h-full ${levelColor}`}
+                    style={{
+                      width: skillLevel === 'Beginner' ? '25%' :
+                             skillLevel === 'Intermediate' ? '50%' :
+                             skillLevel === 'Advanced' ? '75%' : '100%'
+                    }}
+                  ></div>
                 </div>
-                <div className="text-xs text-zinc-500">Projects</div>
+
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-zinc-500">{skillLevel}</span>
+                  {projectsUsingSkill.length > 0 && (
+                    <span className="text-xs text-zinc-600">
+                      {projectsUsingSkill.length} project{projectsUsingSkill.length !== 1 ? 's' : ''}
+                    </span>
+                  )}
+                </div>
               </div>
-            </div>
-            <p className="text-sm text-zinc-400">
-              Each skill is backed by real project experience. Click any skill to see specific projects where it was applied.
-            </p>
-          </div>
+
+              {/* Expanded Projects */}
+              <AnimatePresence>
+                {isExpanded && projectsUsingSkill.length > 0 && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="border-t border-[#333]"
+                  >
+                    <div className="p-3">
+                      <div className="text-xs text-zinc-400 mb-2">Used in:</div>
+                      <div className="space-y-2">
+                        {projectsUsingSkill.slice(0, 3).map((project, idx) => (
+                          <Link
+                            key={idx}
+                            to={`/project/${projects.indexOf(project)}`}
+                            className="flex items-center gap-2 p-2 rounded hover:bg-[#222] transition-colors"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <div className="w-6 h-6 bg-[#222] border border-[#333] rounded flex items-center justify-center flex-shrink-0">
+                              <span className="text-xs text-[#9f1239]">
+                                {idx + 1}
+                              </span>
+                            </div>
+                            <span className="text-sm text-white truncate">
+                              {project.name}
+                            </span>
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          );
+        })}
+      </div>
+
+      {/* View All Skills Button */}
+      {skills.length > 8 && (
+        <div className="mt-6 text-center">
+          <Link
+            to="/about#skills"
+            className="inline-block px-6 py-3 border border-[#333] text-zinc-400 rounded-lg hover:border-[#9f1239] transition-colors"
+          >
+            View All {skills.length} Skills
+          </Link>
         </div>
-      </motion.div>
-    </motion.div>
+      )}
+    </div>
   );
 };
 
-// === PROFILE HERO SECTION ===
-const ProfileHero = ({ profile, home }) => {
-  const [imageLoaded, setImageLoaded] = useState(false);
-
-  return (
-    <motion.div 
-      className="grid grid-cols-1 lg:grid-cols-12 gap-8 md:gap-12 items-center"
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-    >
-      {/* Left: Profile Image */}
-      <motion.div 
-        className="lg:col-span-5 relative"
-        variants={itemVariants}
-      >
-        <div className="relative group">
-          {/* Decorative Frame */}
-          <div className="absolute -inset-4 border-2 border-[#333] rounded-3xl transform rotate-3 group-hover:rotate-0 transition-transform duration-700"></div>
-          <div className="absolute -inset-2 border border-[#9f1239]/30 rounded-2xl"></div>
-          
-          {/* Main Image Container */}
-          <div className="relative overflow-hidden rounded-xl border-2 border-[#333] bg-gradient-to-br from-[#0c0c0c] to-[#1a1a1a] p-2">
-            {profile?.avatarUrl ? (
-              <>
-                <motion.img
-                  src={profile.avatarUrl}
-                  alt="Profile"
-                  className="w-full h-auto object-cover rounded-lg grayscale group-hover:grayscale-0 transition-all duration-700"
-                  initial={{ scale: 1.1, opacity: 0 }}
-                  animate={{ 
-                    scale: imageLoaded ? 1 : 1.1, 
-                    opacity: imageLoaded ? 1 : 0 
-                  }}
-                  onLoad={() => setImageLoaded(true)}
-                />
-                
-                {/* Image Overlay Effects */}
-                <motion.div 
-                  className="absolute inset-0 bg-gradient-to-t from-[#0c0c0c]/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                  initial={false}
-                />
-              </>
-            ) : (
-              <div className="aspect-square flex items-center justify-center text-zinc-600 font-mono text-sm">
-                [ Profile Image ]
-              </div>
-            )}
-          </div>
-
-          {/* Floating Info Badges */}
-          <motion.div 
-            className="absolute -bottom-4 -right-4 bg-[#0c0c0c] border border-[#9f1239] px-4 py-2 rounded-lg shadow-lg"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.8 }}
-          >
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-[#9f1239] rounded-full animate-pulse"></div>
-              <span className="font-mono text-xs text-white">AVAILABLE</span>
-            </div>
-          </motion.div>
-
-          <motion.div 
-            className="absolute -top-4 -left-4 bg-[#0c0c0c] border border-[#c2410c] px-3 py-1 rounded-lg"
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 1 }}
-          >
-            <span className="font-mono text-[10px] text-zinc-400">DEVELOPER</span>
-          </motion.div>
-        </div>
-      </motion.div>
-
-      {/* Right: Text Content */}
-      <motion.div 
-        className="lg:col-span-7 space-y-6"
-        variants={itemVariants}
-      >
-        {/* Welcome Tag */}
-        <div className="inline-flex items-center gap-3 px-4 py-2 bg-[#9f1239]/10 border border-[#9f1239]/30 rounded-full">
-          <div className="w-2 h-2 bg-[#9f1239] rounded-full animate-pulse"></div>
-          <span className="font-mono text-xs text-[#9f1239] tracking-widest">
-            {home?.headline?.includes("Welcome") ? "WELCOME" : "PORTFOLIO"}
-          </span>
-        </div>
-
-        {/* Dynamic Greeting */}
-        <DynamicGreeting home={home} />
-
-        {/* Subtitle from database */}
-        <motion.p 
-          className="text-xl md:text-2xl text-zinc-400 font-serif italic leading-relaxed"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-        >
-          "{home?.subtitle || "Creating digital experiences that matter."}"
-        </motion.p>
-
-        {/* About text from profile */}
-        {profile?.about && (
-          <div className="border-l-4 border-[#9f1239] pl-6 py-2">
-            <p className="text-base text-zinc-300 leading-relaxed line-clamp-3">
-              {profile.about}
-            </p>
-          </div>
-        )}
-
-        {/* CTA Buttons */}
-        <motion.div 
-          className="flex flex-wrap gap-4 pt-4"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-        >
-          <Link
-            to="/projects"
-            className="group relative px-8 py-4 bg-[#9f1239] text-white font-mono text-sm tracking-widest overflow-hidden rounded-lg"
-          >
-            <span className="relative z-10">VIEW MY WORK →</span>
-            <motion.div 
-              className="absolute inset-0 bg-white"
-              initial={{ x: "-100%" }}
-              whileHover={{ x: 0 }}
-              transition={{ duration: 0.3 }}
-            />
-          </Link>
-          
-          <Link
-            to="/about"
-            className="group px-8 py-4 border-2 border-[#333] text-white font-mono text-sm tracking-widest hover:border-[#9f1239] transition-all duration-300 rounded-lg"
-          >
-            LEARN ABOUT ME
-          </Link>
-        </motion.div>
-      </motion.div>
-    </motion.div>
-  );
-};
-
-// === FEATURED PROJECTS PREVIEW ===
-const FeaturedProjects = ({ projects }) => {
+// === MOBILE-FRIENDLY PROJECTS PREVIEW ===
+const MobileProjectsPreview = ({ projects }) => {
   const featuredProjects = projects?.slice(0, 3) || [];
 
-  if (featuredProjects.length === 0) return null;
+  if (featuredProjects.length === 0) {
+    return (
+      <div className="py-8 px-4">
+        <div className="text-center p-8 border-2 border-dashed border-[#333] rounded-lg">
+          <p className="text-zinc-500">No projects added yet</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <motion.div 
-      className="py-16 border-t border-[#333]"
-      initial="hidden"
-      animate="visible"
-      variants={containerVariants}
-    >
-      <div className="mb-12">
-        <motion.h2 
-          className="text-3xl md:text-4xl font-display text-white mb-4"
-          variants={fadeInUp}
-        >
-          Recent Projects
-        </motion.h2>
-        <motion.p 
-          className="text-zinc-400 max-w-2xl"
-          variants={fadeInUp}
-        >
-          A selection of my recent work. Each project represents unique challenges and solutions.
-        </motion.p>
+    <div className="py-8 px-4">
+      <div className="mb-6">
+        <h2 className="text-2xl font-display text-white mb-2">Recent Projects</h2>
+        <p className="text-zinc-400 text-sm">
+          A selection of my recent work
+        </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {featuredProjects.map((project, idx) => (
+      <div className="space-y-4">
+        {featuredProjects.map((project, index) => (
           <motion.div
-            key={idx}
-            variants={itemVariants}
-            whileHover={{ y: -5 }}
-            className="group"
+            key={index}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.1 }}
+            whileTap={{ scale: 0.98 }}
           >
-            <Link to={`/project/${projects?.indexOf(project)}`} className="block">
-              <div className="bg-[#0c0c0c] border border-[#333] rounded-xl overflow-hidden hover:border-[#9f1239] transition-all duration-300 h-full">
+            <Link to={`/project/${projects.indexOf(project)}`} className="block">
+              <div className="bg-[#111] border border-[#333] rounded-lg overflow-hidden">
                 {/* Project Image */}
-                <div className="aspect-video bg-[#111] overflow-hidden relative">
+                <div className="aspect-video bg-[#222] overflow-hidden relative">
                   {project.image ? (
-                    <>
-                      <motion.img
-                        src={project.image}
-                        alt={project.name}
-                        className="w-full h-full object-cover"
-                        whileHover={{ scale: 1.05 }}
-                        transition={{ duration: 0.4 }}
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-[#0c0c0c] via-transparent to-transparent"></div>
-                    </>
+                    <img
+                      src={project.image}
+                      alt={project.name}
+                      className="w-full h-full object-cover"
+                    />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-zinc-600 font-mono">
-                      Project Preview
+                    <div className="w-full h-full flex items-center justify-center text-zinc-600">
+                      Project Image
                     </div>
                   )}
-                  {/* Project Badge */}
-                  <div className="absolute top-3 left-3 bg-[#0c0c0c]/90 backdrop-blur-sm border border-[#333] px-3 py-1 rounded-full">
-                    <span className="font-mono text-[10px] text-[#9f1239]">PROJECT #{idx + 1}</span>
+                  <div className="absolute top-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
+                    #{index + 1}
                   </div>
                 </div>
 
-                {/* Content */}
-                <div className="p-6">
-                  <h3 className="text-xl font-display text-white mb-3 line-clamp-1 group-hover:text-[#9f1239] transition-colors">
+                {/* Project Info */}
+                <div className="p-4">
+                  <h3 className="text-lg font-medium text-white mb-2">
                     {project.name}
                   </h3>
                   
-                  <p className="text-zinc-400 text-sm line-clamp-2 mb-4">
-                    {project.description}
+                  <p className="text-zinc-400 text-sm mb-3 line-clamp-2">
+                    {project.description || "No description available"}
                   </p>
 
                   {/* Tech Tags */}
                   {project.technologies && project.technologies.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5">
-                      {project.technologies.slice(0, 3).map((tech, techIdx) => (
+                    <div className="flex flex-wrap gap-1">
+                      {project.technologies.slice(0, 3).map((tech, idx) => (
                         <span
-                          key={techIdx}
-                          className="text-xs text-zinc-500 border border-[#333] px-2 py-1 rounded hover:border-[#9f1239] hover:text-[#9f1239] transition-colors"
+                          key={idx}
+                          className="text-xs text-zinc-500 border border-[#333] px-2 py-1 rounded"
                         >
                           {tech}
                         </span>
@@ -962,97 +591,78 @@ const FeaturedProjects = ({ projects }) => {
           </motion.div>
         ))}
       </div>
-      
+
       {/* View All Button */}
       {projects && projects.length > 3 && (
-        <motion.div 
-          className="text-center mt-8"
-          variants={scaleIn}
-        >
+        <div className="mt-6 text-center">
           <Link
             to="/projects"
-            className="inline-flex items-center gap-2 px-6 py-3 border-2 border-[#333] text-white font-mono text-sm tracking-widest rounded-lg hover:border-[#9f1239] transition-all group"
+            className="inline-block px-6 py-3 border-2 border-[#333] text-white rounded-lg hover:border-[#9f1239] transition-colors"
           >
-            View All Projects ({projects.length})
-            <motion.span
-              animate={{ x: [0, 5, 0] }}
-              transition={{ duration: 1.5, repeat: Infinity }}
-              className="group-hover:text-[#9f1239]"
-            >
-              →
-            </motion.span>
+            View All {projects.length} Projects
           </Link>
-        </motion.div>
+        </div>
       )}
-    </motion.div>
+    </div>
   );
 };
 
-// === CALL TO ACTION SECTION ===
-const CallToAction = ({ home }) => {
+// === MOBILE-FRIENDLY CALL TO ACTION ===
+const MobileCallToAction = () => {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 30 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.5 }}
-      className="relative overflow-hidden rounded-2xl"
-    >
-      <motion.div 
-        className="absolute inset-0 bg-gradient-to-r from-[#9f1239]/10 to-[#c2410c]/10"
-        animate={{ 
-          backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"]
-        }}
-        transition={{ 
-          duration: 8,
-          repeat: Infinity,
-          ease: "linear"
-        }}
-        style={{ 
-          backgroundSize: "200% 200%"
-        }}
-      />
-      
-      <div className="relative border border-[#9f1239]/20 rounded-2xl p-8 md:p-12 text-center backdrop-blur-sm">
-        <h3 className="text-2xl md:text-3xl font-display text-white mb-6">
-          Let's Create Something Together
+    <div className="py-8 px-4">
+      <div className="bg-gradient-to-r from-[#9f1239]/10 to-[#c2410c]/10 border border-[#9f1239]/20 rounded-xl p-6 text-center">
+        <h3 className="text-xl font-display text-white mb-4">
+          Let's Work Together
         </h3>
-        <p className="text-zinc-300 mb-8 max-w-2xl mx-auto">
-          I'm always open to discussing new projects, creative ideas, or opportunities to be part of your vision.
+        <p className="text-zinc-300 mb-6">
+          Have a project in mind? Let's create something amazing!
         </p>
-        <div className="flex flex-wrap gap-4 justify-center">
+        <div className="flex flex-col gap-3">
           <Link
             to="/contact"
-            className="px-8 py-3 bg-[#9f1239] text-white font-medium rounded-lg hover:bg-[#7f0e2a] transition-colors"
+            className="w-full bg-[#9f1239] text-white font-medium py-4 rounded-lg text-center active:scale-95 transition-all"
           >
             Get in Touch
           </Link>
-          <Link
-            to="/projects"
-            className="px-8 py-3 border-2 border-[#333] text-white font-medium rounded-lg hover:border-[#9f1239] transition-all"
+          <a
+            href="tel:+1234567890"
+            className="w-full bg-transparent border-2 border-[#333] text-white font-medium py-4 rounded-lg text-center active:scale-95 transition-all"
           >
-            See More Work
-          </Link>
+            Call Now
+          </a>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 };
 
 // === MAIN HOME COMPONENT ===
 export default function Home() {
   const { data, loading } = usePortfolio();
-  const { home, profile, skills, projects } = data || {};
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center p-4">
         <motion.div
           animate={{ opacity: [0.5, 1, 0.5] }}
           transition={{ duration: 1.5, repeat: Infinity }}
           className="text-center"
         >
-          <div className="w-16 h-16 border-4 border-[#9f1239] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="font-mono text-sm text-zinc-500">Loading portfolio...</p>
+          <div className="w-14 h-14 border-3 border-[#9f1239] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="font-mono text-sm text-zinc-500">Loading...</p>
         </motion.div>
       </div>
     );
@@ -1060,82 +670,60 @@ export default function Home() {
 
   return (
     <PageTransition>
-      <div className="relative min-h-screen overflow-hidden">
+      <div className="relative min-h-screen">
         {/* Canvas Background */}
         <HomeCanvas />
 
         {/* Main Content */}
         <div className="relative z-10">
           {/* Hero Section */}
-          <section className="py-12 md:py-24 px-4 md:px-8 max-w-7xl mx-auto">
-            <ProfileHero profile={profile} home={home} />
+          <section className="pt-4">
+            <MobileHero data={data} />
           </section>
 
           {/* Skills Section */}
-          <section className="px-4 md:px-8 max-w-7xl mx-auto">
-            <SkillsGrid skills={skills} projects={projects} />
+          <section className="border-t border-[#333]">
+            <MobileSkillsGrid 
+              skills={data?.skills} 
+              projects={data?.projects} 
+            />
           </section>
 
-          {/* Featured Projects */}
-          <section className="px-4 md:px-8 max-w-7xl mx-auto">
-            <FeaturedProjects projects={projects} />
+          {/* Projects Section */}
+          <section className="border-t border-[#333]">
+            <MobileProjectsPreview projects={data?.projects} />
           </section>
 
           {/* Call to Action */}
-          <section className="py-16 px-4 md:px-8 max-w-7xl mx-auto">
-            <CallToAction home={home} />
+          <section className="border-t border-[#333]">
+            <MobileCallToAction />
           </section>
 
-          {/* Stats Footer */}
-          <motion.footer
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.8 }}
-            className="py-8 border-t border-[#333] mt-8"
-          >
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 px-4 md:px-8 max-w-7xl mx-auto">
-              {[
-                { 
-                  label: "Projects", 
-                  value: projects?.length || 0, 
-                  color: "#9f1239",
-                  desc: "Completed works"
-                },
-                { 
-                  label: "Skills", 
-                  value: skills?.length || 0, 
-                  color: "#c2410c",
-                  desc: "Technologies mastered"
-                },
-                { 
-                  label: "Availability", 
-                  value: "Open", 
-                  color: "#e5e5e5",
-                  desc: "For new opportunities"
-                }
-              ].map((stat, idx) => (
-                <div key={idx} className="text-center group">
-                  <motion.div 
-                    className="text-3xl md:text-4xl font-display mb-2"
-                    style={{ color: stat.color }}
-                    whileHover={{ scale: 1.1 }}
-                    transition={{ type: "spring", stiffness: 300 }}
-                  >
-                    {stat.value}
-                  </motion.div>
-                  <div className="text-sm text-zinc-400 mb-1">{stat.label}</div>
-                  <div className="text-xs text-zinc-600">{stat.desc}</div>
-                  <motion.div
-                    className="h-0.5 mx-auto mt-2"
-                    style={{ backgroundColor: stat.color }}
-                    initial={{ width: 0 }}
-                    animate={{ width: "40%" }}
-                    transition={{ delay: 1 + idx * 0.1, duration: 0.8 }}
-                  />
-                </div>
-              ))}
+          {/* Mobile Navigation Helper */}
+          <div className="fixed bottom-6 right-6 z-50">
+            <motion.button
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 2 }}
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+              className="w-12 h-12 rounded-full bg-[#9f1239] text-white flex items-center justify-center shadow-lg active:scale-90 transition-all"
+              aria-label="Scroll to top"
+            >
+              ↑
+            </motion.button>
+          </div>
+
+          {/* Mobile Footer */}
+          <footer className="py-6 px-4 border-t border-[#333]">
+            <div className="text-center">
+              <p className="text-sm text-zinc-500 mb-2">
+                Optimized for mobile experience
+              </p>
+              <div className="text-xs text-zinc-600">
+                © {new Date().getFullYear()} Portfolio
+              </div>
             </div>
-          </motion.footer>
+          </footer>
         </div>
       </div>
     </PageTransition>

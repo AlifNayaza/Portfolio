@@ -345,7 +345,7 @@ export default function Projects() {
           ) : (
             <AnimatePresence mode="wait">
               {viewMode === "grid" ? (
-                // GRID VIEW
+                // GRID VIEW - MOBILE: 1 kolom, DESKTOP: 2-3 kolom
                 <motion.div
                   key="grid"
                   variants={staggerContainer}
@@ -438,14 +438,14 @@ export default function Projects() {
                   ))}
                 </motion.div>
               ) : (
-                // LIST VIEW
+                // LIST VIEW - MOBILE: Compact horizontal layout, DESKTOP: Full details
                 <motion.div
                   key="list"
                   variants={staggerContainer}
                   initial="hidden"
                   animate="visible"
                   exit={{ opacity: 0 }}
-                  className="space-y-4"
+                  className="space-y-3 md:space-y-4"
                 >
                   {filteredProjects.map((project, idx) => (
                     <motion.div
@@ -458,11 +458,11 @@ export default function Projects() {
                     >
                       <Link
                         to={`/project/${projects.indexOf(project)}`}
-                        className="block border border-[#333] bg-[#0c0c0c] hover:border-[#9f1239] transition-all duration-300 p-4 md:p-6"
+                        className="block border border-[#333] bg-[#0c0c0c] hover:border-[#9f1239] transition-all duration-300 p-3 md:p-6"
                       >
-                        <div className="flex flex-col md:flex-row gap-4 md:gap-6 items-start">
-                          {/* Thumbnail */}
-                          <div className="w-full md:w-48 lg:w-56 aspect-video bg-[#111] border border-[#333] overflow-hidden flex-shrink-0">
+                        <div className="flex flex-row md:flex-row gap-3 md:gap-6 items-center">
+                          {/* Thumbnail - Mobile: small square, Desktop: normal */}
+                          <div className="w-16 h-16 md:w-48 lg:w-56 md:aspect-video bg-[#111] border border-[#333] overflow-hidden flex-shrink-0">
                             {project.image ? (
                               <img
                                 src={project.image}
@@ -478,42 +478,56 @@ export default function Projects() {
 
                           {/* Content */}
                           <div className="flex-1 min-w-0">
-                            <div className="flex justify-between items-start mb-2">
-                              <div>
-                                <div className="font-mono text-xs text-[#9f1239] mb-1">
-                                  Project #{projects.indexOf(project) + 1}
+                            <div className="flex justify-between items-center mb-1 md:mb-2">
+                              <div className="overflow-hidden">
+                                {/* Project number - only on mobile */}
+                                <div className="font-mono text-[10px] text-[#9f1239] mb-1 md:hidden">
+                                  #{projects.indexOf(project) + 1}
                                 </div>
-                                <h3 className="text-xl md:text-2xl font-display text-white group-hover:text-[#9f1239] transition-colors">
+                                <h3 className="text-base md:text-2xl font-display text-white group-hover:text-[#9f1239] transition-colors truncate">
                                   {project.name}
                                 </h3>
                               </div>
-                              <span className="text-zinc-500 group-hover:text-[#9f1239] transition-colors flex-shrink-0">
+                              <span className="text-zinc-500 group-hover:text-[#9f1239] transition-colors flex-shrink-0 ml-2">
                                 →
                               </span>
                             </div>
 
-                            <p className="text-zinc-400 mb-4 line-clamp-2">
+                            {/* Description - hidden on mobile, shown on desktop */}
+                            <p className="text-zinc-400 mb-2 line-clamp-1 md:line-clamp-2 hidden md:block">
                               {project.description || "No description provided"}
                             </p>
 
-                            {/* Tech Tags */}
+                            {/* Tech Tags - Mobile: limited & compact, Desktop: full */}
                             {project.technologies && project.technologies.length > 0 && (
-                              <div className="flex flex-wrap gap-1.5">
-                                {project.technologies.slice(0, 5).map((tech, techIdx) => (
+                              <div className="flex flex-wrap gap-1">
+                                {project.technologies.slice(0, window.innerWidth < 768 ? 2 : 5).map((tech, techIdx) => (
                                   <span
                                     key={techIdx}
-                                    className="text-xs text-zinc-500 border border-[#333] px-2 py-1 rounded"
+                                    className="text-[10px] md:text-xs text-zinc-500 border border-[#333] px-1.5 py-0.5 md:px-2 md:py-1 rounded"
                                   >
                                     {tech}
                                   </span>
                                 ))}
-                                {project.technologies.length > 5 && (
-                                  <span className="text-xs text-zinc-600">
-                                    +{project.technologies.length - 5}
+                                {project.technologies.length > (window.innerWidth < 768 ? 2 : 5) && (
+                                  <span className="text-[10px] md:text-xs text-zinc-600">
+                                    +{project.technologies.length - (window.innerWidth < 768 ? 2 : 5)}
                                   </span>
                                 )}
                               </div>
                             )}
+
+                            {/* Project number and date - only on desktop */}
+                            <div className="hidden md:flex justify-between items-center mt-2">
+                              <div className="font-mono text-xs text-[#9f1239]">
+                                Project #{projects.indexOf(project) + 1}
+                              </div>
+                              {project.date && (
+                                <div className="text-xs text-zinc-600">
+                                  {project.date}
+                                </div>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </Link>

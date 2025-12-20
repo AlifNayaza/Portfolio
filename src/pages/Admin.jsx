@@ -23,7 +23,25 @@ const clearAuthToken = () => {
 const mergeWithDefaults = (fetchedData) => {
     const defaults = {
         home: { logoName: "", headline: "", subtitle: "" },
-        profile: { about: "", avatarUrl: "" },
+        profile: { about: "", images: [] }, // Changed to images array
+        aboutPage: {
+            location: "Remote • Worldwide",
+            specialization: "Full-Stack Development",
+            availability: "Available for work",
+            availabilityStatus: "open",
+            coreValues: [
+                { title: "Problem Solving", desc: "Breaking down complex challenges into manageable solutions", icon: "🔍" },
+                { title: "Clean Code", desc: "Writing maintainable, scalable, and well-documented code", icon: "✨" },
+                { title: "Continuous Learning", desc: "Staying updated with latest technologies and best practices", icon: "📚" },
+                { title: "User Focus", desc: "Building with the end-user experience as priority", icon: "🎯" }
+            ],
+            strengths: [
+                "Project Leadership",
+                "Technical Strategy",
+                "Team Collaboration",
+                "Agile Development"
+            ]
+        },
         soundtrack: [],
         skills: [],
         experience: [],
@@ -31,32 +49,45 @@ const mergeWithDefaults = (fetchedData) => {
         contact: { email: "", linkedin: "", github: "", instagram: "", twitter: "" }
     };
 
-    // Deep merge untuk memastikan semua field ada
     const merged = { ...defaults };
     
     if (fetchedData) {
-        // Merge home
         if (fetchedData.home) {
             merged.home = { ...defaults.home, ...fetchedData.home };
         }
         
-        // Merge profile
         if (fetchedData.profile) {
-            merged.profile = { ...defaults.profile, ...fetchedData.profile };
+            // Handle migration from avatarUrl to images array
+            const profileData = { ...defaults.profile };
+            
+            if (fetchedData.profile.avatarUrl && !fetchedData.profile.images) {
+                profileData.images = [fetchedData.profile.avatarUrl];
+                delete fetchedData.profile.avatarUrl;
+            }
+            
+            merged.profile = { ...profileData, ...fetchedData.profile };
+            merged.profile.images = Array.isArray(merged.profile.images) ? merged.profile.images : [];
         }
         
-        // Merge contact
+        if (fetchedData.aboutPage) {
+            merged.aboutPage = { ...defaults.aboutPage, ...fetchedData.aboutPage };
+            if (!merged.aboutPage.coreValues || !Array.isArray(merged.aboutPage.coreValues)) {
+                merged.aboutPage.coreValues = defaults.aboutPage.coreValues;
+            }
+            if (!merged.aboutPage.strengths || !Array.isArray(merged.aboutPage.strengths)) {
+                merged.aboutPage.strengths = defaults.aboutPage.strengths;
+            }
+        }
+        
         if (fetchedData.contact) {
             merged.contact = { ...defaults.contact, ...fetchedData.contact };
         }
         
-        // Arrays - gunakan yang dari database jika ada
         merged.soundtrack = fetchedData.soundtrack || [];
         merged.skills = fetchedData.skills || [];
         merged.experience = fetchedData.experience || [];
         merged.projects = fetchedData.projects || [];
 
-        // Backward compatibility: konversi 'music' ke 'soundtrack'
         if (fetchedData.music && merged.soundtrack.length === 0) {
             merged.soundtrack = Array.isArray(fetchedData.music) 
                 ? fetchedData.music 
@@ -67,7 +98,7 @@ const mergeWithDefaults = (fetchedData) => {
     return merged;
 };
 
-// --- Helper Components (Internal) ---
+// --- Helper Components ---
 const AdminInput = ({ label, textarea, ...props }) => {
     const Comp = textarea ? "textarea" : "input";
     return (
@@ -97,7 +128,200 @@ const SectionHeader = ({ title, onAddItem, buttonLabel }) => (
     </div>
 );
 
-// --- KOMPONEN BARU: Tech Stack Input ---
+// === COMPONENT UNTUK MULTIPLE IMAGES ===
+const ProfileImagesManager = ({ images = [], onChange }) => {
+    const [draggedIndex, setDraggedIndex] = useState(null);
+
+    const handleAddImage = (url) => {
+        onChange([...images, url]);
+        toast.success("Image added successfully");
+    };
+
+    const handleRemoveImage = (index) => {
+        const newImages = images.filter((_, i) => i !== index);
+        onChange(newImages);
+        toast.success("Image removed");
+    };
+
+    const handleDragStart = (e, index) => {
+        setDraggedIndex(index);
+        e.dataTransfer.effectAllowed = 'move';
+    };
+
+    const handleDragOver = (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+    };
+
+    const handleDrop = (e, targetIndex) => {
+        e.preventDefault();
+        if (draggedIndex === null || draggedIndex === targetIndex) return;
+        
+        const newImages = [...images];
+        const [draggedItem] = newImages.splice(draggedIndex, 1);
+        newImages.splice(targetIndex, 0, draggedItem);
+        
+        onChange(newImages);
+        setDraggedIndex(null);
+        toast.success("Image order updated");
+    };
+
+    return (
+        <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="md:col-span-2">
+                    <label className="block font-mono text-[10px] text-zinc-500 uppercase tracking-widest mb-2 border-l-2 border-[#9f1239] pl-2">
+                        Profile Images ({images.length} images)
+                    </label>
+                    
+                    <div className="space-y-4">
+                        {/* Image Grid */}
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                            {images.map((image, index) => (
+                                <motion.div
+                                    key={index}
+                                    layout
+                                    draggable
+                                    onDragStart={(e) => handleDragStart(e, index)}
+                                    onDragOver={handleDragOver}
+                                    onDrop={(e) => handleDrop(e, index)}
+                                    className="relative group aspect-square border-2 border-dashed border-[#333] hover:border-[#9f1239] rounded-lg overflow-hidden bg-[#111]"
+                                >
+                                    <img
+                                        src={image}
+                                        alt={`Profile image ${index + 1}`}
+                                        className="w-full h-full object-cover"
+                                    />
+                                    
+                                    {/* Overlay Controls */}
+                                    <div className="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                        <div className="flex items-center gap-1 text-xs text-white bg-black/50 px-2 py-1 rounded">
+                                            <span className="font-mono">#{index + 1}</span>
+                                            <span className="text-[10px] text-zinc-400">Drag to reorder</span>
+                                        </div>
+                                        <button
+                                            onClick={() => handleRemoveImage(index)}
+                                            className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs"
+                                        >
+                                            ×
+                                        </button>
+                                    </div>
+                                </motion.div>
+                            ))}
+                            
+                            {/* Add New Image Button */}
+                            <div className="relative aspect-square">
+                                <label className="cursor-pointer w-full h-full flex flex-col items-center justify-center border-2 border-dashed border-[#333] hover:border-[#9f1239] rounded-lg bg-[#0c0c0c] hover:bg-[#111] transition-all group">
+                                    <span className="text-3xl text-zinc-600 group-hover:text-[#9f1239] mb-2">+</span>
+                                    <span className="font-mono text-xs text-zinc-500 group-hover:text-white">Add Image</span>
+                                    <input
+                                        type="file"
+                                        className="hidden"
+                                        onChange={async (e) => {
+                                            const file = e.target.files[0];
+                                            if (!file) return;
+                                            
+                                            const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+                                            const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_PRESET;
+                                            
+                                            const formData = new FormData();
+                                            formData.append("file", file);
+                                            formData.append("upload_preset", UPLOAD_PRESET);
+                                            
+                                            try {
+                                                const res = await axios.post(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, formData);
+                                                handleAddImage(res.data.secure_url);
+                                            } catch (err) {
+                                                toast.error("Failed to upload image");
+                                            }
+                                        }}
+                                    />
+                                </label>
+                            </div>
+                        </div>
+                        
+                        {/* Image Uploader Component (for bulk upload) */}
+                        <div className="pt-4 border-t border-[#333]">
+                            <label className="block font-mono text-[10px] text-zinc-500 uppercase tracking-widest mb-2">
+                                Quick Image Upload
+                            </label>
+                            <div className="flex items-center gap-4">
+                                <ImageUploader 
+                                    onUpload={handleAddImage}
+                                    compact={true}
+                                />
+                                <div className="text-xs text-zinc-500">
+                                    <p>• Upload multiple profile images</p>
+                                    <p>• Drag to reorder</p>
+                                    <p>• First image is main profile</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                {/* Preview Section */}
+                <div className="space-y-4">
+                    <label className="block font-mono text-[10px] text-zinc-500 uppercase tracking-widest border-l-2 border-[#9f1239] pl-2">
+                        Live Preview
+                    </label>
+                    
+                    <div className="aspect-square border border-[#333] rounded-lg overflow-hidden bg-[#111]">
+                        {images.length > 0 ? (
+                            <div className="relative w-full h-full">
+                                <img
+                                    src={images[0]}
+                                    alt="Main profile preview"
+                                    className="w-full h-full object-cover"
+                                />
+                                {images.length > 1 && (
+                                    <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded-full font-mono">
+                                        +{images.length - 1} more
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="w-full h-full flex items-center justify-center text-zinc-600 font-mono text-sm">
+                                No images added
+                            </div>
+                        )}
+                    </div>
+                    
+                    <div className="text-xs text-zinc-500 space-y-2">
+                        <p className="font-mono text-[10px] text-[#9f1239]">💡 Tips:</p>
+                        <p>• Add 3-5 high-quality images</p>
+                        <p>• First image appears as main profile</p>
+                        <p>• Use consistent aspect ratio (1:1 recommended)</p>
+                        <p>• Images will display in carousel on homepage</p>
+                    </div>
+                </div>
+            </div>
+            
+            {images.length > 0 && (
+                <motion.div 
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-[#9f1239]/10 border border-[#9f1239]/30 rounded-lg p-4"
+                >
+                    <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-[#9f1239] rounded-full flex items-center justify-center">
+                            <span className="text-white text-sm">✓</span>
+                        </div>
+                        <div>
+                            <p className="text-sm text-white font-mono">Profile Images Configured</p>
+                            <p className="text-xs text-zinc-400">
+                                {images.length} image{images.length !== 1 ? 's' : ''} will display in carousel on homepage
+                            </p>
+                        </div>
+                    </div>
+                </motion.div>
+            )}
+        </div>
+    );
+};
+
+// ... (Rest of AdminInput, SectionHeader, TechStackInput components remain the same)
+
 const TechStackInput = ({ technologies = [], onChange, projectIndex }) => {
     const [inputValue, setInputValue] = useState("");
 
@@ -125,7 +349,6 @@ const TechStackInput = ({ technologies = [], onChange, projectIndex }) => {
                 Technologies Used
             </label>
             
-            {/* Input Field */}
             <div className="flex gap-2">
                 <input
                     type="text"
@@ -144,7 +367,6 @@ const TechStackInput = ({ technologies = [], onChange, projectIndex }) => {
                 </button>
             </div>
 
-            {/* Tech Badges */}
             {technologies.length > 0 && (
                 <div className="flex flex-wrap gap-2 p-3 bg-[#111] border border-[#333] rounded-md">
                     {technologies.map((tech, idx) => (
@@ -175,7 +397,7 @@ const TechStackInput = ({ technologies = [], onChange, projectIndex }) => {
 };
 
 const icons = {
-  home: '📖', profile: '👤', skills: '✨', projects: '💼', 
+  home: '📖', profile: '👤', aboutpage: '📄', skills: '✨', projects: '💼', 
   experience: '⏳', soundtrack: '🎵', contact: '📨',
 };
 
@@ -194,11 +416,18 @@ const listItemVariants = {
 export default function Admin() {
     const navigate = useNavigate();
     const { refreshData } = usePortfolio();
-    const [password, setPassword] = useState("");
     const [activeTab, setActiveTab] = useState("home");
     const [formData, setFormData] = useState({
         home: { logoName: "", headline: "", subtitle: "" },
-        profile: { about: "", avatarUrl: "" },
+        profile: { about: "", images: [] }, // Changed to images array
+        aboutPage: {
+            location: "Remote • Worldwide",
+            specialization: "Full-Stack Development",
+            availability: "Available for work",
+            availabilityStatus: "open",
+            coreValues: [],
+            strengths: []
+        },
         soundtrack: [],
         skills: [],
         experience: [],
@@ -303,6 +532,14 @@ export default function Admin() {
         });
     };
 
+    // Function to update profile images
+    const updateProfileImages = (newImages) => {
+        setFormData(prev => ({
+            ...prev,
+            profile: { ...prev.profile, images: newImages }
+        }));
+    };
+
     if (isLoading) {
         return (
             <div className="min-h-screen bg-[#0c0c0c] flex items-center justify-center">
@@ -314,13 +551,14 @@ export default function Admin() {
     }
 
     const tabs = [
-        { id: 'home', label: 'Chronicle', icon: icons.home },
-        { id: 'profile', label: 'Character', icon: icons.profile },
-        { id: 'skills', label: 'Abilities', icon: icons.skills },
-        { id: 'projects', label: 'Archives', icon: icons.projects },
-        { id: 'experience', label: 'Timeline', icon: icons.experience },
-        { id: 'soundtrack', label: 'Soundtrack', icon: icons.soundtrack },
-        { id: 'contact', label: 'Signals', icon: icons.contact }
+        { id: 'home', label: 'Home Page', icon: icons.home },
+        { id: 'profile', label: 'Biography', icon: icons.profile },
+        { id: 'aboutpage', label: 'About Page', icon: icons.aboutpage },
+        { id: 'skills', label: 'Skills', icon: icons.skills },
+        { id: 'projects', label: 'Projects', icon: icons.projects },
+        { id: 'experience', label: 'Experience', icon: icons.experience },
+        { id: 'soundtrack', label: 'Music', icon: icons.soundtrack },
+        { id: 'contact', label: 'Contact', icon: icons.contact }
     ];
 
     return (
@@ -380,7 +618,7 @@ export default function Admin() {
                         >
                             {activeTab === "home" && (
                                 <div>
-                                    <SectionHeader title="Chronicle Settings" />
+                                    <SectionHeader title="Home Page Settings" />
                                     <div className="space-y-6">
                                         <AdminInput label="Author Name (Logo)" value={formData.home?.logoName || ""} onChange={e=>setNest('home','logoName',e.target.value)} />
                                         <AdminInput label="Main Headline" value={formData.home?.headline || ""} onChange={e=>setNest('home','headline',e.target.value)} />
@@ -391,14 +629,239 @@ export default function Admin() {
 
                             {activeTab === "profile" && (
                                 <div>
-                                    <SectionHeader title="Character Profile" />
-                                    <div className="grid md:grid-cols-3 gap-6">
-                                        <div className="md:col-span-2">
-                                            <AdminInput textarea rows={10} label="Biography / Story" value={formData.profile?.about || ""} onChange={e=>setNest('profile','about',e.target.value)} />
+                                    <SectionHeader title="Biography & Profile Images" />
+                                    <div className="space-y-8">
+                                        {/* About Section */}
+                                        <div className="bg-[#111] border border-[#333] rounded-lg p-6">
+                                            <h3 className="text-lg font-display text-white mb-4 border-b border-[#333] pb-3">
+                                                📝 Biography
+                                            </h3>
+                                            <AdminInput 
+                                                textarea 
+                                                rows={10} 
+                                                label="About Me / Biography" 
+                                                value={formData.profile?.about || ""} 
+                                                onChange={e=>setNest('profile','about',e.target.value)} 
+                                            />
                                         </div>
-                                        <div>
-                                            <label className="block font-mono text-[10px] text-zinc-500 uppercase tracking-widest mb-2 border-l-2 border-[#9f1239] pl-2">Portrait</label>
-                                            <ImageUploader currentImage={formData.profile?.avatarUrl || ""} onUpload={url=>setNest('profile','avatarUrl',url)} onDelete={()=>setNest('profile','avatarUrl',"")} />
+
+                                        {/* Multiple Images Section */}
+                                        <div className="bg-[#111] border border-[#333] rounded-lg p-6">
+                                            <h3 className="text-lg font-display text-white mb-6 border-b border-[#333] pb-3">
+                                                🖼️ Profile Images Gallery
+                                            </h3>
+                                            <ProfileImagesManager 
+                                                images={formData.profile?.images || []} 
+                                                onChange={updateProfileImages}
+                                            />
+                                        </div>
+
+                                        {/* Tips Section */}
+                                        <div className="bg-[#9f1239]/10 border border-[#9f1239]/30 rounded-lg p-6">
+                                            <h4 className="text-sm font-mono text-[#9f1239] mb-4 flex items-center gap-2">
+                                                <span>💡</span> Profile Tips:
+                                            </h4>
+                                            <ul className="text-xs text-zinc-400 space-y-2 font-mono">
+                                                <li>• <span className="text-white">Biography:</span> Write 2-3 paragraphs about yourself, your journey, and passion</li>
+                                                <li>• <span className="text-white">Images:</span> Upload 3-5 high-quality photos showing different aspects</li>
+                                                <li>• <span className="text-white">Order:</span> First image is main profile, others show in carousel</li>
+                                                <li>• <span className="text-white">Format:</span> Use square images (1:1 ratio) for best display</li>
+                                                <li>• <span className="text-white">Variety:</span> Include professional, casual, and work environment photos</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {activeTab === "aboutpage" && (
+                                <div>
+                                    <SectionHeader title="About Page Settings" />
+                                    
+                                    <div className="space-y-8">
+                                        <div className="bg-[#111] border border-[#333] rounded-lg p-6 space-y-6">
+                                            <h3 className="text-lg font-display text-white border-b border-[#333] pb-3">
+                                                📍 Basic Information
+                                            </h3>
+                                            
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                <AdminInput 
+                                                    label="Your Location" 
+                                                    placeholder="e.g., Remote • Worldwide"
+                                                    value={formData.aboutPage?.location || ""} 
+                                                    onChange={e => setNest('aboutPage','location',e.target.value)} 
+                                                />
+                                                
+                                                <AdminInput 
+                                                    label="Your Specialization" 
+                                                    placeholder="e.g., Full-Stack Developer"
+                                                    value={formData.aboutPage?.specialization || ""} 
+                                                    onChange={e => setNest('aboutPage','specialization',e.target.value)} 
+                                                />
+                                                
+                                                <AdminInput 
+                                                    label="Availability Text" 
+                                                    placeholder="e.g., Available for work"
+                                                    value={formData.aboutPage?.availability || ""} 
+                                                    onChange={e => setNest('aboutPage','availability',e.target.value)} 
+                                                />
+                                                
+                                                <div>
+                                                    <label className="block font-mono text-[10px] text-zinc-500 uppercase tracking-widest mb-2 border-l-2 border-[#9f1239] pl-2">
+                                                        Availability Status
+                                                    </label>
+                                                    <select 
+                                                        className="w-full bg-[#1e1e1e] border border-[#333] text-[#e5e5e5] p-3 font-serif focus:border-[#9f1239] focus:outline-none focus:ring-1 focus:ring-[#9f1239]/50 transition-all rounded-md"
+                                                        value={formData.aboutPage?.availabilityStatus || "open"}
+                                                        onChange={e => setNest('aboutPage','availabilityStatus',e.target.value)}
+                                                    >
+                                                        <option value="open">🟢 Open for Work</option>
+                                                        <option value="limited">🟡 Limited Availability</option>
+                                                        <option value="closed">🔴 Not Available</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="bg-[#111] border border-[#333] rounded-lg p-6 space-y-4">
+                                            <div className="flex justify-between items-center border-b border-[#333] pb-3">
+                                                <h3 className="text-lg font-display text-white">
+                                                    💡 Your Core Values & Approach
+                                                </h3>
+                                                <button 
+                                                    onClick={() => {
+                                                        const newValues = formData.aboutPage?.coreValues || [];
+                                                        newValues.push({ title: "", desc: "", icon: "⭐" });
+                                                        setNest('aboutPage', 'coreValues', newValues);
+                                                    }}
+                                                    className="font-mono text-xs text-[#9f1239] hover:text-white transition-colors"
+                                                >
+                                                    [ + ADD VALUE ]
+                                                </button>
+                                            </div>
+                                            
+                                            <p className="text-sm text-zinc-500 font-mono">
+                                                Add 4 core values that represent your work philosophy
+                                            </p>
+
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                {(formData.aboutPage?.coreValues || []).map((value, i) => (
+                                                    <div key={i} className="bg-[#1e1e1e]/50 border border-[#333] rounded-lg p-4 space-y-3">
+                                                        <div className="flex justify-between items-start">
+                                                            <input
+                                                                type="text"
+                                                                placeholder="Icon (emoji)"
+                                                                value={value.icon || ""}
+                                                                onChange={e => {
+                                                                    const newValues = [...(formData.aboutPage?.coreValues || [])];
+                                                                    newValues[i] = { ...newValues[i], icon: e.target.value };
+                                                                    setNest('aboutPage', 'coreValues', newValues);
+                                                                }}
+                                                                className="w-16 text-center text-2xl bg-transparent border-none focus:outline-none"
+                                                            />
+                                                            <button 
+                                                                onClick={() => {
+                                                                    const newValues = (formData.aboutPage?.coreValues || []).filter((_, idx) => idx !== i);
+                                                                    setNest('aboutPage', 'coreValues', newValues);
+                                                                }}
+                                                                className="text-zinc-600 hover:text-red-500 text-xl font-bold"
+                                                            >
+                                                                ×
+                                                            </button>
+                                                        </div>
+                                                        
+                                                        <AdminInput 
+                                                            label="Value Title" 
+                                                            placeholder="e.g., Problem Solving"
+                                                            value={value.title || ""} 
+                                                            onChange={e => {
+                                                                const newValues = [...(formData.aboutPage?.coreValues || [])];
+                                                                newValues[i] = { ...newValues[i], title: e.target.value };
+                                                                setNest('aboutPage', 'coreValues', newValues);
+                                                            }}
+                                                        />
+                                                        
+                                                        <AdminInput 
+                                                            textarea
+                                                            rows={2}
+                                                            label="Description" 
+                                                            placeholder="Brief explanation..."
+                                                            value={value.desc || ""} 
+                                                            onChange={e => {
+                                                                const newValues = [...(formData.aboutPage?.coreValues || [])];
+                                                                newValues[i] = { ...newValues[i], desc: e.target.value };
+                                                                setNest('aboutPage', 'coreValues', newValues);
+                                                            }}
+                                                        />
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            
+                                            {(!formData.aboutPage?.coreValues || formData.aboutPage.coreValues.length === 0) && (
+                                                <div className="text-center py-8 border-2 border-dashed border-[#333] rounded-lg">
+                                                    <p className="text-zinc-600 font-mono text-sm">
+                                                        No core values added. Click "+ ADD VALUE" to start.
+                                                    </p>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <div className="bg-[#111] border border-[#333] rounded-lg p-6 space-y-4">
+                                            <div className="flex justify-between items-center border-b border-[#333] pb-3">
+                                                <h3 className="text-lg font-display text-white">
+                                                    💪 Professional Strengths
+                                                </h3>
+                                                <button 
+                                                    onClick={() => {
+                                                        const newStrengths = formData.aboutPage?.strengths || [];
+                                                        newStrengths.push("");
+                                                        setNest('aboutPage', 'strengths', newStrengths);
+                                                    }}
+                                                    className="font-mono text-xs text-[#9f1239] hover:text-white transition-colors"
+                                                >
+                                                    [ + ADD STRENGTH ]
+                                                </button>
+                                            </div>
+                                            
+                                            <p className="text-sm text-zinc-500 font-mono">
+                                                List your key professional strengths (4-6 items recommended)
+                                            </p>
+
+                                            <div className="space-y-3">
+                                                {(formData.aboutPage?.strengths || []).map((strength, i) => (
+                                                    <div key={i} className="flex gap-3 items-center">
+                                                        <div className="flex-1">
+                                                            <input
+                                                                type="text"
+                                                                placeholder="e.g., Project Leadership"
+                                                                value={strength || ""}
+                                                                onChange={e => {
+                                                                    const newStrengths = [...(formData.aboutPage?.strengths || [])];
+                                                                    newStrengths[i] = e.target.value;
+                                                                    setNest('aboutPage', 'strengths', newStrengths);
+                                                                }}
+                                                                className="w-full bg-[#1e1e1e] border border-[#333] text-[#e5e5e5] p-3 font-serif focus:border-[#9f1239] focus:outline-none focus:ring-1 focus:ring-[#9f1239]/50 placeholder:text-zinc-600 transition-all rounded-md"
+                                                            />
+                                                        </div>
+                                                        <button 
+                                                            onClick={() => {
+                                                                const newStrengths = (formData.aboutPage?.strengths || []).filter((_, idx) => idx !== i);
+                                                                setNest('aboutPage', 'strengths', newStrengths);
+                                                            }}
+                                                            className="text-zinc-600 hover:text-red-500 text-xl font-bold px-3"
+                                                        >
+                                                            ×
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            
+                                            {(!formData.aboutPage?.strengths || formData.aboutPage.strengths.length === 0) && (
+                                                <div className="text-center py-8 border-2 border-dashed border-[#333] rounded-lg">
+                                                    <p className="text-zinc-600 font-mono text-sm">
+                                                        No strengths added. Click "+ ADD STRENGTH" to start.
+                                                    </p>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -427,7 +890,7 @@ export default function Admin() {
                             
                             {activeTab === "skills" && (
                                 <div>
-                                    <SectionHeader title="Abilities" onAddItem={()=>addItem('skills', { name: "", level: "Intermediate" })} buttonLabel="[ + ADD ABILITY ]" />
+                                    <SectionHeader title="Skills & Abilities" onAddItem={()=>addItem('skills', { name: "", level: "Intermediate" })} buttonLabel="[ + ADD SKILL ]" />
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <AnimatePresence>
                                             {formData.skills?.map((skill, i) => {
@@ -436,7 +899,7 @@ export default function Admin() {
                                                     <motion.div key={i} variants={listItemVariants} initial="hidden" animate="visible" exit="exit" layout className="bg-[#1e1e1e]/50 border border-[#333] rounded-lg p-4 space-y-4">
                                                         <AdminInput label="Skill Name" value={skillData.name || ""} onChange={e=>setArrObj('skills',i,'name',e.target.value)} />
                                                         <div>
-                                                            <label className="block font-mono text-[10px] text-zinc-500 uppercase tracking-widest mb-2 border-l-2 border-[#9f1239] pl-2">Proficiency</label>
+                                                            <label className="block font-mono text-[10px] text-zinc-500 uppercase tracking-widest mb-2 border-l-2 border-[#9f1239] pl-2">Proficiency Level</label>
                                                             <select className="w-full bg-[#1e1e1e] border border-[#333] text-[#e5e5e5] p-3 font-serif focus:border-[#9f1239] focus:outline-none focus:ring-1 focus:ring-[#9f1239]/50 transition-all rounded-md" value={skillData.level || "Intermediate"} onChange={e=>setArrObj('skills',i,'level',e.target.value)}>
                                                                 <option>Beginner</option><option>Intermediate</option><option>Advanced</option><option>Master</option>
                                                             </select>
@@ -453,42 +916,40 @@ export default function Admin() {
 
                             {activeTab === "experience" && (
                                 <div>
-                                    <SectionHeader title="Timeline" onAddItem={()=>addItem('experience', {role:"", company:"", year:""})} buttonLabel="[ + ADD EVENT ]" />
+                                    <SectionHeader title="Work Experience" onAddItem={()=>addItem('experience', {role:"", company:"", year:""})} buttonLabel="[ + ADD EXPERIENCE ]" />
                                     <div className="space-y-4">
                                         <AnimatePresence>
                                             {formData.experience?.map((exp, i) => (
                                                 <motion.div key={i} variants={listItemVariants} initial="hidden" animate="visible" exit="exit" layout className="bg-[#1e1e1e]/50 border border-[#333] rounded-lg p-4 relative space-y-4">
                                                     <button onClick={() => delItem('experience',i)} className="absolute top-2 right-2 text-zinc-600 hover:text-red-500 text-xl font-bold">&times;</button>
-                                                    <AdminInput label="Role / Title" value={exp.role || ""} onChange={e=>setArrObj('experience',i,'role',e.target.value)} />
-                                                    <AdminInput label="Company / Place" value={exp.company || ""} onChange={e=>setArrObj('experience',i,'company',e.target.value)} />
-                                                    <AdminInput label="Duration / Year" value={exp.year || ""} onChange={e=>setArrObj('experience',i,'year',e.target.value)} />
+                                                    <AdminInput label="Job Title / Role" value={exp.role || ""} onChange={e=>setArrObj('experience',i,'role',e.target.value)} />
+                                                    <AdminInput label="Company Name" value={exp.company || ""} onChange={e=>setArrObj('experience',i,'company',e.target.value)} />
+                                                    <AdminInput label="Duration / Year" placeholder="e.g., 2020-2023" value={exp.year || ""} onChange={e=>setArrObj('experience',i,'year',e.target.value)} />
                                                 </motion.div>
                                             ))}
                                         </AnimatePresence>
                                     </div>
-                                    {formData.experience?.length === 0 && <p className="text-center text-zinc-600 font-mono text-xs py-10">NO EVENTS FOUND</p>}
+                                    {formData.experience?.length === 0 && <p className="text-center text-zinc-600 font-mono text-xs py-10">NO EXPERIENCE FOUND</p>}
                                 </div>
                             )}
 
-                            {/* === BAGIAN PROJECTS DENGAN TEKNOLOGI === */}
                             {activeTab === "projects" && (
                                 <div>
-                                    <SectionHeader title="Archives" onAddItem={()=>addItem('projects', {name:"",description:"",image:"",link:"",technologies:[]})} buttonLabel="[ + NEW ENTRY ]" />
+                                    <SectionHeader title="Projects Portfolio" onAddItem={()=>addItem('projects', {name:"",description:"",image:"",link:"",technologies:[]})} buttonLabel="[ + NEW PROJECT ]" />
                                     <div className="space-y-6">
                                         <AnimatePresence>
                                             {formData.projects?.map((p, i) => (
                                                 <motion.div key={i} variants={listItemVariants} initial="hidden" animate="visible" exit="exit" layout className="bg-[#1e1e1e]/50 border border-[#333] rounded-lg p-4">
                                                     <div className="flex justify-between items-start">
-                                                        <p className="font-mono text-xs text-zinc-500 mb-4">FILE #{i+1}</p>
+                                                        <p className="font-mono text-xs text-zinc-500 mb-4">PROJECT #{i+1}</p>
                                                         <button onClick={()=>delItem('projects',i)} className="text-zinc-600 hover:text-red-500 text-xl font-bold -mt-2">&times;</button>
                                                     </div>
                                                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                                                         <div className="lg:col-span-2 space-y-4">
                                                             <AdminInput label="Project Name" value={p.name || ""} onChange={e=>setArrObj('projects',i,'name',e.target.value)} />
-                                                            <AdminInput label="Link / URL" value={p.link || ""} onChange={e=>setArrObj('projects',i,'link',e.target.value)} />
-                                                            <AdminInput textarea rows={4} label="Description / Report" value={p.description || ""} onChange={e=>setArrObj('projects',i,'description',e.target.value)} />
+                                                            <AdminInput label="Project Link / URL" value={p.link || ""} onChange={e=>setArrObj('projects',i,'link',e.target.value)} />
+                                                            <AdminInput textarea rows={4} label="Description" value={p.description || ""} onChange={e=>setArrObj('projects',i,'description',e.target.value)} />
                                                             
-                                                            {/* === INPUT TEKNOLOGI BARU === */}
                                                             <TechStackInput 
                                                                 technologies={p.technologies || []} 
                                                                 onChange={(newTechs) => setArrObj('projects', i, 'technologies', newTechs)}
@@ -496,7 +957,7 @@ export default function Admin() {
                                                             />
                                                         </div>
                                                         <div className="space-y-2">
-                                                            <label className="block font-mono text-[10px] text-zinc-500 uppercase tracking-widest border-l-2 border-[#9f1239] pl-2">Attachment</label>
+                                                            <label className="block font-mono text-[10px] text-zinc-500 uppercase tracking-widest border-l-2 border-[#9f1239] pl-2">Project Image</label>
                                                             <ImageUploader currentImage={p.image || ""} onUpload={url=>setArrObj('projects',i,'image',url)} onDelete={()=>setArrObj('projects',i,'image',"")} />
                                                         </div>
                                                     </div>
@@ -510,13 +971,13 @@ export default function Admin() {
 
                             {activeTab === "contact" && (
                                 <div>
-                                    <SectionHeader title="Signal Frequencies" />
+                                    <SectionHeader title="Contact Information" />
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <AdminInput label="Email Address" value={formData.contact?.email || ""} onChange={e=>setNest('contact','email',e.target.value)} />
-                                        <AdminInput label="LinkedIn" value={formData.contact?.linkedin || ""} onChange={e=>setNest('contact','linkedin',e.target.value)} />
-                                        <AdminInput label="GitHub" value={formData.contact?.github || ""} onChange={e=>setNest('contact','github',e.target.value)} />
-                                        <AdminInput label="Instagram" value={formData.contact?.instagram || ""} onChange={e=>setNest('contact','instagram',e.target.value)} />
-                                        <AdminInput label="Twitter / X" value={formData.contact?.twitter || ""} onChange={e=>setNest('contact','twitter',e.target.value)} />
+                                        <AdminInput label="Email Address" placeholder="your@email.com" value={formData.contact?.email || ""} onChange={e=>setNest('contact','email',e.target.value)} />
+                                        <AdminInput label="LinkedIn URL" placeholder="https://linkedin.com/in/..." value={formData.contact?.linkedin || ""} onChange={e=>setNest('contact','linkedin',e.target.value)} />
+                                        <AdminInput label="GitHub URL" placeholder="https://github.com/..." value={formData.contact?.github || ""} onChange={e=>setNest('contact','github',e.target.value)} />
+                                        <AdminInput label="Instagram URL" placeholder="https://instagram.com/..." value={formData.contact?.instagram || ""} onChange={e=>setNest('contact','instagram',e.target.value)} />
+                                        <AdminInput label="Twitter / X URL" placeholder="https://twitter.com/..." value={formData.contact?.twitter || ""} onChange={e=>setNest('contact','twitter',e.target.value)} />
                                     </div>
                                 </div>
                             )}

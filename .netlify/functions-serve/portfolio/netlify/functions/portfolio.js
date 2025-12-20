@@ -64229,9 +64229,39 @@ var normalizeData = (data) => {
   if (data.soundtrack && !Array.isArray(data.soundtrack)) {
     data.soundtrack = [data.soundtrack];
   }
+  if (data.profile) {
+    if (data.profile.avatarUrl && !data.profile.images) {
+      data.profile.images = [data.profile.avatarUrl];
+      delete data.profile.avatarUrl;
+    }
+    if (data.profile.images && !Array.isArray(data.profile.images)) {
+      data.profile.images = [data.profile.images];
+    }
+    if (!data.profile.images) {
+      data.profile.images = [];
+    }
+  }
   const normalized = {
     home: data.home || { logoName: "Author", headline: "The Journey Begins", subtitle: "Welcome." },
-    profile: data.profile || { about: "", avatarUrl: "" },
+    profile: data.profile || {
+      about: "",
+      images: [],
+      // Ganti avatarUrl dengan images array
+      socialLinks: data.profile?.socialLinks || {}
+    },
+    aboutPage: data.aboutPage || {
+      location: "Remote \u2022 Worldwide",
+      specialization: "Full-Stack Development",
+      availability: "Available for work",
+      availabilityStatus: "open",
+      coreValues: [
+        { title: "Problem Solving", desc: "Breaking down complex challenges", icon: "\u{1F50D}" },
+        { title: "Clean Code", desc: "Writing maintainable code", icon: "\u2728" },
+        { title: "Continuous Learning", desc: "Staying updated", icon: "\u{1F4DA}" },
+        { title: "User Focus", desc: "Building user-first", icon: "\u{1F3AF}" }
+      ],
+      strengths: ["Project Leadership", "Technical Strategy", "Team Collaboration", "Agile Development"]
+    },
     soundtrack: data.soundtrack || [],
     skills: data.skills || [],
     projects: data.projects || [],
@@ -64252,7 +64282,16 @@ var normalizeData = (data) => {
   };
   normalized.profile = {
     about: normalized.profile.about || "",
-    avatarUrl: normalized.profile.avatarUrl || ""
+    images: Array.isArray(normalized.profile.images) ? normalized.profile.images : [],
+    socialLinks: normalized.profile.socialLinks || {}
+  };
+  normalized.aboutPage = {
+    location: normalized.aboutPage.location || "Remote \u2022 Worldwide",
+    specialization: normalized.aboutPage.specialization || "Full-Stack Development",
+    availability: normalized.aboutPage.availability || "Available for work",
+    availabilityStatus: normalized.aboutPage.availabilityStatus || "open",
+    coreValues: Array.isArray(normalized.aboutPage.coreValues) ? normalized.aboutPage.coreValues : [],
+    strengths: Array.isArray(normalized.aboutPage.strengths) ? normalized.aboutPage.strengths : []
   };
   if (normalized.projects && Array.isArray(normalized.projects)) {
     normalized.projects = normalized.projects.map((project) => ({
@@ -64281,7 +64320,6 @@ exports.handler = async (event) => {
     if (action === "verify" && event.httpMethod === "POST") {
       const clientSecret = event.headers.authorization || event.headers.Authorization;
       if (!clientSecret) {
-        console.log("\u274C Verify: No authorization header");
         return {
           statusCode: 401,
           headers,
@@ -64289,7 +64327,6 @@ exports.handler = async (event) => {
         };
       }
       if (!ADMIN_SECRET) {
-        console.error("\u26A0\uFE0F ADMIN_SECRET is not set!");
         return {
           statusCode: 500,
           headers,
@@ -64297,14 +64334,12 @@ exports.handler = async (event) => {
         };
       }
       if (clientSecret !== ADMIN_SECRET) {
-        console.log("\u274C Verify: Invalid password");
         return {
           statusCode: 401,
           headers,
           body: JSON.stringify({ authenticated: false, message: "Invalid credentials" })
         };
       }
-      console.log("\u2705 Verify: Password valid");
       return {
         statusCode: 200,
         headers,
@@ -64312,15 +64347,24 @@ exports.handler = async (event) => {
       };
     }
     if (event.httpMethod === "GET") {
-      console.log("\u{1F4D6} GET: Fetching portfolio data...");
+      console.log("\u{1F4D6} Fetching portfolio data...");
       let doc = await PortfolioModel.findOne({ identifier: "main_portfolio" });
       if (!doc) {
-        console.log("\u26A0\uFE0F No data found in database, creating default data...");
+        console.log("\u26A0\uFE0F Creating default data...");
         doc = await PortfolioModel.create({
           identifier: "main_portfolio",
           data: {
             home: { logoName: "Author", headline: "The Journey Begins", subtitle: "Welcome." },
-            profile: { about: "", avatarUrl: "" },
+            profile: { about: "", images: [] },
+            // Default images array
+            aboutPage: {
+              location: "Remote \u2022 Worldwide",
+              specialization: "Full-Stack Development",
+              availability: "Available for work",
+              availabilityStatus: "open",
+              coreValues: [],
+              strengths: []
+            },
             soundtrack: [],
             skills: [],
             projects: [],
@@ -64328,14 +64372,8 @@ exports.handler = async (event) => {
             contact: { email: "", linkedin: "", github: "", instagram: "", twitter: "" }
           }
         });
-        console.log("\u2705 Default data created");
-      } else {
-        console.log("\u2705 Data found in database");
-        console.log("Raw data structure:", Object.keys(doc.data));
       }
       const normalizedData = normalizeData(doc.data);
-      console.log("\u2705 Data normalized and ready to send");
-      console.log("Normalized structure:", Object.keys(normalizedData));
       return {
         statusCode: 200,
         headers,
@@ -64345,7 +64383,6 @@ exports.handler = async (event) => {
     if (event.httpMethod === "POST") {
       const clientSecret = event.headers.authorization || event.headers.Authorization;
       if (!clientSecret) {
-        console.log("\u274C No authorization header provided");
         return {
           statusCode: 401,
           headers,
@@ -64353,7 +64390,6 @@ exports.handler = async (event) => {
         };
       }
       if (!ADMIN_SECRET) {
-        console.error("\u26A0\uFE0F ADMIN_SECRET is not set in environment variables!");
         return {
           statusCode: 500,
           headers,
@@ -64361,29 +64397,20 @@ exports.handler = async (event) => {
         };
       }
       if (clientSecret !== ADMIN_SECRET) {
-        console.log("\u274C Invalid password attempt");
         return {
           statusCode: 401,
           headers,
           body: JSON.stringify({ message: "Unauthorized: Invalid credentials" })
         };
       }
-      console.log("\u2705 Valid credentials, updating data...");
       const newData = JSON.parse(event.body);
       const normalizedData = normalizeData(newData);
-      console.log("Data to save:", Object.keys(normalizedData));
-      console.log("Projects count:", normalizedData.projects?.length || 0);
-      if (normalizedData.projects && normalizedData.projects.length > 0) {
-        normalizedData.projects.forEach((proj, idx) => {
-          console.log(`Project ${idx} technologies:`, proj.technologies || []);
-        });
-      }
       const updated = await PortfolioModel.findOneAndUpdate(
         { identifier: "main_portfolio" },
         { data: normalizedData },
         { new: true, upsert: true }
       );
-      console.log("\u2705 Data updated successfully");
+      console.log("\u2705 Data saved successfully");
       return {
         statusCode: 200,
         headers,
@@ -64400,7 +64427,7 @@ exports.handler = async (event) => {
     return {
       statusCode: 500,
       headers,
-      body: JSON.stringify({ error: error.message, stack: error.stack })
+      body: JSON.stringify({ error: error.message })
     };
   }
 };
