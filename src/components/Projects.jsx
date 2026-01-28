@@ -3,10 +3,18 @@ export default function Projects({ projects }) {
     <section id="projects" className="py-32">
       <div className="max-w-7xl mx-auto px-6">
         <div className="mb-16">
-          <h2 className="text-4xl md:text-6xl font-bold mb-4">
-            Selected <span className="text-primary">Works</span>
+          <h2 
+            className="text-4xl md:text-6xl font-bold mb-4"
+            style={{ color: 'var(--color-paper)' }}
+          >
+            Selected <span style={{ color: 'var(--color-crimson)' }}>Works</span>
           </h2>
-          <div className="w-24 h-1.5 bg-gradient-brand rounded-full"></div>
+          <div 
+            className="w-24 h-1.5 rounded-full"
+            style={{
+              background: 'linear-gradient(to right, var(--color-crimson), var(--color-gold))'
+            }}
+          ></div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -16,11 +24,25 @@ export default function Projects({ projects }) {
               href={proj.link} 
               target="_blank"
               rel="noreferrer"
-              className="group relative block bg-surface rounded-2xl overflow-hidden hover:shadow-[0_10px_40px_-10px_rgba(220,38,38,0.2)] transition-all duration-500"
+              className="group relative block rounded-2xl overflow-hidden transition-all duration-500"
+              style={{
+                backgroundColor: 'var(--color-line)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.boxShadow = '0 10px 40px -10px rgba(159, 18, 57, 0.3)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.boxShadow = 'none';
+              }}
             >
               {/* Image */}
               <div className="h-64 overflow-hidden relative">
-                <div className="absolute inset-0 bg-primary/20 mix-blend-overlay z-10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div 
+                  className="absolute inset-0 mix-blend-overlay z-10 opacity-0 group-hover:opacity-100 transition-opacity"
+                  style={{
+                    backgroundColor: 'rgba(159, 18, 57, 0.2)'
+                  }}
+                ></div>
                 {proj.image ? (
                   <img 
                     src={proj.image} 
@@ -28,20 +50,49 @@ export default function Projects({ projects }) {
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
                   />
                 ) : (
-                  <div className="w-full h-full bg-zinc-800 flex items-center justify-center">No Preview</div>
+                  <div 
+                    className="w-full h-full flex items-center justify-center"
+                    style={{
+                      backgroundColor: 'var(--color-line)',
+                      color: 'var(--color-muted)'
+                    }}
+                  >
+                    No Preview
+                  </div>
                 )}
               </div>
               
               {/* Content */}
               <div className="p-8">
-                <h3 className="text-2xl font-bold mb-3 group-hover:text-accent transition-colors">
+                <h3 
+                  className="text-2xl font-bold mb-3 transition-colors"
+                  style={{ color: 'var(--color-paper)' }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.color = 'var(--color-crimson)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.color = 'var(--color-paper)';
+                  }}
+                >
                   {proj.name}
                 </h3>
-                <p className="text-zinc-400 leading-relaxed mb-6 line-clamp-3">
+                <p 
+                  className="leading-relaxed mb-6 line-clamp-3"
+                  style={{ color: 'var(--color-muted)' }}
+                >
                   {proj.description}
                 </p>
-                <div className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-white">
-                    <span className="w-8 h-[1px] bg-primary group-hover:w-12 transition-all"></span>
+                <div 
+                  className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider"
+                  style={{ color: 'var(--color-paper)' }}
+                >
+                    <span 
+                      className="h-[1px] group-hover:w-12 transition-all"
+                      style={{
+                        width: '32px',
+                        backgroundColor: 'var(--color-crimson)'
+                      }}
+                    ></span>
                     View Case
                 </div>
               </div>

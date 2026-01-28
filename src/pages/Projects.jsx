@@ -167,22 +167,22 @@ const ProjectCard = ({ project, index, totalProjects }) => {
             rotateY: window.innerWidth > 768 ? rotateY : 0,
             transformStyle: "preserve-3d"
           }}
-          className="relative h-full bg-[#0d0d0d] border border-[#2a2a2a] overflow-hidden transition-all duration-500 hover:border-[#9f1239]/50 hover:shadow-2xl hover:shadow-[#9f1239]/10"
+          className="relative h-full bg-[var(--color-bg)] border border-[var(--color-border)] overflow-hidden transition-all duration-500 hover:border-[var(--color-crimson)]/50 hover:shadow-2xl hover:shadow-[#9f1239]/10"
         >
           {/* Chapter number badge */}
           <div className="absolute top-4 left-4 z-20">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-[#9f1239]/10 border border-[#9f1239]/30 flex items-center justify-center backdrop-blur-sm">
-                <span className="font-display text-xs text-[#9f1239]">{index + 1}</span>
+              <div className="w-8 h-8 rounded-full bg-[var(--color-crimson)]/10 border border-[var(--color-crimson)]/30 flex items-center justify-center backdrop-blur-sm">
+                <span className="font-display text-xs text-[var(--color-crimson)]">{index + 1}</span>
               </div>
-              <span className="font-mono text-[9px] text-[#666] tracking-widest hidden md:block">
+              <span className="font-mono text-[9px] text-[var(--color-muted)] tracking-widest hidden md:block">
                 CHAPTER
               </span>
             </div>
           </div>
 
           {/* Image with overlay */}
-          <div className="relative h-56 md:h-64 overflow-hidden bg-gradient-to-br from-[#0a0a0a] to-[#111]">
+          <div className="relative h-56 md:h-64 overflow-hidden bg-gradient-to-br from-[#0a0a0a] to-[var(--color-line)]">
             {project.image ? (
               <>
                 <motion.img
@@ -205,7 +205,7 @@ const ProjectCard = ({ project, index, totalProjects }) => {
                 ></div>
                 {/* Page curl effect on hover */}
                 <motion.div
-                  className="absolute bottom-0 right-0 w-16 h-16 bg-gradient-to-tl from-[#9f1239]/20 to-transparent"
+                  className="absolute bottom-0 right-0 w-16 h-16 bg-gradient-to-tl from-[var(--color-crimson)]/20 to-transparent"
                   style={{
                     clipPath: 'polygon(100% 0, 100% 100%, 0 100%)',
                     opacity: isHovered ? 1 : 0,
@@ -226,12 +226,12 @@ const ProjectCard = ({ project, index, totalProjects }) => {
           {/* Content */}
           <div className="p-5 md:p-6">
             {/* Title */}
-            <h3 className="font-display text-xl md:text-2xl text-[#e5e5e5] mb-3 line-clamp-2 group-hover:text-[#9f1239] transition-colors duration-300">
+            <h3 className="font-display text-xl md:text-2xl text-[var(--color-paper)] mb-3 line-clamp-2 group-hover:text-[var(--color-crimson)] transition-colors duration-300">
               {project.name}
             </h3>
             
             {/* Description */}
-            <p className="font-serif text-sm text-[#999] leading-relaxed mb-4 line-clamp-3">
+            <p className="font-serif text-sm text-[var(--color-muted)] leading-relaxed mb-4 line-clamp-3">
               {project.description || "A story waiting to be told..."}
             </p>
 
@@ -241,13 +241,13 @@ const ProjectCard = ({ project, index, totalProjects }) => {
                 {project.technologies.slice(0, 4).map((tech, idx) => (
                   <span
                     key={idx}
-                    className="px-2.5 py-1 text-[10px] font-mono border border-[#333] text-[#c2410c] bg-[#0a0a0a]/50 tracking-wide hover:border-[#9f1239] transition-colors"
+                    className="px-2.5 py-1 text-[10px] font-mono border border-[var(--color-border)] text-[var(--color-gold)] bg-[var(--color-bg)]/50 tracking-wide hover:border-[var(--color-crimson)] transition-colors"
                   >
                     {tech}
                   </span>
                 ))}
                 {project.technologies.length > 4 && (
-                  <span className="px-2.5 py-1 text-[10px] font-mono text-[#666]">
+                  <span className="px-2.5 py-1 text-[10px] font-mono text-[var(--color-muted)]">
                     +{project.technologies.length - 4}
                   </span>
                 )}
@@ -255,14 +255,14 @@ const ProjectCard = ({ project, index, totalProjects }) => {
             )}
 
             {/* Read more */}
-            <div className="flex items-center justify-between pt-4 border-t border-[#222]">
-              <span className="font-mono text-[10px] text-[#666] tracking-wider">
+            <div className="flex items-center justify-between pt-4 border-t border-[var(--color-border)]">
+              <span className="font-mono text-[10px] text-[var(--color-muted)] tracking-wider">
                 Read the story
               </span>
               <motion.div
                 animate={{ x: isHovered ? 3 : 0 }}
                 transition={{ duration: 0.3 }}
-                className="text-[#9f1239] text-sm"
+                className="text-[var(--color-crimson)] text-sm"
               >
                 →
               </motion.div>
@@ -270,7 +270,7 @@ const ProjectCard = ({ project, index, totalProjects }) => {
           </div>
 
           {/* Subtle page edge effect */}
-          <div className="absolute top-0 right-0 w-px h-full bg-gradient-to-b from-transparent via-[#9f1239]/20 to-transparent"></div>
+          <div className="absolute top-0 right-0 w-px h-full bg-gradient-to-b from-transparent via-[var(--color-crimson)]/20 to-transparent"></div>
         </motion.div>
       </Link>
     </motion.div>
@@ -291,8 +291,8 @@ const FilterTabs = ({ allTechs, filterTech, setFilterTech, projects }) => {
       className="mb-12"
     >
       <div className="flex items-center gap-3 mb-5">
-        <span className="font-mono text-xs text-[#999] tracking-wider">FILTER BY</span>
-        <div className="flex-1 h-px bg-[#222]"></div>
+        <span className="font-mono text-xs text-[var(--color-muted)] tracking-wider">FILTER BY</span>
+        <div className="flex-1 h-px bg-[var(--color-line)]"></div>
       </div>
       
       <div className="flex flex-wrap gap-2">
@@ -302,8 +302,8 @@ const FilterTabs = ({ allTechs, filterTech, setFilterTech, projects }) => {
           whileTap={{ scale: 0.98 }}
           className={`px-4 py-2.5 font-mono text-xs border transition-all ${
             filterTech === "all"
-              ? "bg-[#9f1239] border-[#9f1239] text-white shadow-lg shadow-[#9f1239]/20"
-              : "bg-[#0d0d0d] border-[#333] text-[#999] hover:border-[#9f1239]/50 hover:text-white"
+              ? "bg-[var(--color-crimson)] border-[var(--color-crimson)] text-[var(--color-paper)] shadow-lg shadow-[#9f1239]/20"
+              : "bg-[var(--color-bg)] border-[var(--color-border)] text-[var(--color-muted)] hover:border-[var(--color-crimson)]/50 hover:text-[var(--color-paper)]"
           }`}
         >
           All Projects
@@ -317,8 +317,8 @@ const FilterTabs = ({ allTechs, filterTech, setFilterTech, projects }) => {
             whileTap={{ scale: 0.98 }}
             className={`px-4 py-2.5 font-mono text-xs border transition-all ${
               filterTech === tech
-                ? "bg-[#9f1239] border-[#9f1239] text-white shadow-lg shadow-[#9f1239]/20"
-                : "bg-[#0d0d0d] border-[#333] text-[#999] hover:border-[#9f1239]/50 hover:text-white"
+                ? "bg-[var(--color-crimson)] border-[var(--color-crimson)] text-[var(--color-paper)] shadow-lg shadow-[#9f1239]/20"
+                : "bg-[var(--color-bg)] border-[var(--color-border)] text-[var(--color-muted)] hover:border-[var(--color-crimson)]/50 hover:text-[var(--color-paper)]"
             }`}
           >
             {tech}
@@ -346,9 +346,9 @@ const ProjectListItem = ({ project, index }) => {
       }}
     >
       <Link to={`/project/${index}`} className="block group">
-        <div className="flex gap-3 p-3 border border-[#2a2a2a] bg-[#0d0d0d] hover:border-[#9f1239]/50 transition-all duration-300">
+        <div className="flex gap-3 p-3 border border-[var(--color-border)] bg-[var(--color-bg)] hover:border-[var(--color-crimson)]/50 transition-all duration-300">
           {/* Thumbnail */}
-          <div className="w-20 h-20 flex-shrink-0 bg-gradient-to-br from-[#0a0a0a] to-[#111] overflow-hidden">
+          <div className="w-20 h-20 flex-shrink-0 bg-gradient-to-br from-[#0a0a0a] to-[var(--color-line)] overflow-hidden">
             {project.image ? (
               <img
                 src={project.image}
@@ -366,19 +366,19 @@ const ProjectListItem = ({ project, index }) => {
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2 mb-1">
               <div className="flex items-center gap-2 min-w-0">
-                <span className="font-mono text-[9px] text-[#9f1239]">
+                <span className="font-mono text-[9px] text-[var(--color-crimson)]">
                   #{index + 1}
                 </span>
-                <h3 className="font-display text-base text-[#e5e5e5] group-hover:text-[#9f1239] transition-colors truncate">
+                <h3 className="font-display text-base text-[var(--color-paper)] group-hover:text-[var(--color-crimson)] transition-colors truncate">
                   {project.name}
                 </h3>
               </div>
-              <span className="text-[#9f1239] text-xs flex-shrink-0 group-hover:translate-x-1 transition-transform">
+              <span className="text-[var(--color-crimson)] text-xs flex-shrink-0 group-hover:translate-x-1 transition-transform">
                 →
               </span>
             </div>
 
-            <p className="text-xs text-[#999] line-clamp-2 mb-2 leading-relaxed">
+            <p className="text-xs text-[var(--color-muted)] line-clamp-2 mb-2 leading-relaxed">
               {project.description || "A story waiting to be told..."}
             </p>
 
@@ -388,13 +388,13 @@ const ProjectListItem = ({ project, index }) => {
                 {project.technologies.slice(0, 3).map((tech, idx) => (
                   <span
                     key={idx}
-                    className="px-1.5 py-0.5 text-[9px] font-mono border border-[#333] text-[#c2410c] bg-[#0a0a0a]/50"
+                    className="px-1.5 py-0.5 text-[9px] font-mono border border-[var(--color-border)] text-[var(--color-gold)] bg-[var(--color-bg)]/50"
                   >
                     {tech}
                   </span>
                 ))}
                 {project.technologies.length > 3 && (
-                  <span className="px-1.5 py-0.5 text-[9px] font-mono text-[#666]">
+                  <span className="px-1.5 py-0.5 text-[9px] font-mono text-[var(--color-muted)]">
                     +{project.technologies.length - 3}
                   </span>
                 )}
@@ -411,24 +411,24 @@ const ProjectListItem = ({ project, index }) => {
 const ViewModeToggle = ({ viewMode, setViewMode }) => {
   return (
     <div className="flex items-center gap-2 mb-6 md:hidden">
-      <span className="font-mono text-[10px] text-[#666] tracking-wider">VIEW</span>
-      <div className="flex border border-[#333] bg-[#0d0d0d]">
+      <span className="font-mono text-[10px] text-[var(--color-muted)] tracking-wider">VIEW</span>
+      <div className="flex border border-[var(--color-border)] bg-[var(--color-bg)]">
         <button
           onClick={() => setViewMode("grid")}
           className={`px-3 py-1.5 font-mono text-[10px] transition-all ${
             viewMode === "grid"
-              ? "bg-[#9f1239] text-white"
-              : "text-[#999] hover:text-white"
+              ? "bg-[var(--color-crimson)] text-[var(--color-paper)]"
+              : "text-[var(--color-muted)] hover:text-[var(--color-paper)]"
           }`}
         >
           Grid
         </button>
         <button
           onClick={() => setViewMode("list")}
-          className={`px-3 py-1.5 font-mono text-[10px] transition-all border-l border-[#333] ${
+          className={`px-3 py-1.5 font-mono text-[10px] transition-all border-l border-[var(--color-border)] ${
             viewMode === "list"
-              ? "bg-[#9f1239] text-white"
-              : "text-[#999] hover:text-white"
+              ? "bg-[var(--color-crimson)] text-[var(--color-paper)]"
+              : "text-[var(--color-muted)] hover:text-[var(--color-paper)]"
           }`}
         >
           List
@@ -467,13 +467,13 @@ export default function Projects() {
         >
           <div className="w-16 h-16 mb-6 mx-auto relative">
             <motion.div
-              className="absolute inset-0 border-2 border-[#9f1239] rounded-full"
+              className="absolute inset-0 border-2 border-[var(--color-crimson)] rounded-full"
               animate={{ rotate: 360 }}
               transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
               style={{ borderTopColor: 'transparent' }}
             ></motion.div>
           </div>
-          <div className="font-display text-xl tracking-[0.2em] text-[#9f1239]">
+          <div className="font-display text-xl tracking-[0.2em] text-[var(--color-crimson)]">
             Loading stories...
           </div>
         </motion.div>
@@ -508,22 +508,22 @@ export default function Projects() {
             animate={{ width: "auto" }}
             transition={{ duration: 0.8, delay: 0.2 }}
           >
-            <div className="w-1 h-1 bg-[#9f1239] rounded-full"></div>
-            <div className="w-12 h-px bg-gradient-to-r from-[#9f1239] to-transparent"></div>
+            <div className="w-1 h-1 bg-[var(--color-crimson)] rounded-full"></div>
+            <div className="w-12 h-px bg-gradient-to-r from-[var(--color-crimson)] to-transparent"></div>
           </motion.div>
 
-          <h1 className="font-display text-4xl md:text-6xl lg:text-7xl text-[#e5e5e5] mb-5 tracking-tight leading-tight">
+          <h1 className="font-display text-4xl md:text-6xl lg:text-7xl text-[var(--color-paper)] mb-5 tracking-tight leading-tight">
             My Projects
           </h1>
           
-          <p className="font-serif text-base md:text-lg text-[#999] max-w-2xl leading-relaxed">
+          <p className="font-serif text-base md:text-lg text-[var(--color-muted)] max-w-2xl leading-relaxed">
             Each project is a chapter in my journey as a developer. 
             From ideas to execution, here's what I've been building.
           </p>
 
           {/* Bottom decorative line */}
           <motion.div 
-            className="mt-6 h-px bg-gradient-to-r from-[#9f1239]/50 via-[#333] to-transparent"
+            className="mt-6 h-px bg-gradient-to-r from-[var(--color-crimson)]/50 via-[#333] to-transparent"
             initial={{ scaleX: 0 }}
             animate={{ scaleX: 1 }}
             transition={{ duration: 1, delay: 0.4 }}
@@ -601,10 +601,10 @@ export default function Projects() {
             >
               📖
             </motion.div>
-            <h3 className="font-display text-2xl md:text-3xl text-[#666] mb-4">
+            <h3 className="font-display text-2xl md:text-3xl text-[var(--color-muted)] mb-4">
               {filterTech === "all" ? "No projects yet" : "Nothing found"}
             </h3>
-            <p className="font-serif text-[#888] max-w-md mx-auto mb-8 leading-relaxed">
+            <p className="font-serif text-[var(--color-muted)] max-w-md mx-auto mb-8 leading-relaxed">
               {filterTech === "all" 
                 ? "Your project showcase is waiting. Head to the admin panel to add your first project."
                 : `No projects found using ${filterTech}. Try viewing all projects or choose a different filter.`}
@@ -614,7 +614,7 @@ export default function Projects() {
                 onClick={() => setFilterTech("all")}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="px-6 py-3 border border-[#333] text-[#999] font-mono text-xs hover:border-[#9f1239] hover:text-white transition-all"
+                className="px-6 py-3 border border-[var(--color-border)] text-[var(--color-muted)] font-mono text-xs hover:border-[var(--color-crimson)] hover:text-[var(--color-paper)] transition-all"
               >
                 View all projects
               </motion.button>
@@ -629,12 +629,12 @@ export default function Projects() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.2 }}
-            className="mt-20 pt-12 border-t border-[#222] relative z-10"
+            className="mt-20 pt-12 border-t border-[var(--color-border)] relative z-10"
           >
             <div className="grid grid-cols-2 md:grid-cols-3 gap-8 md:gap-12">
               <div className="text-center md:text-left">
                 <motion.div 
-                  className="font-display text-4xl md:text-5xl text-[#9f1239] mb-2"
+                  className="font-display text-4xl md:text-5xl text-[var(--color-crimson)] mb-2"
                   initial={{ opacity: 0, scale: 0.5 }}
                   whileInView={{ opacity: 1, scale: 1 }}
                   viewport={{ once: true }}
@@ -642,14 +642,14 @@ export default function Projects() {
                 >
                   {projects.length}
                 </motion.div>
-                <div className="font-mono text-[10px] text-[#666] tracking-wider">
+                <div className="font-mono text-[10px] text-[var(--color-muted)] tracking-wider">
                   Total Projects
                 </div>
               </div>
               
               <div className="text-center md:text-left">
                 <motion.div 
-                  className="font-display text-4xl md:text-5xl text-[#9f1239] mb-2"
+                  className="font-display text-4xl md:text-5xl text-[var(--color-crimson)] mb-2"
                   initial={{ opacity: 0, scale: 0.5 }}
                   whileInView={{ opacity: 1, scale: 1 }}
                   viewport={{ once: true }}
@@ -657,14 +657,14 @@ export default function Projects() {
                 >
                   {allTechs.length}
                 </motion.div>
-                <div className="font-mono text-[10px] text-[#666] tracking-wider">
+                <div className="font-mono text-[10px] text-[var(--color-muted)] tracking-wider">
                   Technologies
                 </div>
               </div>
               
               <div className="text-center md:text-left col-span-2 md:col-span-1">
                 <motion.div 
-                  className="font-display text-4xl md:text-5xl text-[#9f1239] mb-2"
+                  className="font-display text-4xl md:text-5xl text-[var(--color-crimson)] mb-2"
                   initial={{ opacity: 0, scale: 0.5 }}
                   whileInView={{ opacity: 1, scale: 1 }}
                   viewport={{ once: true }}
@@ -672,7 +672,7 @@ export default function Projects() {
                 >
                   {filteredProjects.length}
                 </motion.div>
-                <div className="font-mono text-[10px] text-[#666] tracking-wider">
+                <div className="font-mono text-[10px] text-[var(--color-muted)] tracking-wider">
                   Showing Now
                 </div>
               </div>

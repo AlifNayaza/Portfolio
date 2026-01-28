@@ -23,7 +23,7 @@ const clearAuthToken = () => {
 const mergeWithDefaults = (fetchedData) => {
     const defaults = {
         home: { logoName: "", headline: "", subtitle: "" },
-        profile: { about: "", images: [] }, // Changed to images array
+        profile: { about: "", images: [] },
         aboutPage: {
             location: "Remote • Worldwide",
             specialization: "Full-Stack Development",
@@ -57,14 +57,11 @@ const mergeWithDefaults = (fetchedData) => {
         }
         
         if (fetchedData.profile) {
-            // Handle migration from avatarUrl to images array
             const profileData = { ...defaults.profile };
-            
             if (fetchedData.profile.avatarUrl && !fetchedData.profile.images) {
                 profileData.images = [fetchedData.profile.avatarUrl];
                 delete fetchedData.profile.avatarUrl;
             }
-            
             merged.profile = { ...profileData, ...fetchedData.profile };
             merged.profile.images = Array.isArray(merged.profile.images) ? merged.profile.images : [];
         }
@@ -98,16 +95,16 @@ const mergeWithDefaults = (fetchedData) => {
     return merged;
 };
 
-// --- Helper Components ---
+// --- Helper Components (Fixed Contrast) ---
 const AdminInput = ({ label, textarea, ...props }) => {
     const Comp = textarea ? "textarea" : "input";
     return (
         <div className="w-full">
-            <label className="block font-mono text-[10px] text-zinc-500 uppercase tracking-widest mb-2 border-l-2 border-[#9f1239] pl-2">
+            <label className="block font-mono text-[10px] text-[var(--color-muted)] uppercase tracking-widest mb-2 border-l-2 border-[var(--color-crimson)] pl-2">
                 {label}
             </label>
             <Comp 
-                className="w-full bg-[#1e1e1e] border border-[#333] text-[#e5e5e5] p-3 font-serif focus:border-[#9f1239] focus:outline-none focus:ring-1 focus:ring-[#9f1239]/50 placeholder:text-zinc-600 transition-all rounded-md"
+                className="w-full bg-[var(--color-bg)] border border-[var(--color-border)] text-[var(--color-paper)] p-3 font-serif focus:border-[var(--color-crimson)] focus:outline-none focus:ring-1 focus:ring-[var(--color-crimson)]/50 placeholder:text-[var(--color-muted)]/50 transition-all rounded-md shadow-inner"
                 {...props}
             />
         </div>
@@ -115,12 +112,12 @@ const AdminInput = ({ label, textarea, ...props }) => {
 };
 
 const SectionHeader = ({ title, onAddItem, buttonLabel }) => (
-    <div className="flex justify-between items-end border-b border-[#333] pb-4 mb-8">
-        <h2 className="text-3xl font-display text-white">{title}</h2>
+    <div className="flex justify-between items-end border-b border-[var(--color-border)] pb-4 mb-8">
+        <h2 className="text-3xl font-display text-[var(--color-paper)]">{title}</h2>
         {onAddItem && (
             <button 
                 onClick={onAddItem} 
-                className="font-mono text-xs text-[#9f1239] hover:text-white transition-colors"
+                className="font-mono text-xs text-[var(--color-crimson)] hover:text-[var(--color-paper)] transition-colors font-bold px-3 py-1 rounded hover:bg-[var(--color-crimson)] hover:text-white"
             >
                 {buttonLabel}
             </button>
@@ -128,7 +125,7 @@ const SectionHeader = ({ title, onAddItem, buttonLabel }) => (
     </div>
 );
 
-// === COMPONENT UNTUK MULTIPLE IMAGES ===
+// === COMPONENT UNTUK MULTIPLE IMAGES (Fixed Contrast) ===
 const ProfileImagesManager = ({ images = [], onChange }) => {
     const [draggedIndex, setDraggedIndex] = useState(null);
 
@@ -170,7 +167,7 @@ const ProfileImagesManager = ({ images = [], onChange }) => {
         <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="md:col-span-2">
-                    <label className="block font-mono text-[10px] text-zinc-500 uppercase tracking-widest mb-2 border-l-2 border-[#9f1239] pl-2">
+                    <label className="block font-mono text-[10px] text-[var(--color-muted)] uppercase tracking-widest mb-2 border-l-2 border-[var(--color-crimson)] pl-2">
                         Profile Images ({images.length} images)
                     </label>
                     
@@ -185,7 +182,7 @@ const ProfileImagesManager = ({ images = [], onChange }) => {
                                     onDragStart={(e) => handleDragStart(e, index)}
                                     onDragOver={handleDragOver}
                                     onDrop={(e) => handleDrop(e, index)}
-                                    className="relative group aspect-square border-2 border-dashed border-[#333] hover:border-[#9f1239] rounded-lg overflow-hidden bg-[#111]"
+                                    className="relative group aspect-square border-2 border-dashed border-[var(--color-border)] hover:border-[var(--color-crimson)] rounded-lg overflow-hidden bg-[var(--color-line)] shadow-sm"
                                 >
                                     <img
                                         src={image}
@@ -194,10 +191,10 @@ const ProfileImagesManager = ({ images = [], onChange }) => {
                                     />
                                     
                                     {/* Overlay Controls */}
-                                    <div className="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                                         <div className="flex items-center gap-1 text-xs text-white bg-black/50 px-2 py-1 rounded">
                                             <span className="font-mono">#{index + 1}</span>
-                                            <span className="text-[10px] text-zinc-400">Drag to reorder</span>
+                                            <span className="text-[10px] text-zinc-300">Drag to reorder</span>
                                         </div>
                                         <button
                                             onClick={() => handleRemoveImage(index)}
@@ -211,9 +208,9 @@ const ProfileImagesManager = ({ images = [], onChange }) => {
                             
                             {/* Add New Image Button */}
                             <div className="relative aspect-square">
-                                <label className="cursor-pointer w-full h-full flex flex-col items-center justify-center border-2 border-dashed border-[#333] hover:border-[#9f1239] rounded-lg bg-[#0c0c0c] hover:bg-[#111] transition-all group">
-                                    <span className="text-3xl text-zinc-600 group-hover:text-[#9f1239] mb-2">+</span>
-                                    <span className="font-mono text-xs text-zinc-500 group-hover:text-white">Add Image</span>
+                                <label className="cursor-pointer w-full h-full flex flex-col items-center justify-center border-2 border-dashed border-[var(--color-border)] hover:border-[var(--color-crimson)] rounded-lg bg-[var(--color-bg)] hover:bg-[var(--color-line)] transition-all group shadow-sm">
+                                    <span className="text-3xl text-[var(--color-muted)] group-hover:text-[var(--color-crimson)] mb-2">+</span>
+                                    <span className="font-mono text-xs text-[var(--color-muted)] group-hover:text-[var(--color-paper)]">Add Image</span>
                                     <input
                                         type="file"
                                         className="hidden"
@@ -240,9 +237,9 @@ const ProfileImagesManager = ({ images = [], onChange }) => {
                             </div>
                         </div>
                         
-                        {/* Image Uploader Component (for bulk upload) */}
-                        <div className="pt-4 border-t border-[#333]">
-                            <label className="block font-mono text-[10px] text-zinc-500 uppercase tracking-widest mb-2">
+                        {/* Quick Upload */}
+                        <div className="pt-4 border-t border-[var(--color-border)]">
+                            <label className="block font-mono text-[10px] text-[var(--color-muted)] uppercase tracking-widest mb-2">
                                 Quick Image Upload
                             </label>
                             <div className="flex items-center gap-4">
@@ -250,7 +247,7 @@ const ProfileImagesManager = ({ images = [], onChange }) => {
                                     onUpload={handleAddImage}
                                     compact={true}
                                 />
-                                <div className="text-xs text-zinc-500">
+                                <div className="text-xs text-[var(--color-muted)]">
                                     <p>• Upload multiple profile images</p>
                                     <p>• Drag to reorder</p>
                                     <p>• First image is main profile</p>
@@ -262,11 +259,11 @@ const ProfileImagesManager = ({ images = [], onChange }) => {
                 
                 {/* Preview Section */}
                 <div className="space-y-4">
-                    <label className="block font-mono text-[10px] text-zinc-500 uppercase tracking-widest border-l-2 border-[#9f1239] pl-2">
+                    <label className="block font-mono text-[10px] text-[var(--color-muted)] uppercase tracking-widest border-l-2 border-[var(--color-crimson)] pl-2">
                         Live Preview
                     </label>
                     
-                    <div className="aspect-square border border-[#333] rounded-lg overflow-hidden bg-[#111]">
+                    <div className="aspect-square border border-[var(--color-border)] rounded-lg overflow-hidden bg-[var(--color-line)] shadow-md">
                         {images.length > 0 ? (
                             <div className="relative w-full h-full">
                                 <img
@@ -281,18 +278,17 @@ const ProfileImagesManager = ({ images = [], onChange }) => {
                                 )}
                             </div>
                         ) : (
-                            <div className="w-full h-full flex items-center justify-center text-zinc-600 font-mono text-sm">
+                            <div className="w-full h-full flex items-center justify-center text-[var(--color-muted)] font-mono text-sm">
                                 No images added
                             </div>
                         )}
                     </div>
                     
-                    <div className="text-xs text-zinc-500 space-y-2">
-                        <p className="font-mono text-[10px] text-[#9f1239]">💡 Tips:</p>
+                    <div className="text-xs text-[var(--color-muted)] space-y-2">
+                        <p className="font-mono text-[10px] text-[var(--color-crimson)]">💡 Tips:</p>
                         <p>• Add 3-5 high-quality images</p>
                         <p>• First image appears as main profile</p>
                         <p>• Use consistent aspect ratio (1:1 recommended)</p>
-                        <p>• Images will display in carousel on homepage</p>
                     </div>
                 </div>
             </div>
@@ -301,15 +297,15 @@ const ProfileImagesManager = ({ images = [], onChange }) => {
                 <motion.div 
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="bg-[#9f1239]/10 border border-[#9f1239]/30 rounded-lg p-4"
+                    className="bg-[var(--color-crimson)]/10 border border-[var(--color-crimson)]/30 rounded-lg p-4"
                 >
                     <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-[#9f1239] rounded-full flex items-center justify-center">
+                        <div className="w-8 h-8 bg-[var(--color-crimson)] rounded-full flex items-center justify-center">
                             <span className="text-white text-sm">✓</span>
                         </div>
                         <div>
-                            <p className="text-sm text-white font-mono">Profile Images Configured</p>
-                            <p className="text-xs text-zinc-400">
+                            <p className="text-sm text-[var(--color-paper)] font-mono">Profile Images Configured</p>
+                            <p className="text-xs text-[var(--color-muted)]">
                                 {images.length} image{images.length !== 1 ? 's' : ''} will display in carousel on homepage
                             </p>
                         </div>
@@ -319,8 +315,6 @@ const ProfileImagesManager = ({ images = [], onChange }) => {
         </div>
     );
 };
-
-// ... (Rest of AdminInput, SectionHeader, TechStackInput components remain the same)
 
 const TechStackInput = ({ technologies = [], onChange, projectIndex }) => {
     const [inputValue, setInputValue] = useState("");
@@ -345,7 +339,7 @@ const TechStackInput = ({ technologies = [], onChange, projectIndex }) => {
 
     return (
         <div className="space-y-3">
-            <label className="block font-mono text-[10px] text-zinc-500 uppercase tracking-widest border-l-2 border-[#9f1239] pl-2">
+            <label className="block font-mono text-[10px] text-[var(--color-muted)] uppercase tracking-widest border-l-2 border-[var(--color-crimson)] pl-2">
                 Technologies Used
             </label>
             
@@ -356,29 +350,29 @@ const TechStackInput = ({ technologies = [], onChange, projectIndex }) => {
                     onChange={(e) => setInputValue(e.target.value)}
                     onKeyPress={handleKeyPress}
                     placeholder="e.g., React, Node.js, MongoDB..."
-                    className="flex-1 bg-[#1e1e1e] border border-[#333] text-[#e5e5e5] p-2 font-mono text-sm focus:border-[#9f1239] focus:outline-none focus:ring-1 focus:ring-[#9f1239]/50 placeholder:text-zinc-600 transition-all rounded-md"
+                    className="flex-1 bg-[var(--color-bg)] border border-[var(--color-border)] text-[var(--color-paper)] p-2 font-mono text-sm focus:border-[var(--color-crimson)] focus:outline-none focus:ring-1 focus:ring-[var(--color-crimson)]/50 placeholder:text-[var(--color-muted)] transition-all rounded-md shadow-inner"
                 />
                 <button
                     type="button"
                     onClick={addTech}
-                    className="px-4 py-2 bg-[#9f1239] text-white font-mono text-xs hover:bg-[#7f0e2a] transition-colors rounded-md"
+                    className="px-4 py-2 bg-[var(--color-crimson)] text-white font-mono text-xs hover:bg-[#7f0e2a] transition-colors rounded-md shadow-sm"
                 >
                     ADD
                 </button>
             </div>
 
             {technologies.length > 0 && (
-                <div className="flex flex-wrap gap-2 p-3 bg-[#111] border border-[#333] rounded-md">
+                <div className="flex flex-wrap gap-2 p-3 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-md shadow-inner">
                     {technologies.map((tech, idx) => (
                         <span
                             key={idx}
-                            className="inline-flex items-center gap-2 px-3 py-1 bg-[#1e1e1e] border border-[#444] text-[#e5e5e5] font-mono text-xs rounded-full group hover:border-[#9f1239] transition-colors"
+                            className="inline-flex items-center gap-2 px-3 py-1 bg-[var(--color-line)] border border-[var(--color-border)] text-[var(--color-paper)] font-mono text-xs rounded-full group hover:border-[var(--color-crimson)] transition-colors shadow-sm"
                         >
                             {tech}
                             <button
                                 type="button"
                                 onClick={() => removeTech(tech)}
-                                className="text-zinc-500 hover:text-red-500 transition-colors font-bold"
+                                className="text-[var(--color-muted)] hover:text-red-500 transition-colors font-bold"
                             >
                                 ×
                             </button>
@@ -388,7 +382,7 @@ const TechStackInput = ({ technologies = [], onChange, projectIndex }) => {
             )}
 
             {technologies.length === 0 && (
-                <p className="text-xs text-zinc-600 font-mono italic p-3 bg-[#111] border border-[#333] rounded-md">
+                <p className="text-xs text-[var(--color-muted)] font-mono italic p-3 bg-[var(--color-line)] border border-[var(--color-border)] rounded-md">
                     No technologies added yet. Type and press Enter or click ADD.
                 </p>
             )}
@@ -419,7 +413,7 @@ export default function Admin() {
     const [activeTab, setActiveTab] = useState("home");
     const [formData, setFormData] = useState({
         home: { logoName: "", headline: "", subtitle: "" },
-        profile: { about: "", images: [] }, // Changed to images array
+        profile: { about: "", images: [] },
         aboutPage: {
             location: "Remote • Worldwide",
             specialization: "Full-Stack Development",
@@ -449,7 +443,6 @@ export default function Admin() {
     const fetchData = async () => {
         try {
             const response = await axios.get(API_URL, { timeout: 10000 });
-            console.log("Data fetched from API:", response.data);
             const merged = mergeWithDefaults(response.data);
             setFormData(merged);
         } catch (error) {
@@ -476,17 +469,13 @@ export default function Admin() {
 
         setIsSaving(true);
         try {
-            console.log("Saving data:", formData);
-            const response = await axios.post(API_URL, formData, {
+            await axios.post(API_URL, formData, {
                 headers: { Authorization: token },
                 timeout: 15000
             });
-
-            console.log("Save response:", response.data);
             toast.success("✓ Data saved successfully!");
             await refreshData();
         } catch (error) {
-            console.error("Save error:", error);
             if (error.response?.status === 401) {
                 toast.error("Session expired. Please login again.");
                 clearAuthToken();
@@ -532,7 +521,6 @@ export default function Admin() {
         });
     };
 
-    // Function to update profile images
     const updateProfileImages = (newImages) => {
         setFormData(prev => ({
             ...prev,
@@ -542,8 +530,8 @@ export default function Admin() {
 
     if (isLoading) {
         return (
-            <div className="min-h-screen bg-[#0c0c0c] flex items-center justify-center">
-                <div className="font-display text-xl tracking-[0.5em] animate-pulse text-white">
+            <div className="min-h-screen bg-[var(--color-bg)] flex items-center justify-center">
+                <div className="font-display text-xl tracking-[0.5em] animate-pulse text-[var(--color-paper)]">
                     LOADING ARCHIVE...
                 </div>
             </div>
@@ -562,14 +550,14 @@ export default function Admin() {
     ];
 
     return (
-        <div className="min-h-screen bg-[#0c0c0c] text-[#e5e5e5]">
+        <div className="min-h-screen bg-[var(--color-bg)] text-[var(--color-paper)]">
             <div className="noise-overlay fixed top-0 left-0 w-full h-full pointer-events-none z-[1] opacity-[0.03]"></div>
             
             <div className="flex relative">
-                <aside className="w-64 min-h-screen bg-[#0c0c0c] border-r border-[#333] fixed left-0 top-0 z-40 overflow-y-auto">
-                    <div className="p-6 border-b border-[#333]">
-                        <h1 className="font-display text-2xl text-white mb-1">ARCHIVIST</h1>
-                        <p className="font-mono text-xs text-zinc-600 tracking-widest">CONTROL PANEL</p>
+                <aside className="w-64 min-h-screen bg-[var(--color-bg)] border-r border-[var(--color-border)] fixed left-0 top-0 z-40 overflow-y-auto">
+                    <div className="p-6 border-b border-[var(--color-border)]">
+                        <h1 className="font-display text-2xl text-[var(--color-paper)] mb-1">ARCHIVIST</h1>
+                        <p className="font-mono text-xs text-[var(--color-muted)] tracking-widest">CONTROL PANEL</p>
                     </div>
 
                     <nav className="p-4 space-y-2">
@@ -577,10 +565,10 @@ export default function Admin() {
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
-                                className={`w-full text-left px-4 py-3 font-mono text-sm transition-all flex items-center gap-3 ${
+                                className={`w-full text-left px-4 py-3 font-mono text-sm transition-all flex items-center gap-3 rounded-lg ${
                                     activeTab === tab.id 
-                                        ? 'bg-[#9f1239] text-white border-l-4 border-white' 
-                                        : 'text-zinc-500 hover:text-white hover:bg-[#1e1e1e] border-l-4 border-transparent'
+                                        ? 'bg-[var(--color-crimson)] text-white shadow-md' 
+                                        : 'text-[var(--color-muted)] hover:text-[var(--color-paper)] hover:bg-[var(--color-line)]'
                                 }`}
                             >
                                 <span className="text-lg">{tab.icon}</span>
@@ -589,17 +577,17 @@ export default function Admin() {
                         ))}
                     </nav>
 
-                    <div className="p-4 border-t border-[#333] space-y-2">
+                    <div className="p-4 border-t border-[var(--color-border)] space-y-2">
                         <button 
                             onClick={handleSave} 
                             disabled={isSaving}
-                            className="w-full bg-[#9f1239] hover:bg-[#7f0e2a] text-white py-3 font-mono text-xs tracking-widest transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full bg-[var(--color-crimson)] hover:bg-[#7f0e2a] text-white py-3 font-mono text-xs tracking-widest transition-colors rounded shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {isSaving ? 'SAVING...' : '[ COMMIT CHANGES ]'}
                         </button>
                         <button 
                             onClick={handleLogout}
-                            className="w-full border border-[#333] hover:border-[#9f1239] text-zinc-500 hover:text-white py-3 font-mono text-xs tracking-widest transition-colors"
+                            className="w-full border border-[var(--color-border)] hover:border-[var(--color-crimson)] text-[var(--color-muted)] hover:text-[var(--color-paper)] py-3 font-mono text-xs tracking-widest transition-colors rounded hover:bg-[var(--color-line)]"
                         >
                             [ LOGOUT ]
                         </button>
@@ -632,8 +620,8 @@ export default function Admin() {
                                     <SectionHeader title="Biography & Profile Images" />
                                     <div className="space-y-8">
                                         {/* About Section */}
-                                        <div className="bg-[#111] border border-[#333] rounded-lg p-6">
-                                            <h3 className="text-lg font-display text-white mb-4 border-b border-[#333] pb-3">
+                                        <div className="bg-[var(--color-line)] border border-[var(--color-border)] rounded-lg p-6 shadow-sm">
+                                            <h3 className="text-lg font-display text-[var(--color-paper)] mb-4 border-b border-[var(--color-border)] pb-3">
                                                 📝 Biography
                                             </h3>
                                             <AdminInput 
@@ -646,8 +634,8 @@ export default function Admin() {
                                         </div>
 
                                         {/* Multiple Images Section */}
-                                        <div className="bg-[#111] border border-[#333] rounded-lg p-6">
-                                            <h3 className="text-lg font-display text-white mb-6 border-b border-[#333] pb-3">
+                                        <div className="bg-[var(--color-line)] border border-[var(--color-border)] rounded-lg p-6 shadow-sm">
+                                            <h3 className="text-lg font-display text-[var(--color-paper)] mb-6 border-b border-[var(--color-border)] pb-3">
                                                 🖼️ Profile Images Gallery
                                             </h3>
                                             <ProfileImagesManager 
@@ -657,16 +645,14 @@ export default function Admin() {
                                         </div>
 
                                         {/* Tips Section */}
-                                        <div className="bg-[#9f1239]/10 border border-[#9f1239]/30 rounded-lg p-6">
-                                            <h4 className="text-sm font-mono text-[#9f1239] mb-4 flex items-center gap-2">
+                                        <div className="bg-[var(--color-crimson)]/5 border border-[var(--color-crimson)]/30 rounded-lg p-6">
+                                            <h4 className="text-sm font-mono text-[var(--color-crimson)] mb-4 flex items-center gap-2">
                                                 <span>💡</span> Profile Tips:
                                             </h4>
-                                            <ul className="text-xs text-zinc-400 space-y-2 font-mono">
-                                                <li>• <span className="text-white">Biography:</span> Write 2-3 paragraphs about yourself, your journey, and passion</li>
-                                                <li>• <span className="text-white">Images:</span> Upload 3-5 high-quality photos showing different aspects</li>
-                                                <li>• <span className="text-white">Order:</span> First image is main profile, others show in carousel</li>
-                                                <li>• <span className="text-white">Format:</span> Use square images (1:1 ratio) for best display</li>
-                                                <li>• <span className="text-white">Variety:</span> Include professional, casual, and work environment photos</li>
+                                            <ul className="text-xs text-[var(--color-muted)] space-y-2 font-mono">
+                                                <li>• <span className="text-[var(--color-paper)]">Biography:</span> Write 2-3 paragraphs about yourself, your journey, and passion</li>
+                                                <li>• <span className="text-[var(--color-paper)]">Images:</span> Upload 3-5 high-quality photos showing different aspects</li>
+                                                <li>• <span className="text-[var(--color-paper)]">Order:</span> First image is main profile, others show in carousel</li>
                                             </ul>
                                         </div>
                                     </div>
@@ -678,8 +664,8 @@ export default function Admin() {
                                     <SectionHeader title="About Page Settings" />
                                     
                                     <div className="space-y-8">
-                                        <div className="bg-[#111] border border-[#333] rounded-lg p-6 space-y-6">
-                                            <h3 className="text-lg font-display text-white border-b border-[#333] pb-3">
+                                        <div className="bg-[var(--color-line)] border border-[var(--color-border)] rounded-lg p-6 space-y-6 shadow-sm">
+                                            <h3 className="text-lg font-display text-[var(--color-paper)] border-b border-[var(--color-border)] pb-3">
                                                 📍 Basic Information
                                             </h3>
                                             
@@ -706,11 +692,11 @@ export default function Admin() {
                                                 />
                                                 
                                                 <div>
-                                                    <label className="block font-mono text-[10px] text-zinc-500 uppercase tracking-widest mb-2 border-l-2 border-[#9f1239] pl-2">
+                                                    <label className="block font-mono text-[10px] text-[var(--color-muted)] uppercase tracking-widest mb-2 border-l-2 border-[var(--color-crimson)] pl-2">
                                                         Availability Status
                                                     </label>
                                                     <select 
-                                                        className="w-full bg-[#1e1e1e] border border-[#333] text-[#e5e5e5] p-3 font-serif focus:border-[#9f1239] focus:outline-none focus:ring-1 focus:ring-[#9f1239]/50 transition-all rounded-md"
+                                                        className="w-full bg-[var(--color-bg)] border border-[var(--color-border)] text-[var(--color-paper)] p-3 font-serif focus:border-[var(--color-crimson)] focus:outline-none focus:ring-1 focus:ring-[var(--color-crimson)]/50 transition-all rounded-md shadow-inner"
                                                         value={formData.aboutPage?.availabilityStatus || "open"}
                                                         onChange={e => setNest('aboutPage','availabilityStatus',e.target.value)}
                                                     >
@@ -722,9 +708,9 @@ export default function Admin() {
                                             </div>
                                         </div>
 
-                                        <div className="bg-[#111] border border-[#333] rounded-lg p-6 space-y-4">
-                                            <div className="flex justify-between items-center border-b border-[#333] pb-3">
-                                                <h3 className="text-lg font-display text-white">
+                                        <div className="bg-[var(--color-line)] border border-[var(--color-border)] rounded-lg p-6 space-y-4 shadow-sm">
+                                            <div className="flex justify-between items-center border-b border-[var(--color-border)] pb-3">
+                                                <h3 className="text-lg font-display text-[var(--color-paper)]">
                                                     💡 Your Core Values & Approach
                                                 </h3>
                                                 <button 
@@ -733,19 +719,19 @@ export default function Admin() {
                                                         newValues.push({ title: "", desc: "", icon: "⭐" });
                                                         setNest('aboutPage', 'coreValues', newValues);
                                                     }}
-                                                    className="font-mono text-xs text-[#9f1239] hover:text-white transition-colors"
+                                                    className="font-mono text-xs text-[var(--color-crimson)] hover:text-[var(--color-paper)] transition-colors"
                                                 >
                                                     [ + ADD VALUE ]
                                                 </button>
                                             </div>
                                             
-                                            <p className="text-sm text-zinc-500 font-mono">
+                                            <p className="text-sm text-[var(--color-muted)] font-mono">
                                                 Add 4 core values that represent your work philosophy
                                             </p>
 
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                 {(formData.aboutPage?.coreValues || []).map((value, i) => (
-                                                    <div key={i} className="bg-[#1e1e1e]/50 border border-[#333] rounded-lg p-4 space-y-3">
+                                                    <div key={i} className="bg-[var(--color-bg)] border border-[var(--color-border)] rounded-lg p-4 space-y-3 shadow-inner">
                                                         <div className="flex justify-between items-start">
                                                             <input
                                                                 type="text"
@@ -763,7 +749,7 @@ export default function Admin() {
                                                                     const newValues = (formData.aboutPage?.coreValues || []).filter((_, idx) => idx !== i);
                                                                     setNest('aboutPage', 'coreValues', newValues);
                                                                 }}
-                                                                className="text-zinc-600 hover:text-red-500 text-xl font-bold"
+                                                                className="text-[var(--color-muted)] hover:text-red-500 text-xl font-bold"
                                                             >
                                                                 ×
                                                             </button>
@@ -797,17 +783,17 @@ export default function Admin() {
                                             </div>
                                             
                                             {(!formData.aboutPage?.coreValues || formData.aboutPage.coreValues.length === 0) && (
-                                                <div className="text-center py-8 border-2 border-dashed border-[#333] rounded-lg">
-                                                    <p className="text-zinc-600 font-mono text-sm">
+                                                <div className="text-center py-8 border-2 border-dashed border-[var(--color-border)] rounded-lg">
+                                                    <p className="text-[var(--color-muted)] font-mono text-sm">
                                                         No core values added. Click "+ ADD VALUE" to start.
                                                     </p>
                                                 </div>
                                             )}
                                         </div>
 
-                                        <div className="bg-[#111] border border-[#333] rounded-lg p-6 space-y-4">
-                                            <div className="flex justify-between items-center border-b border-[#333] pb-3">
-                                                <h3 className="text-lg font-display text-white">
+                                        <div className="bg-[var(--color-line)] border border-[var(--color-border)] rounded-lg p-6 space-y-4 shadow-sm">
+                                            <div className="flex justify-between items-center border-b border-[var(--color-border)] pb-3">
+                                                <h3 className="text-lg font-display text-[var(--color-paper)]">
                                                     💪 Professional Strengths
                                                 </h3>
                                                 <button 
@@ -816,16 +802,12 @@ export default function Admin() {
                                                         newStrengths.push("");
                                                         setNest('aboutPage', 'strengths', newStrengths);
                                                     }}
-                                                    className="font-mono text-xs text-[#9f1239] hover:text-white transition-colors"
+                                                    className="font-mono text-xs text-[var(--color-crimson)] hover:text-[var(--color-paper)] transition-colors"
                                                 >
                                                     [ + ADD STRENGTH ]
                                                 </button>
                                             </div>
                                             
-                                            <p className="text-sm text-zinc-500 font-mono">
-                                                List your key professional strengths (4-6 items recommended)
-                                            </p>
-
                                             <div className="space-y-3">
                                                 {(formData.aboutPage?.strengths || []).map((strength, i) => (
                                                     <div key={i} className="flex gap-3 items-center">
@@ -839,7 +821,7 @@ export default function Admin() {
                                                                     newStrengths[i] = e.target.value;
                                                                     setNest('aboutPage', 'strengths', newStrengths);
                                                                 }}
-                                                                className="w-full bg-[#1e1e1e] border border-[#333] text-[#e5e5e5] p-3 font-serif focus:border-[#9f1239] focus:outline-none focus:ring-1 focus:ring-[#9f1239]/50 placeholder:text-zinc-600 transition-all rounded-md"
+                                                                className="w-full bg-[var(--color-bg)] border border-[var(--color-border)] text-[var(--color-paper)] p-3 font-serif focus:border-[var(--color-crimson)] focus:outline-none focus:ring-1 focus:ring-[var(--color-crimson)]/50 placeholder:text-[var(--color-muted)] transition-all rounded-md shadow-inner"
                                                             />
                                                         </div>
                                                         <button 
@@ -847,21 +829,13 @@ export default function Admin() {
                                                                 const newStrengths = (formData.aboutPage?.strengths || []).filter((_, idx) => idx !== i);
                                                                 setNest('aboutPage', 'strengths', newStrengths);
                                                             }}
-                                                            className="text-zinc-600 hover:text-red-500 text-xl font-bold px-3"
+                                                            className="text-[var(--color-muted)] hover:text-red-500 text-xl font-bold px-3"
                                                         >
                                                             ×
                                                         </button>
                                                     </div>
                                                 ))}
                                             </div>
-                                            
-                                            {(!formData.aboutPage?.strengths || formData.aboutPage.strengths.length === 0) && (
-                                                <div className="text-center py-8 border-2 border-dashed border-[#333] rounded-lg">
-                                                    <p className="text-zinc-600 font-mono text-sm">
-                                                        No strengths added. Click "+ ADD STRENGTH" to start.
-                                                    </p>
-                                                </div>
-                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -873,8 +847,8 @@ export default function Admin() {
                                     <div className="space-y-4">
                                         <AnimatePresence>
                                             {formData.soundtrack?.map((track, i) => (
-                                                <motion.div key={i} variants={listItemVariants} initial="hidden" animate="visible" exit="exit" layout className="bg-[#1e1e1e]/50 border border-[#333] rounded-lg p-4 relative">
-                                                    <button onClick={() => delItem('soundtrack',i)} className="absolute top-2 right-2 text-zinc-600 hover:text-red-500 text-xl font-bold">&times;</button>
+                                                <motion.div key={i} variants={listItemVariants} initial="hidden" animate="visible" exit="exit" layout className="bg-[var(--color-line)] border border-[var(--color-border)] rounded-lg p-4 relative shadow-sm">
+                                                    <button onClick={() => delItem('soundtrack',i)} className="absolute top-2 right-2 text-[var(--color-muted)] hover:text-red-500 text-xl font-bold">&times;</button>
                                                     <div className="grid md:grid-cols-2 gap-4 mb-4">
                                                         <AdminInput label="Track Title" value={track.title || ""} onChange={e => setArrObj('soundtrack', i, 'title', e.target.value)} />
                                                         <AdminInput label="Artist Name" value={track.artist || ""} onChange={e => setArrObj('soundtrack', i, 'artist', e.target.value)} />
@@ -883,7 +857,7 @@ export default function Admin() {
                                                 </motion.div>
                                             ))}
                                         </AnimatePresence>
-                                        {formData.soundtrack?.length === 0 && <p className="text-center text-zinc-600 font-mono text-xs py-10">NO TRACKS FOUND</p>}
+                                        {formData.soundtrack?.length === 0 && <p className="text-center text-[var(--color-muted)] font-mono text-xs py-10">NO TRACKS FOUND</p>}
                                     </div>
                                 </div>
                             )}
@@ -896,21 +870,21 @@ export default function Admin() {
                                             {formData.skills?.map((skill, i) => {
                                                 const skillData = typeof skill === 'string' ? { name: skill, level: "Intermediate" } : skill;
                                                 return (
-                                                    <motion.div key={i} variants={listItemVariants} initial="hidden" animate="visible" exit="exit" layout className="bg-[#1e1e1e]/50 border border-[#333] rounded-lg p-4 space-y-4">
+                                                    <motion.div key={i} variants={listItemVariants} initial="hidden" animate="visible" exit="exit" layout className="bg-[var(--color-line)] border border-[var(--color-border)] rounded-lg p-4 space-y-4 shadow-sm">
                                                         <AdminInput label="Skill Name" value={skillData.name || ""} onChange={e=>setArrObj('skills',i,'name',e.target.value)} />
                                                         <div>
-                                                            <label className="block font-mono text-[10px] text-zinc-500 uppercase tracking-widest mb-2 border-l-2 border-[#9f1239] pl-2">Proficiency Level</label>
-                                                            <select className="w-full bg-[#1e1e1e] border border-[#333] text-[#e5e5e5] p-3 font-serif focus:border-[#9f1239] focus:outline-none focus:ring-1 focus:ring-[#9f1239]/50 transition-all rounded-md" value={skillData.level || "Intermediate"} onChange={e=>setArrObj('skills',i,'level',e.target.value)}>
+                                                            <label className="block font-mono text-[10px] text-[var(--color-muted)] uppercase tracking-widest mb-2 border-l-2 border-[var(--color-crimson)] pl-2">Proficiency Level</label>
+                                                            <select className="w-full bg-[var(--color-bg)] border border-[var(--color-border)] text-[var(--color-paper)] p-3 font-serif focus:border-[var(--color-crimson)] focus:outline-none focus:ring-1 focus:ring-[var(--color-crimson)]/50 transition-all rounded-md shadow-inner" value={skillData.level || "Intermediate"} onChange={e=>setArrObj('skills',i,'level',e.target.value)}>
                                                                 <option>Beginner</option><option>Intermediate</option><option>Advanced</option><option>Master</option>
                                                             </select>
                                                         </div>
-                                                        <button onClick={()=>delItem('skills',i)} className="font-mono text-[10px] text-zinc-500 hover:text-red-500 transition-colors">[ DELETE ]</button>
+                                                        <button onClick={()=>delItem('skills',i)} className="font-mono text-[10px] text-[var(--color-muted)] hover:text-red-500 transition-colors">[ DELETE ]</button>
                                                     </motion.div>
                                                 )
                                             })}
                                         </AnimatePresence>
                                     </div>
-                                    {formData.skills?.length === 0 && <p className="text-center text-zinc-600 font-mono text-xs py-10">NO SKILLS FOUND</p>}
+                                    {formData.skills?.length === 0 && <p className="text-center text-[var(--color-muted)] font-mono text-xs py-10">NO SKILLS FOUND</p>}
                                 </div>
                             )}
 
@@ -920,8 +894,8 @@ export default function Admin() {
                                     <div className="space-y-4">
                                         <AnimatePresence>
                                             {formData.experience?.map((exp, i) => (
-                                                <motion.div key={i} variants={listItemVariants} initial="hidden" animate="visible" exit="exit" layout className="bg-[#1e1e1e]/50 border border-[#333] rounded-lg p-4 relative space-y-4">
-                                                    <button onClick={() => delItem('experience',i)} className="absolute top-2 right-2 text-zinc-600 hover:text-red-500 text-xl font-bold">&times;</button>
+                                                <motion.div key={i} variants={listItemVariants} initial="hidden" animate="visible" exit="exit" layout className="bg-[var(--color-line)] border border-[var(--color-border)] rounded-lg p-4 relative space-y-4 shadow-sm">
+                                                    <button onClick={() => delItem('experience',i)} className="absolute top-2 right-2 text-[var(--color-muted)] hover:text-red-500 text-xl font-bold">&times;</button>
                                                     <AdminInput label="Job Title / Role" value={exp.role || ""} onChange={e=>setArrObj('experience',i,'role',e.target.value)} />
                                                     <AdminInput label="Company Name" value={exp.company || ""} onChange={e=>setArrObj('experience',i,'company',e.target.value)} />
                                                     <AdminInput label="Duration / Year" placeholder="e.g., 2020-2023" value={exp.year || ""} onChange={e=>setArrObj('experience',i,'year',e.target.value)} />
@@ -929,7 +903,7 @@ export default function Admin() {
                                             ))}
                                         </AnimatePresence>
                                     </div>
-                                    {formData.experience?.length === 0 && <p className="text-center text-zinc-600 font-mono text-xs py-10">NO EXPERIENCE FOUND</p>}
+                                    {formData.experience?.length === 0 && <p className="text-center text-[var(--color-muted)] font-mono text-xs py-10">NO EXPERIENCE FOUND</p>}
                                 </div>
                             )}
 
@@ -939,10 +913,10 @@ export default function Admin() {
                                     <div className="space-y-6">
                                         <AnimatePresence>
                                             {formData.projects?.map((p, i) => (
-                                                <motion.div key={i} variants={listItemVariants} initial="hidden" animate="visible" exit="exit" layout className="bg-[#1e1e1e]/50 border border-[#333] rounded-lg p-4">
+                                                <motion.div key={i} variants={listItemVariants} initial="hidden" animate="visible" exit="exit" layout className="bg-[var(--color-line)] border border-[var(--color-border)] rounded-lg p-4 shadow-sm">
                                                     <div className="flex justify-between items-start">
-                                                        <p className="font-mono text-xs text-zinc-500 mb-4">PROJECT #{i+1}</p>
-                                                        <button onClick={()=>delItem('projects',i)} className="text-zinc-600 hover:text-red-500 text-xl font-bold -mt-2">&times;</button>
+                                                        <p className="font-mono text-xs text-[var(--color-muted)] mb-4">PROJECT #{i+1}</p>
+                                                        <button onClick={()=>delItem('projects',i)} className="text-[var(--color-muted)] hover:text-red-500 text-xl font-bold -mt-2">&times;</button>
                                                     </div>
                                                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                                                         <div className="lg:col-span-2 space-y-4">
@@ -957,7 +931,7 @@ export default function Admin() {
                                                             />
                                                         </div>
                                                         <div className="space-y-2">
-                                                            <label className="block font-mono text-[10px] text-zinc-500 uppercase tracking-widest border-l-2 border-[#9f1239] pl-2">Project Image</label>
+                                                            <label className="block font-mono text-[10px] text-[var(--color-muted)] uppercase tracking-widest border-l-2 border-[var(--color-crimson)] pl-2">Project Image</label>
                                                             <ImageUploader currentImage={p.image || ""} onUpload={url=>setArrObj('projects',i,'image',url)} onDelete={()=>setArrObj('projects',i,'image',"")} />
                                                         </div>
                                                     </div>
@@ -965,7 +939,7 @@ export default function Admin() {
                                             ))}
                                         </AnimatePresence>
                                     </div>
-                                    {formData.projects?.length === 0 && <p className="text-center text-zinc-600 font-mono text-xs py-10">NO PROJECTS FOUND</p>}
+                                    {formData.projects?.length === 0 && <p className="text-center text-[var(--color-muted)] font-mono text-xs py-10">NO PROJECTS FOUND</p>}
                                 </div>
                             )}
 

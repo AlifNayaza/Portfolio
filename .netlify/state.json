@@ -1,20 +1,20 @@
 {
 	"geolocation": {
 		"data": {
-			"city": "Jakarta",
+			"city": "Bandung",
 			"country": {
 				"code": "ID",
 				"name": "Indonesia"
 			},
 			"subdivision": {
-				"code": "JK",
-				"name": "Jakarta"
+				"code": "JB",
+				"name": "West Java"
 			},
 			"timezone": "Asia/Jakarta",
-			"latitude": -6.2369,
-			"longitude": 106.853,
-			"postalCode": "12820"
+			"latitude": -6.9172,
+			"longitude": 107.6296,
+			"postalCode": "40257"
 		},
-		"timestamp": 1766214568501
+		"timestamp": 1769576299862
 	}
 }

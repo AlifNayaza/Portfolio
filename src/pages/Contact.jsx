@@ -38,7 +38,7 @@ const ConnectionParticles = () => {
           size: Math.random() * 1.5 + 0.5,
           speedX: (Math.random() - 0.5) * 0.15,
           speedY: (Math.random() - 0.5) * 0.15,
-          color: Math.random() > 0.7 ? '#9f1239' : '#c2410c',
+          color: Math.random() > 0.7 ? 'var(--color-crimson)' : 'var(--color-gold)',
           alpha: Math.random() * 0.12 + 0.03,
           pulseSpeed: Math.random() * 0.008 + 0.002,
           pulsePhase: Math.random() * Math.PI * 2,
@@ -110,7 +110,7 @@ const ConnectionParticles = () => {
         // Gambar koneksi (setiap 3 frame untuk performa)
         if (frameCount % 3 === 0) {
           ctx.globalAlpha = 0.03;
-          ctx.strokeStyle = '#9f1239';
+          ctx.strokeStyle = 'var(--color-crimson)';
           ctx.lineWidth = 0.6;
           
           for (let i = 0; i < particlesRef.current.length; i++) {
@@ -252,8 +252,8 @@ const QuickAccessPanel = ({ contact, onCommandClick }) => {
       label: 'Send Email', 
       icon: '📧', 
       description: 'Compose a message',
-      color: 'from-[#9f1239]/20 to-[#9f1239]/5',
-      borderColor: 'border-[#9f1239]/40'
+      color: 'from-[var(--color-crimson)]/20 to-[var(--color-crimson)]/5',
+      borderColor: 'border-[var(--color-crimson)]/40'
     },
     ...socialLinks.map(([key, value]) => ({
       cmd: key,
@@ -263,7 +263,7 @@ const QuickAccessPanel = ({ contact, onCommandClick }) => {
             key === 'instagram' ? '📸' : '🐦',
       description: `Navigate to ${key}`,
       color: 'from-[#333]/10 to-transparent',
-      borderColor: 'border-[#333]/60 hover:border-[#9f1239]/60'
+      borderColor: 'border-[var(--color-border)]/60 hover:border-[var(--color-crimson)]/60'
     }))
   ];
 
@@ -287,7 +287,7 @@ const QuickAccessPanel = ({ contact, onCommandClick }) => {
         >
           {/* Background glow effect */}
           <motion.div 
-            className="absolute inset-0 bg-gradient-to-r from-transparent via-[#9f1239]/5 to-transparent"
+            className="absolute inset-0 bg-gradient-to-r from-transparent via-[var(--color-crimson)]/5 to-transparent"
             initial={{ x: "-100%" }}
             whileHover={{ x: "100%" }}
             transition={{ duration: 0.6, ease: "easeInOut" }}
@@ -306,11 +306,11 @@ const QuickAccessPanel = ({ contact, onCommandClick }) => {
           
           {/* Content */}
           <div className="text-center z-10">
-            <div className="font-medium text-white mb-1 tracking-wide text-sm">
+            <div className="font-medium text-[var(--color-paper)] mb-1 tracking-wide text-sm">
               {cmd.label}
             </div>
             <motion.div 
-              className="text-xs text-zinc-500 group-hover:text-[#9f1239]/80 transition-colors"
+              className="text-xs text-[var(--color-muted)] group-hover:text-[var(--color-crimson)]/80 transition-colors"
               initial={{ opacity: 0.7 }}
               whileHover={{ opacity: 1 }}
             >
@@ -320,7 +320,7 @@ const QuickAccessPanel = ({ contact, onCommandClick }) => {
           
           {/* Active indicator dot */}
           <motion.div 
-            className="absolute top-3 right-3 w-2 h-2 rounded-full bg-[#9f1239]/50"
+            className="absolute top-3 right-3 w-2 h-2 rounded-full bg-[var(--color-crimson)]/50"
             whileHover={{ 
               scale: [1, 1.3, 1],
               opacity: [0.5, 1, 0.5],
@@ -341,11 +341,11 @@ const TerminalLine = ({ text, isUserInput = false, isCommand = false, index }) =
       initial="hidden"
       animate="visible"
       custom={index}
-      className={`${isUserInput ? 'flex items-start gap-2 text-white' : isCommand ? 'text-[#9f1239] text-sm' : 'text-zinc-400'} font-mono text-sm tracking-wide`}
+      className={`${isUserInput ? 'flex items-start gap-2 text-[var(--color-paper)]' : isCommand ? 'text-[var(--color-crimson)] text-sm' : 'text-[var(--color-muted)]'} font-mono text-sm tracking-wide`}
     >
       {isUserInput && (
         <motion.span 
-          className="text-[#9f1239] flex-shrink-0"
+          className="text-[var(--color-crimson)] flex-shrink-0"
           animate={{ opacity: [1, 0.7, 1] }}
           transition={{ duration: 1.5, repeat: Infinity }}
         >
@@ -377,7 +377,7 @@ const TypingCursor = () => {
         repeat: Infinity,
         times: [0, 0.5, 1]
       }}
-      className="inline-block w-2 h-5 bg-[#9f1239] ml-1"
+      className="inline-block w-2 h-5 bg-[var(--color-crimson)] ml-1"
     />
   );
 };
@@ -563,7 +563,7 @@ export default function Contact() {
             className="text-center"
           >
             <motion.h1 
-              className="text-4xl md:text-5xl font-display text-white mb-4 tracking-tight"
+              className="text-4xl md:text-5xl font-display text-[var(--color-paper)] mb-4 tracking-tight"
               initial={{ letterSpacing: "0.05em" }}
               animate={{ letterSpacing: "0.02em" }}
               transition={{ duration: 0.5, delay: 0.3 }}
@@ -577,9 +577,9 @@ export default function Contact() {
               animate={{ width: "180px" }}
               transition={{ duration: 0.8, delay: 0.5 }}
             >
-              <div className="h-1 bg-gradient-to-r from-transparent via-[#9f1239] to-transparent rounded-full" />
+              <div className="h-1 bg-gradient-to-r from-transparent via-[var(--color-crimson)] to-transparent rounded-full" />
               <motion.div 
-                className="absolute -top-1 left-1/2 w-3 h-3 rounded-full bg-[#9f1239]"
+                className="absolute -top-1 left-1/2 w-3 h-3 rounded-full bg-[var(--color-crimson)]"
                 animate={{ 
                   x: ["-50%", "-50%"],
                   scale: [1, 1.2, 1],
@@ -592,7 +592,7 @@ export default function Contact() {
             </motion.div>
             
             <motion.p 
-              className="text-zinc-400 max-w-2xl mx-auto mt-6 leading-relaxed"
+              className="text-[var(--color-muted)] max-w-2xl mx-auto mt-6 leading-relaxed"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.7 }}
@@ -611,7 +611,7 @@ export default function Contact() {
           >
             <div className="flex items-center gap-3">
               <motion.div 
-                className="w-4 h-4 bg-[#9f1239] rounded-full"
+                className="w-4 h-4 bg-[var(--color-crimson)] rounded-full"
                 animate={{ 
                   scale: [1, 1.3, 1],
                   boxShadow: ["0 0 0px #9f1239", "0 0 8px #9f1239", "0 0 0px #9f1239"]
@@ -622,7 +622,7 @@ export default function Contact() {
                   ease: "easeInOut"
                 }}
               />
-              <h2 className="font-medium text-white tracking-wider text-lg">Direct Channels</h2>
+              <h2 className="font-medium text-[var(--color-paper)] tracking-wider text-lg">Direct Channels</h2>
             </div>
             <QuickAccessPanel contact={contact} onCommandClick={handleQuickCommand} />
           </motion.section>
@@ -632,16 +632,16 @@ export default function Contact() {
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.5, type: "spring", damping: 25 }}
-            className="bg-[#0c0c0c]/95 backdrop-blur-sm border border-[#222] rounded-xl overflow-hidden shadow-2xl shadow-black/30"
+            className="bg-[var(--color-bg)]/95 backdrop-blur-sm border border-[var(--color-border)] rounded-xl overflow-hidden shadow-2xl shadow-black/30"
           >
             {/* Terminal Header */}
             <motion.div 
-              className="flex items-center justify-between px-6 py-4 border-b border-[#222] bg-gradient-to-r from-[#0a0a0a] to-[#111]"
+              className="flex items-center justify-between px-6 py-4 border-b border-[var(--color-border)] bg-gradient-to-r from-[#0a0a0a] to-[var(--color-line)]"
               whileHover={{ backgroundColor: "rgba(10, 10, 10, 0.9)" }}
             >
               <div className="flex items-center gap-3">
                 <div className="flex gap-2">
-                  {['#9f1239', '#c2410c', '#d97706'].map((color, idx) => (
+                  {['var(--color-crimson)', 'var(--color-gold)', '#d97706'].map((color, idx) => (
                     <motion.div
                       key={idx}
                       className="w-3 h-3 rounded-full"
@@ -670,7 +670,7 @@ export default function Contact() {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setShowHelp(!showHelp)}
-                className="text-xs text-zinc-500 hover:text-white transition-colors px-3 py-1 rounded border border-transparent hover:border-[#333]"
+                className="text-xs text-[var(--color-muted)] hover:text-[var(--color-paper)] transition-colors px-3 py-1 rounded border border-transparent hover:border-[var(--color-border)]"
               >
                 {showHelp ? 'Hide Guide' : 'Show Guide'}
               </motion.button>
@@ -698,14 +698,14 @@ export default function Contact() {
             {/* Input Area */}
             {isReady && (
               <motion.div 
-                className="border-t border-[#222] bg-[#0a0a0a]/80 p-4"
+                className="border-t border-[var(--color-border)] bg-[var(--color-bg)]/80 p-4"
                 initial={{ y: 10, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.8 }}
               >
                 <div className="flex items-center gap-3">
                   <motion.span 
-                    className="text-[#9f1239] font-bold"
+                    className="text-[var(--color-crimson)] font-bold"
                     animate={{ 
                       opacity: [1, 0.6, 1],
                       scale: [1, 1.1, 1]
@@ -728,7 +728,7 @@ export default function Contact() {
                         setIsTyping(true);
                       }}
                       onKeyPress={handleKeyPress}
-                      className="flex-1 bg-transparent border-none text-white placeholder:text-zinc-600 focus:outline-none font-mono tracking-wide"
+                      className="flex-1 bg-transparent border-none text-[var(--color-paper)] placeholder:text-[var(--color-muted)] focus:outline-none font-mono tracking-wide"
                       placeholder="Enter command..."
                       spellCheck="false"
                       autoComplete="off"
@@ -777,7 +777,7 @@ export default function Contact() {
                   opacity: { duration: 0.3 },
                   height: { type: "spring", damping: 25 }
                 }}
-                className="bg-gradient-to-b from-[#111]/80 to-[#0a0a0a]/80 border border-[#222] rounded-xl p-6 overflow-hidden backdrop-blur-sm"
+                className="bg-gradient-to-b from-[var(--color-line)]/80 to-[#0a0a0a]/80 border border-[var(--color-border)] rounded-xl p-6 overflow-hidden backdrop-blur-sm"
               >
                 <motion.div 
                   className="flex items-center gap-3 mb-6"
@@ -786,13 +786,13 @@ export default function Contact() {
                   transition={{ delay: 0.1 }}
                 >
                   <motion.div 
-                    className="w-6 h-6 bg-gradient-to-br from-[#9f1239] to-[#c2410c] rounded-full flex items-center justify-center"
+                    className="w-6 h-6 bg-gradient-to-br from-[var(--color-crimson)] to-[var(--color-gold)] rounded-full flex items-center justify-center"
                     animate={{ rotate: 360 }}
                     transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
                   >
-                    <span className="text-xs text-white">?</span>
+                    <span className="text-xs text-[var(--color-paper)]">?</span>
                   </motion.div>
-                  <h3 className="text-xl font-medium text-white tracking-wide">Navigation Guide</h3>
+                  <h3 className="text-xl font-medium text-[var(--color-paper)] tracking-wide">Navigation Guide</h3>
                 </motion.div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -802,13 +802,13 @@ export default function Contact() {
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ delay: 0.2 }}
                   >
-                    <h4 className="text-white font-medium tracking-wide">Direct Channels</h4>
-                    <p className="text-zinc-400 text-sm leading-relaxed">
+                    <h4 className="text-[var(--color-paper)] font-medium tracking-wide">Direct Channels</h4>
+                    <p className="text-[var(--color-muted)] text-sm leading-relaxed">
                       Each card represents a direct communication pathway. Hover to preview the interaction, 
                       click to initiate connection. Visual feedback confirms successful activation.
                     </p>
                     <motion.div 
-                      className="h-1 bg-gradient-to-r from-[#9f1239] to-transparent rounded-full w-24"
+                      className="h-1 bg-gradient-to-r from-[var(--color-crimson)] to-transparent rounded-full w-24"
                       initial={{ width: 0 }}
                       animate={{ width: "96px" }}
                       transition={{ delay: 0.4 }}
@@ -821,13 +821,13 @@ export default function Contact() {
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ delay: 0.3 }}
                   >
-                    <h4 className="text-white font-medium tracking-wide">Terminal Interface</h4>
-                    <p className="text-zinc-400 text-sm leading-relaxed">
+                    <h4 className="text-[var(--color-paper)] font-medium tracking-wide">Terminal Interface</h4>
+                    <p className="text-[var(--color-muted)] text-sm leading-relaxed">
                       For precise control, type commands directly. The terminal responds with real-time feedback. 
                       Experiment with different commands to explore all available functions.
                     </p>
                     <motion.div 
-                      className="h-1 bg-gradient-to-r from-[#c2410c] to-transparent rounded-full w-24"
+                      className="h-1 bg-gradient-to-r from-[var(--color-gold)] to-transparent rounded-full w-24"
                       initial={{ width: 0 }}
                       animate={{ width: "96px" }}
                       transition={{ delay: 0.5 }}
@@ -836,7 +836,7 @@ export default function Contact() {
                 </div>
                 
                 <motion.div 
-                  className="mt-8 pt-6 border-t border-[#222]"
+                  className="mt-8 pt-6 border-t border-[var(--color-border)]"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.6 }}
@@ -853,7 +853,7 @@ export default function Contact() {
                         repeat: Infinity
                       }}
                     />
-                    <span className="text-sm text-zinc-500">
+                    <span className="text-sm text-[var(--color-muted)]">
                       System active • Response window: 12-24 cycles
                     </span>
                   </div>
@@ -870,7 +870,7 @@ export default function Contact() {
             className="relative overflow-hidden rounded-xl"
           >
             <motion.div 
-              className="absolute inset-0 bg-gradient-to-r from-[#9f1239]/10 via-[#c2410c]/5 to-transparent"
+              className="absolute inset-0 bg-gradient-to-r from-[var(--color-crimson)]/10 via-[var(--color-gold)]/5 to-transparent"
               animate={{ 
                 backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"]
               }}
@@ -884,11 +884,11 @@ export default function Contact() {
               }}
             />
             
-            <div className="relative border border-[#222] rounded-xl p-6 md:p-8 backdrop-blur-sm">
+            <div className="relative border border-[var(--color-border)] rounded-xl p-6 md:p-8 backdrop-blur-sm">
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                 <div className="space-y-3">
-                  <h3 className="text-xl font-medium text-white tracking-wide">Direct Transmission</h3>
-                  <p className="text-zinc-400 text-sm max-w-md">
+                  <h3 className="text-xl font-medium text-[var(--color-paper)] tracking-wide">Direct Transmission</h3>
+                  <p className="text-[var(--color-muted)] text-sm max-w-md">
                     For detailed inquiries, collaboration proposals, or secure communication.
                   </p>
                 </div>
@@ -901,7 +901,7 @@ export default function Contact() {
                     whileTap={{ scale: 0.98 }}
                   >
                     <motion.div 
-                      className="absolute inset-0 bg-gradient-to-r from-[#9f1239] to-[#c2410c]"
+                      className="absolute inset-0 bg-gradient-to-r from-[var(--color-crimson)] to-[var(--color-gold)]"
                       animate={{ 
                         x: ["-100%", "100%"]
                       }}
@@ -913,7 +913,7 @@ export default function Contact() {
                       }}
                       style={{ opacity: 0.1 }}
                     />
-                    <div className="relative px-6 py-3 bg-[#9f1239] text-white font-medium rounded-lg hover:bg-[#7f0e2a] transition-colors">
+                    <div className="relative px-6 py-3 bg-[var(--color-crimson)] text-[var(--color-paper)] font-medium rounded-lg hover:bg-[#7f0e2a] transition-colors">
                       Initiate Transmission
                     </div>
                   </motion.a>
@@ -927,16 +927,16 @@ export default function Contact() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1.1 }}
-            className="text-center pt-8 border-t border-[#222]/30"
+            className="text-center pt-8 border-t border-[var(--color-border)]/30"
           >
             <motion.p 
-              className="text-sm text-zinc-500 mb-2"
+              className="text-sm text-[var(--color-muted)] mb-2"
               animate={{ opacity: [0.7, 1, 0.7] }}
               transition={{ duration: 3, repeat: Infinity }}
             >
               Connection established • Awaiting response
             </motion.p>
-            <p className="text-xs text-zinc-600 tracking-wide">
+            <p className="text-xs text-[var(--color-muted)] tracking-wide">
               © {new Date().getFullYear()} • All transmission channels secured
             </p>
             
@@ -966,7 +966,7 @@ export default function Contact() {
           {[...Array(8)].map((_, i) => (
             <motion.div
               key={i}
-              className="absolute w-[1px] h-[1px] bg-[#9f1239]/20 rounded-full"
+              className="absolute w-[1px] h-[1px] bg-[var(--color-crimson)]/20 rounded-full"
               style={{
                 left: `${Math.random() * 100}%`,
                 top: `${Math.random() * 100}%`,

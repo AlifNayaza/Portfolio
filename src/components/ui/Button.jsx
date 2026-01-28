@@ -10,11 +10,33 @@ export default function Button({
   iconPosition = "right",
   ...props 
 }) {
-  const variants = {
-    primary: "bg-gradient-to-r from-[#9f1239] to-[#c2410c] text-white shadow-lg shadow-[#9f1239]/30 hover:shadow-[#9f1239]/50 border border-[#9f1239]/50 hover:border-[#9f1239]",
-    outline: "border-2 border-[#333] text-zinc-300 hover:border-[#9f1239] hover:text-white bg-transparent hover:bg-[#9f1239]/10",
-    ghost: "bg-transparent text-zinc-400 hover:text-white hover:bg-white/5 border border-transparent hover:border-white/10",
-    glass: "bg-white/5 backdrop-blur-md border border-white/10 text-white hover:bg-white/10 hover:border-white/20 shadow-xl",
+  const getVariantStyles = (variant) => {
+    const styles = {
+      primary: {
+        background: 'linear-gradient(to right, var(--color-crimson), var(--color-gold))',
+        color: 'white',
+        border: '1px solid rgba(159, 18, 57, 0.5)',
+        boxShadow: '0 10px 15px -3px rgba(159, 18, 57, 0.3)'
+      },
+      outline: {
+        border: '2px solid var(--color-border)',
+        color: 'var(--color-muted)',
+        backgroundColor: 'transparent'
+      },
+      ghost: {
+        backgroundColor: 'transparent',
+        color: 'var(--color-muted)',
+        border: '1px solid transparent'
+      },
+      glass: {
+        backgroundColor: 'rgba(255, 255, 255, 0.05)',
+        backdropFilter: 'blur(12px)',
+        border: '1px solid rgba(255, 255, 255, 0.1)',
+        color: 'var(--color-paper)',
+        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
+      }
+    };
+    return styles[variant] || styles.primary;
   };
 
   const sizes = {
@@ -23,16 +45,37 @@ export default function Button({
     lg: "px-8 py-3.5 text-base",
   };
 
+  const variantStyles = getVariantStyles(variant);
+
   return (
     <motion.button
       whileHover={{ scale: 1.02, y: -2 }}
       whileTap={{ scale: 0.98 }}
       className={cn(
         "relative rounded-lg font-bold transition-all duration-300 overflow-hidden group inline-flex items-center justify-center gap-2",
-        variants[variant],
         sizes[size],
         className
       )}
+      style={variantStyles}
+      onMouseEnter={(e) => {
+        if (variant === 'outline') {
+          e.currentTarget.style.borderColor = 'var(--color-crimson)';
+          e.currentTarget.style.color = 'var(--color-paper)';
+          e.currentTarget.style.backgroundColor = 'rgba(159, 18, 57, 0.1)';
+        } else if (variant === 'ghost') {
+          e.currentTarget.style.color = 'var(--color-paper)';
+          e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
+          e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+        } else if (variant === 'glass') {
+          e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+          e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+        } else if (variant === 'primary') {
+          e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(159, 18, 57, 0.5)';
+        }
+      }}
+      onMouseLeave={(e) => {
+        Object.assign(e.currentTarget.style, variantStyles);
+      }}
       {...props}
     >
       {/* Shine effect */}

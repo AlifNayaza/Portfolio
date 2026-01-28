@@ -29,7 +29,7 @@ const FloatingOrbs = () => {
       radius: Math.random() * 100 + 50,
       vx: (Math.random() - 0.5) * 0.3,
       vy: (Math.random() - 0.5) * 0.3,
-      color: Math.random() > 0.5 ? '#9f1239' : '#c2410c'
+      color: Math.random() > 0.5 ? 'var(--color-crimson)' : 'var(--color-gold)'
     }));
 
     const animate = () => {
@@ -80,7 +80,7 @@ const ChapterHeader = ({ projectNumber, projectName }) => {
         initial={{ width: 0 }}
         animate={{ width: "100%" }}
         transition={{ duration: 1.2, delay: 0.3 }}
-        className="h-px bg-gradient-to-r from-transparent via-[#9f1239] to-transparent mb-8"
+        className="h-px bg-gradient-to-r from-transparent via-[var(--color-crimson)] to-transparent mb-8"
       />
       
       <div className="inline-block relative">
@@ -88,7 +88,7 @@ const ChapterHeader = ({ projectNumber, projectName }) => {
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.4 }}
-          className="font-mono text-xs tracking-[0.5em] text-[#9f1239] uppercase block mb-4"
+          className="font-mono text-xs tracking-[0.5em] text-[var(--color-crimson)] uppercase block mb-4"
         >
           Chapter {projectNumber}
         </motion.span>
@@ -97,7 +97,7 @@ const ChapterHeader = ({ projectNumber, projectName }) => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
-          className="font-display text-4xl md:text-6xl text-white mb-6 leading-tight px-4"
+          className="font-display text-4xl md:text-6xl text-[var(--color-paper)] mb-6 leading-tight px-4"
         >
           {projectName}
         </motion.h1>
@@ -106,7 +106,7 @@ const ChapterHeader = ({ projectNumber, projectName }) => {
           initial={{ scaleX: 0 }}
           animate={{ scaleX: 1 }}
           transition={{ delay: 0.8, duration: 0.6 }}
-          className="h-1 bg-[#9f1239] mx-auto"
+          className="h-1 bg-[var(--color-crimson)] mx-auto"
           style={{ width: '80px' }}
         />
       </div>
@@ -115,7 +115,7 @@ const ChapterHeader = ({ projectNumber, projectName }) => {
         initial={{ width: 0 }}
         animate={{ width: "100%" }}
         transition={{ duration: 1.2, delay: 1 }}
-        className="h-px bg-gradient-to-r from-transparent via-[#9f1239] to-transparent mt-8"
+        className="h-px bg-gradient-to-r from-transparent via-[var(--color-crimson)] to-transparent mt-8"
       />
     </motion.div>
   );
@@ -140,8 +140,8 @@ const StorySection = ({ title, children, icon, delay = 0 }) => {
           {icon}
         </motion.div>
         <div className="flex-1">
-          <h2 className="font-display text-2xl md:text-3xl text-white mb-2">{title}</h2>
-          <div className="h-px bg-gradient-to-r from-[#9f1239] to-transparent" />
+          <h2 className="font-display text-2xl md:text-3xl text-[var(--color-paper)] mb-2">{title}</h2>
+          <div className="h-px bg-gradient-to-r from-[var(--color-crimson)] to-transparent" />
         </div>
       </div>
       
@@ -166,7 +166,7 @@ const ImageShowcase = ({ image, alt, onZoom }) => {
       onHoverEnd={() => setIsHovered(false)}
       onClick={onZoom}
     >
-      <div className="relative overflow-hidden rounded-2xl border border-[#333] shadow-2xl">
+      <div className="relative overflow-hidden rounded-2xl border border-[var(--color-border)] shadow-2xl">
         <motion.img
           src={image}
           alt={alt}
@@ -189,7 +189,7 @@ const ImageShowcase = ({ image, alt, onZoom }) => {
               exit={{ opacity: 0, y: 20 }}
               className="absolute bottom-6 left-0 right-0 text-center"
             >
-              <span className="inline-flex items-center gap-2 px-6 py-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-white font-mono text-sm">
+              <span className="inline-flex items-center gap-2 px-6 py-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-[var(--color-paper)] font-mono text-sm">
                 <span>Click to expand</span>
                 <span className="text-lg">🔍</span>
               </span>
@@ -199,10 +199,10 @@ const ImageShowcase = ({ image, alt, onZoom }) => {
       </div>
 
       {/* Decorative corners */}
-      <div className="absolute -top-2 -left-2 w-8 h-8 border-t-2 border-l-2 border-[#9f1239] opacity-0 group-hover:opacity-100 transition-opacity" />
-      <div className="absolute -top-2 -right-2 w-8 h-8 border-t-2 border-r-2 border-[#9f1239] opacity-0 group-hover:opacity-100 transition-opacity" />
-      <div className="absolute -bottom-2 -left-2 w-8 h-8 border-b-2 border-l-2 border-[#9f1239] opacity-0 group-hover:opacity-100 transition-opacity" />
-      <div className="absolute -bottom-2 -right-2 w-8 h-8 border-b-2 border-r-2 border-[#9f1239] opacity-0 group-hover:opacity-100 transition-opacity" />
+      <div className="absolute -top-2 -left-2 w-8 h-8 border-t-2 border-l-2 border-[var(--color-crimson)] opacity-0 group-hover:opacity-100 transition-opacity" />
+      <div className="absolute -top-2 -right-2 w-8 h-8 border-t-2 border-r-2 border-[var(--color-crimson)] opacity-0 group-hover:opacity-100 transition-opacity" />
+      <div className="absolute -bottom-2 -left-2 w-8 h-8 border-b-2 border-l-2 border-[var(--color-crimson)] opacity-0 group-hover:opacity-100 transition-opacity" />
+      <div className="absolute -bottom-2 -right-2 w-8 h-8 border-b-2 border-r-2 border-[var(--color-crimson)] opacity-0 group-hover:opacity-100 transition-opacity" />
     </motion.div>
   );
 };
@@ -230,7 +230,7 @@ const TechStack = ({ technologies }) => {
             boxShadow: "0 10px 40px rgba(159, 18, 57, 0.3)",
             y: -5
           }}
-          className="relative bg-gradient-to-br from-[#1a1a1a] to-[#0d0d0d] border border-[#333] rounded-xl p-6 text-center group cursor-pointer overflow-hidden"
+          className="relative bg-gradient-to-br from-[#1a1a1a] to-[#0d0d0d] border border-[var(--color-border)] rounded-xl p-6 text-center group cursor-pointer overflow-hidden"
         >
           {/* Shine effect */}
           <motion.div
@@ -244,13 +244,13 @@ const TechStack = ({ technologies }) => {
             <div className="text-3xl mb-3 filter grayscale group-hover:grayscale-0 transition-all">
               💎
             </div>
-            <span className="font-mono text-sm text-zinc-400 group-hover:text-white transition-colors">
+            <span className="font-mono text-sm text-[var(--color-muted)] group-hover:text-[var(--color-paper)] transition-colors">
               {tech}
             </span>
           </div>
 
           {/* Corner accent */}
-          <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-[#9f1239] opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-[var(--color-crimson)] opacity-0 group-hover:opacity-100 transition-opacity" />
         </motion.div>
       ))}
     </div>
@@ -275,9 +275,9 @@ const NarrativeText = ({ text }) => {
           className="text-base md:text-lg font-serif first:indent-0"
           style={{ textIndent: idx === 0 ? '0' : '2rem' }}
         >
-          <span className="text-[#9f1239] text-2xl leading-none">❝</span>
+          <span className="text-[var(--color-crimson)] text-2xl leading-none">❝</span>
           {paragraph}
-          <span className="text-[#9f1239] text-2xl leading-none">❞</span>
+          <span className="text-[var(--color-crimson)] text-2xl leading-none">❞</span>
         </motion.p>
       ))}
     </div>
@@ -298,28 +298,28 @@ const NavigationCard = ({ direction, projectIndex, totalProjects, projects }) =>
     <Link to={`/project/${targetIndex}`}>
       <motion.div
         whileHover={{ x: isNext ? 10 : -10, scale: 1.02 }}
-        className="group relative bg-gradient-to-br from-[#1a1a1a] to-[#0d0d0d] border border-[#333] hover:border-[#9f1239] rounded-xl p-6 overflow-hidden cursor-pointer transition-all"
+        className="group relative bg-gradient-to-br from-[#1a1a1a] to-[#0d0d0d] border border-[var(--color-border)] hover:border-[var(--color-crimson)] rounded-xl p-6 overflow-hidden cursor-pointer transition-all"
       >
         <div className={`flex items-center gap-4 ${isNext ? 'flex-row' : 'flex-row-reverse'}`}>
           <div className="flex-1">
-            <span className="font-mono text-xs text-zinc-500 block mb-2">
+            <span className="font-mono text-xs text-[var(--color-muted)] block mb-2">
               {isNext ? "Next Chapter" : "Previous Chapter"}
             </span>
-            <span className="font-display text-lg text-white group-hover:text-[#9f1239] transition-colors line-clamp-1">
+            <span className="font-display text-lg text-[var(--color-paper)] group-hover:text-[var(--color-crimson)] transition-colors line-clamp-1">
               {targetProject?.name || `Project ${targetIndex + 1}`}
             </span>
           </div>
           <motion.div
             animate={{ x: isNext ? [0, 5, 0] : [0, -5, 0] }}
             transition={{ duration: 1.5, repeat: Infinity }}
-            className="text-2xl text-[#9f1239]"
+            className="text-2xl text-[var(--color-crimson)]"
           >
             {isNext ? "→" : "←"}
           </motion.div>
         </div>
 
         <motion.div
-          className="absolute inset-0 bg-gradient-to-r from-[#9f1239]/0 via-[#9f1239]/5 to-[#9f1239]/0"
+          className="absolute inset-0 bg-gradient-to-r from-[var(--color-crimson)]/0 via-[var(--color-crimson)]/5 to-[var(--color-crimson)]/0"
           initial={{ x: "-100%" }}
           whileHover={{ x: "100%" }}
           transition={{ duration: 0.6 }}
@@ -352,7 +352,7 @@ const ImageZoomModal = ({ image, alt, onClose }) => {
     >
       <button
         onClick={onClose}
-        className="absolute top-6 right-6 w-12 h-12 bg-white/10 hover:bg-white/20 border border-white/20 rounded-full flex items-center justify-center text-white text-2xl transition-all z-50"
+        className="absolute top-6 right-6 w-12 h-12 bg-white/10 hover:bg-white/20 border border-white/20 rounded-full flex items-center justify-center text-[var(--color-paper)] text-2xl transition-all z-50"
       >
         ✕
       </button>
@@ -395,14 +395,14 @@ export default function ProjectDetail() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#0c0c0c]">
+      <div className="min-h-screen flex items-center justify-center bg-[var(--color-bg)]">
         <motion.div
           animate={{ opacity: [0.5, 1, 0.5] }}
           transition={{ duration: 1.5, repeat: Infinity }}
           className="text-center"
         >
-          <div className="w-16 h-16 border-4 border-[#9f1239] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="font-mono text-sm text-zinc-500">Loading chapter...</p>
+          <div className="w-16 h-16 border-4 border-[var(--color-crimson)] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="font-mono text-sm text-[var(--color-muted)]">Loading chapter...</p>
         </motion.div>
       </div>
     );
@@ -414,7 +414,7 @@ export default function ProjectDetail() {
 
   if (!project) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#0c0c0c] text-white px-4">
+      <div className="min-h-screen flex items-center justify-center bg-[var(--color-bg)] text-[var(--color-paper)] px-4">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -422,10 +422,10 @@ export default function ProjectDetail() {
         >
           <span className="text-6xl mb-6 block">📖</span>
           <h1 className="font-display text-3xl mb-4">Chapter Not Found</h1>
-          <p className="text-zinc-400 mb-8">This story hasn't been written yet.</p>
+          <p className="text-[var(--color-muted)] mb-8">This story hasn't been written yet.</p>
           <button
             onClick={() => navigate("/projects")}
-            className="px-6 py-3 bg-[#9f1239] text-white font-medium rounded-lg hover:bg-[#7f0e2a] transition-colors"
+            className="px-6 py-3 bg-[var(--color-crimson)] text-[var(--color-paper)] font-medium rounded-lg hover:bg-[#7f0e2a] transition-colors"
           >
             Return to Library
           </button>
@@ -438,7 +438,7 @@ export default function ProjectDetail() {
 
   return (
     <PageTransition>
-      <div className="min-h-screen bg-[#0c0c0c] text-white relative overflow-hidden">
+      <div className="min-h-screen bg-[var(--color-bg)] text-[var(--color-paper)] relative overflow-hidden">
         <FloatingOrbs />
 
         <AnimatePresence>
@@ -453,7 +453,7 @@ export default function ProjectDetail() {
 
         {/* Progress bar */}
         <motion.div
-          className="fixed top-0 left-0 h-1 bg-gradient-to-r from-[#9f1239] to-[#c2410c] z-50"
+          className="fixed top-0 left-0 h-1 bg-gradient-to-r from-[var(--color-crimson)] to-[var(--color-gold)] z-50"
           style={{ width: `${scrollProgress}%` }}
         />
 
@@ -466,7 +466,7 @@ export default function ProjectDetail() {
           >
             <Link
               to="/projects"
-              className="inline-flex items-center gap-2 text-zinc-400 hover:text-white font-mono text-sm transition-colors group"
+              className="inline-flex items-center gap-2 text-[var(--color-muted)] hover:text-[var(--color-paper)] font-mono text-sm transition-colors group"
             >
               <motion.span
                 animate={{ x: [-2, 0, -2] }}
@@ -492,7 +492,7 @@ export default function ProjectDetail() {
               transition={{ delay: 1 }}
               className="text-center mb-20 max-w-3xl mx-auto px-4"
             >
-              <p className="font-serif italic text-xl text-zinc-400 leading-relaxed">
+              <p className="font-serif italic text-xl text-[var(--color-muted)] leading-relaxed">
                 "Every great project begins with a vision and evolves through dedication, 
                 creativity, and countless iterations."
               </p>
@@ -509,7 +509,7 @@ export default function ProjectDetail() {
                       delay: dot * 0.2,
                       repeat: Infinity
                     }}
-                    className="w-1 h-1 rounded-full bg-[#9f1239]"
+                    className="w-1 h-1 rounded-full bg-[var(--color-crimson)]"
                   />
                 ))}
               </div>
@@ -524,8 +524,8 @@ export default function ProjectDetail() {
                   onZoom={() => setIsZoomed(true)}
                 />
               ) : (
-                <div className="aspect-video bg-gradient-to-br from-[#1a1a1a] to-[#0d0d0d] rounded-2xl border border-[#333] flex items-center justify-center">
-                  <span className="font-mono text-zinc-600">No preview available</span>
+                <div className="aspect-video bg-gradient-to-br from-[#1a1a1a] to-[#0d0d0d] rounded-2xl border border-[var(--color-border)] flex items-center justify-center">
+                  <span className="font-mono text-[var(--color-muted)]">No preview available</span>
                 </div>
               )}
             </StorySection>
@@ -535,7 +535,7 @@ export default function ProjectDetail() {
               {project.description ? (
                 <NarrativeText text={project.description} />
               ) : (
-                <p className="text-zinc-400 italic text-center py-12">
+                <p className="text-[var(--color-muted)] italic text-center py-12">
                   The story of this project is yet to be told...
                 </p>
               )}
@@ -562,7 +562,7 @@ export default function ProjectDetail() {
                   rel="noopener noreferrer"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-[#9f1239] to-[#c2410c] text-white font-display text-lg rounded-full shadow-lg shadow-[#9f1239]/30 hover:shadow-[#9f1239]/50 transition-all"
+                  className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-[var(--color-crimson)] to-[var(--color-gold)] text-[var(--color-paper)] font-display text-lg rounded-full shadow-lg shadow-[#9f1239]/30 hover:shadow-[#9f1239]/50 transition-all"
                 >
                   <span>Experience Live</span>
                   <span className="text-2xl">🚀</span>
@@ -575,7 +575,7 @@ export default function ProjectDetail() {
               initial={{ opacity: 0, y: 40 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-20 pt-12 border-t border-[#333]"
+              className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-20 pt-12 border-t border-[var(--color-border)]"
             >
               <NavigationCard
                 direction="prev"
@@ -603,16 +603,16 @@ export default function ProjectDetail() {
                 whileInView={{ width: "100%" }}
                 viewport={{ once: true }}
                 transition={{ duration: 1.2 }}
-                className="h-px bg-gradient-to-r from-transparent via-[#9f1239] to-transparent mb-12"
+                className="h-px bg-gradient-to-r from-transparent via-[var(--color-crimson)] to-transparent mb-12"
               />
               
-              <p className="font-serif italic text-zinc-500 mb-8">
+              <p className="font-serif italic text-[var(--color-muted)] mb-8">
                 "Thank you for reading this chapter of my journey."
               </p>
               
               <Link
                 to="/contact"
-                className="inline-flex items-center gap-2 font-mono text-sm text-[#9f1239] hover:text-white transition-colors"
+                className="inline-flex items-center gap-2 font-mono text-sm text-[var(--color-crimson)] hover:text-[var(--color-paper)] transition-colors"
               >
                 <span>Let's create something together</span>
                 <span>→</span>

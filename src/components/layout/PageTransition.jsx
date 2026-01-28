@@ -1,61 +1,59 @@
 import { motion } from "framer-motion";
+import { memo } from "react";
 
 const blackBox = {
-  initial: {
-    height: "100vh",
-    bottom: 0,
-  },
+  initial: { height: "100vh", bottom: 0 },
   animate: {
     height: 0,
-    transition: {
-      when: "afterChildren",
-      duration: 1.2,
-      ease: [0.87, 0, 0.13, 1], // Bezier curve untuk efek cinematic
-    },
+    transition: { when: "afterChildren", duration: 0.8, ease: [0.87, 0, 0.13, 1] },
   },
   exit: {
     height: "100vh",
     top: 0,
-    transition: {
-      duration: 0.8,
-      ease: [0.87, 0, 0.13, 1],
-    },
+    transition: { duration: 0.6, ease: [0.87, 0, 0.13, 1] },
   },
 };
 
 const textContainer = {
   initial: { opacity: 1 },
-  animate: {
-    opacity: 0,
-    transition: { duration: 0.3, when: "afterChildren" },
-  },
+  animate: { opacity: 0, transition: { duration: 0.3, when: "afterChildren" } },
 };
 
-export default function PageTransition({ children }) {
+const PageTransition = memo(({ children }) => {
   return (
     <div className="relative">
-      {/* Konten Halaman */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        transition={{ duration: 0.5, delay: 0.5 }} // Delay konten muncul setelah layar hitam turun
+        transition={{ duration: 0.4, delay: 0.4 }}
       >
         {children}
       </motion.div>
 
-      {/* Tirai Hitam (Overlay) */}
       <motion.div
-        className="fixed inset-0 z-[100] w-full bg-[#0c0c0c] flex items-center justify-center pointer-events-none border-b border-[#9f1239]"
+        className="fixed inset-0 z-[100] w-full flex items-center justify-center pointer-events-none"
+        style={{
+          backgroundColor: 'var(--color-bg)',
+          borderBottom: '1px solid var(--color-crimson)'
+        }}
         initial="initial"
         animate="animate"
         exit="exit"
         variants={blackBox}
       >
-        <motion.div variants={textContainer} className="font-mono text-xs text-[#9f1239] tracking-[0.5em]">
-          LOADING CHAPTER...
+        <motion.div 
+          variants={textContainer} 
+          className="font-mono text-xs tracking-[0.5em]"
+          style={{ color: 'var(--color-crimson)' }}
+        >
+          LOADING...
         </motion.div>
       </motion.div>
     </div>
   );
-}
+});
+
+PageTransition.displayName = 'PageTransition';
+
+export default PageTransition;

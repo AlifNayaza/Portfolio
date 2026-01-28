@@ -25,9 +25,9 @@ export default function Input({
       {/* Label with animation */}
       {label && (
         <motion.label 
-          className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-zinc-500"
+          className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider"
           animate={{ 
-            color: isFocused ? "#9f1239" : "#71717a",
+            color: isFocused ? "var(--color-crimson)" : "var(--color-muted)",
             x: isFocused ? 2 : 0
           }}
           transition={{ duration: 0.2 }}
@@ -51,7 +51,10 @@ export default function Input({
       <div className="relative group">
         {/* Animated border glow */}
         <motion.div
-          className="absolute -inset-0.5 rounded-lg bg-gradient-to-r from-[#9f1239] to-[#c2410c] opacity-0 blur transition-opacity"
+          className="absolute -inset-0.5 rounded-lg blur transition-opacity"
+          style={{
+            background: 'linear-gradient(to right, var(--color-crimson), var(--color-gold))'
+          }}
           animate={{ 
             opacity: isFocused ? 0.3 : 0
           }}
@@ -61,15 +64,20 @@ export default function Input({
         {/* Input field */}
         <Comp
           className={cn(
-            "relative w-full bg-[#0c0c0c] border rounded-lg p-3 md:p-4 outline-none transition-all duration-300 placeholder:text-zinc-700 font-serif",
-            "focus:ring-2 focus:ring-[#9f1239]/50",
-            isFocused || hasValue
-              ? "border-[#9f1239] text-white"
-              : "border-[#333] text-zinc-400",
-            error && "border-red-500 focus:ring-red-500/50",
+            "relative w-full border rounded-lg p-3 md:p-4 outline-none transition-all duration-300 font-serif",
             textarea && "min-h-[120px] resize-y",
             className
           )}
+          style={{
+            backgroundColor: 'var(--color-bg)',
+            borderColor: error 
+              ? '#ef4444' 
+              : (isFocused || hasValue) 
+                ? 'var(--color-crimson)' 
+                : 'var(--color-border)',
+            color: (isFocused || hasValue) ? 'var(--color-paper)' : 'var(--color-muted)',
+            boxShadow: isFocused ? '0 0 0 2px rgba(159, 18, 57, 0.5)' : 'none'
+          }}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
           onChange={handleChange}
@@ -80,25 +88,29 @@ export default function Input({
         {isFocused && (
           <>
             <motion.div
-              className="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-[#9f1239]"
+              className="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2"
+              style={{ borderColor: 'var(--color-crimson)' }}
               initial={{ opacity: 0, scale: 0 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.2 }}
             />
             <motion.div
-              className="absolute top-0 right-0 w-3 h-3 border-t-2 border-r-2 border-[#9f1239]"
+              className="absolute top-0 right-0 w-3 h-3 border-t-2 border-r-2"
+              style={{ borderColor: 'var(--color-crimson)' }}
               initial={{ opacity: 0, scale: 0 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.2, delay: 0.05 }}
             />
             <motion.div
-              className="absolute bottom-0 left-0 w-3 h-3 border-b-2 border-l-2 border-[#9f1239]"
+              className="absolute bottom-0 left-0 w-3 h-3 border-b-2 border-l-2"
+              style={{ borderColor: 'var(--color-crimson)' }}
               initial={{ opacity: 0, scale: 0 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.2, delay: 0.1 }}
             />
             <motion.div
-              className="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 border-[#9f1239]"
+              className="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2"
+              style={{ borderColor: 'var(--color-crimson)' }}
               initial={{ opacity: 0, scale: 0 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.2, delay: 0.15 }}
@@ -112,7 +124,8 @@ export default function Input({
         <motion.p
           initial={{ opacity: 0, y: -5 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-xs text-red-500 font-mono flex items-center gap-1"
+          className="text-xs font-mono flex items-center gap-1"
+          style={{ color: '#ef4444' }}
         >
           <span>⚠</span>
           {error}
