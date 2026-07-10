@@ -1,7 +1,9 @@
-import { useState, useEffect, useRef } from "react";
+/* eslint-disable no-unused-vars */
+import { useState, useEffect, useRef, useMemo } from "react";
 import { usePortfolio } from "../context/PortfolioContext";
 import PageTransition from "../components/layout/PageTransition";
 import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
+import axios from "axios";
 
 // === CANVAS: FLOATING CONNECTION PARTICLES (OPTIMIZED) ===
 const ConnectionParticles = () => {
@@ -248,12 +250,20 @@ const QuickAccessPanel = ({ contact, onCommandClick }) => {
 
   const quickCommands = [
     { 
+      cmd: 'message', 
+      label: 'Direct Message', 
+      icon: '💬', 
+      description: 'Send direct msg in terminal',
+      color: 'from-[var(--color-crimson)]/20 to-[var(--color-crimson)]/5',
+      borderColor: 'border-[var(--color-crimson)]/40'
+    },
+    { 
       cmd: 'email', 
       label: 'Send Email', 
       icon: '📧', 
-      description: 'Compose a message',
-      color: 'from-[var(--color-crimson)]/20 to-[var(--color-crimson)]/5',
-      borderColor: 'border-[var(--color-crimson)]/40'
+      description: 'Compose a mailto message',
+      color: 'from-[#333]/10 to-transparent',
+      borderColor: 'border-[var(--color-border)]/60 hover:border-[var(--color-crimson)]/60'
     },
     ...socialLinks.map(([key, value]) => ({
       cmd: key,
@@ -387,14 +397,112 @@ export default function Contact() {
   const { data } = usePortfolio();
   const { contact } = data;
 
+  const particles = useMemo(() => [
+    { left: 10, top: 25, duration: 3.5 },
+    { left: 30, top: 75, duration: 4.2 },
+    { left: 55, top: 40, duration: 3.8 },
+    { left: 80, top: 15, duration: 4.5 },
+    { left: 15, top: 60, duration: 3.2 },
+    { left: 45, top: 85, duration: 4.8 },
+    { left: 70, top: 50, duration: 3.6 },
+    { left: 90, top: 30, duration: 4.0 },
+  ], []);
+
   const [lines, setLines] = useState([]);
   const [input, setInput] = useState('');
   const [isReady, setIsReady] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
+  const [messageFlow, setMessageFlow] = useState(null);
   const terminalRef = useRef(null);
   const inputRef = useRef(null);
   const hasBooted = useRef(false);
+
+  const printResponse = (responseList) => {
+    let delay = 50;
+    responseList.forEach((line, idx) => {
+      setTimeout(() => {
+        setLines(prev => [...prev, { 
+          text: line, 
+          isCommand: true,
+          id: Date.now() + idx 
+        }]);
+      }, delay);
+      delay += 60;
+    });
+  };
+
+  const processMessageFlow = async (val) => {
+    const current = { ...messageFlow };
+    let response = [];
+    
+    if (current.step === 'name') {
+      current.name = val;
+      current.step = 'email';
+      response = [
+        `Name recorded: ${val}`,
+        "Please enter your email:"
+      ];
+      setMessageFlow(current);
+      printResponse(response);
+    } else if (current.step === 'email') {
+      if (!val.includes('@') || !val.includes('.')) {
+        response = [
+          "Invalid email format. Please try again:",
+          "Please enter your email:"
+        ];
+        printResponse(response);
+        return;
+      }
+      current.email = val;
+      current.step = 'subject';
+      response = [
+        `Email recorded: ${val}`,
+        "Please enter message subject (or type 'skip' to leave blank):"
+      ];
+      setMessageFlow(current);
+      printResponse(response);
+    } else if (current.step === 'subject') {
+      current.subject = val.toLowerCase() === 'skip' ? '' : val;
+      current.step = 'message';
+      response = [
+        current.subject ? `Subject recorded: ${current.subject}` : "Subject skipped",
+        "Please enter your message:"
+      ];
+      setMessageFlow(current);
+      printResponse(response);
+    } else if (current.step === 'message') {
+      current.message = val;
+      setMessageFlow(null); // Reset flow
+      setIsTyping(true);
+      
+      printResponse(["Sending transmission to database..."]);
+      
+      try {
+        await axios.post("/.netlify/functions/contact", {
+          name: current.name,
+          email: current.email,
+          subject: current.subject,
+          message: current.message
+        });
+        
+        response = [
+          "✓ Transmission established successfully!",
+          "Your message has been stored in the archive.",
+          "Type 'message' to start a new transmission."
+        ];
+      } catch (err) {
+        console.error(err);
+        response = [
+          "❌ Transmission failed.",
+          "Could not connect to the database or invalid parameters.",
+          "Please try again or use direct email."
+        ];
+      }
+      
+      printResponse(response);
+    }
+  };
 
   const socialLinks = contact 
     ? Object.entries(contact).filter(([key, value]) => key !== 'email' && value) 
@@ -452,6 +560,7 @@ export default function Contact() {
       case 'help':
         response = [
           "Available commands:",
+          "  message      - Send a message directly from this terminal",
           "  email        - Open email client to send me a message",
           "  github       - Visit my GitHub profile",
           "  linkedin     - Visit my LinkedIn profile",
@@ -459,6 +568,14 @@ export default function Contact() {
           "  twitter      - Visit my Twitter/X profile",
           "  clear        - Clear terminal screen",
           "  help         - Show this help message",
+        ];
+        break;
+
+      case 'message':
+        setMessageFlow({ step: 'name', name: '', email: '', subject: '', message: '' });
+        response = [
+          "Starting direct transmission protocol...",
+          "Please enter your name:"
         ];
         break;
 
@@ -474,7 +591,7 @@ export default function Contact() {
       case 'github':
       case 'linkedin':
       case 'instagram':
-      case 'twitter':
+      case 'twitter': {
         const social = socialLinks.find(([key]) => key.toLowerCase() === command);
         if (social) {
           response = [`Redirecting to ${social[0]}...`];
@@ -483,9 +600,11 @@ export default function Contact() {
           response = [`${command} link unavailable.`];
         }
         break;
+      }
 
       case 'clear':
         setLines([]);
+        setMessageFlow(null); // Cancel message flow if active
         return;
 
       default:
@@ -493,22 +612,13 @@ export default function Contact() {
         break;
     }
 
-    let delay = 50;
-    response.forEach((line, idx) => {
-      setTimeout(() => {
-        setLines(prev => [...prev, { 
-          text: line, 
-          isCommand: true,
-          id: Date.now() + idx 
-        }]);
-      }, delay);
-      delay += 60;
-    });
+    printResponse(response);
   };
 
   const handleSubmit = (e) => {
     if (e) e.preventDefault();
-    if (!input.trim()) return;
+    const val = input.trim();
+    if (!val) return;
     
     setLines(prev => [...prev, { 
       text: input, 
@@ -516,10 +626,15 @@ export default function Contact() {
       id: Date.now() 
     }]);
     
-    setTimeout(() => processCommand(input), 120);
     setInput('');
     setIsTyping(false);
     setTimeout(() => setIsTyping(true), 100);
+
+    if (messageFlow) {
+      setTimeout(() => processMessageFlow(val), 120);
+    } else {
+      setTimeout(() => processCommand(val), 120);
+    }
   };
 
   const handleKeyPress = (e) => {
@@ -963,13 +1078,13 @@ export default function Contact() {
 
         {/* Floating particles background (lightweight alternative) */}
         <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-          {[...Array(8)].map((_, i) => (
+          {particles.map((particle, i) => (
             <motion.div
               key={i}
               className="absolute w-[1px] h-[1px] bg-[var(--color-crimson)]/20 rounded-full"
               style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
+                left: `${particle.left}%`,
+                top: `${particle.top}%`,
               }}
               animate={{
                 y: [0, -20, 0],
@@ -977,7 +1092,7 @@ export default function Contact() {
                 scale: [1, 1.5, 1],
               }}
               transition={{
-                duration: 3 + Math.random() * 2,
+                duration: particle.duration,
                 delay: i * 0.5,
                 repeat: Infinity,
                 ease: "easeInOut",

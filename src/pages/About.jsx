@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePortfolio } from "../context/PortfolioContext";
@@ -20,17 +21,14 @@ const ArtisticBackground = () => {
       canvas.height = canvas.offsetHeight;
     };
     
+    const crimsonColor = '#9f1239';
+    
     const draw = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      
-      // Mengambil warna dari CSS Variable agar reaktif terhadap tema
-      const style = getComputedStyle(document.body);
-      const crimsonColor = style.getPropertyValue('--color-crimson') || '#dc2626';
       
       // Flowing lines
       for (let i = 0; i < 3; i++) {
         ctx.beginPath();
-        // Menggunakan warna tema dengan transparansi rendah
         ctx.strokeStyle = `${crimsonColor}10`; // Hex opacity ~6%
         ctx.lineWidth = 2;
         
@@ -288,7 +286,7 @@ const BiographySection = ({ profile }) => {
           <div className="bg-[var(--color-line)]/40 backdrop-blur-sm border border-[var(--color-border)] rounded-xl md:rounded-2xl p-6 md:p-12 shadow-sm">
             {profile?.bio || profile?.about ? (
               <div className="space-y-4 md:space-y-6">
-                {(profile?.bio || profile?.about).split('\n').map((paragraph, index) => (
+                {(profile?.bio || profile?.about || "").split('\n').map((paragraph, index) => (
                   <motion.p
                     key={index}
                     initial={{ opacity: 0, x: -20 }}

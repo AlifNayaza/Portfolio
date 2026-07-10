@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+/* eslint-disable no-unused-vars */
+import { useState, useEffect, useMemo } from "react";
 import { usePortfolio } from "../context/PortfolioContext";
 import PageTransition from "../components/layout/PageTransition"; 
 import { motion, useScroll, useTransform, AnimatePresence, useMotionValue, useSpring } from "framer-motion";
@@ -6,6 +7,12 @@ import { Link } from "react-router-dom";
 
 // --- ATMOSPHERIC ELEMENTS ---
 const AtmosphericBackground = () => {
+  const bubbles = useMemo(() => [
+    { width: 350, height: 280, top: 20, left: 15, duration: 25 },
+    { width: 220, height: 410, top: 60, left: 75, duration: 28 },
+    { width: 400, height: 320, top: 40, left: 45, duration: 22 },
+  ], []);
+
   return (
     <div className="fixed inset-0 w-full h-full pointer-events-none z-0 overflow-hidden">
       {/* PERBAIKAN: Hapus gradient abu-abu, gunakan pure bg */}
@@ -13,17 +20,17 @@ const AtmosphericBackground = () => {
         className="absolute inset-0"
         style={{ backgroundColor: 'var(--color-bg)' }}
       />
-      {[...Array(3)].map((_, i) => (  /* OPTIMASI: Kurangi dari 5 ke 3 */
+      {bubbles.map((bubble, i) => (
         <motion.div
           key={i}
           className="absolute rounded-full blur-3xl"
           style={{
             backgroundColor: 'var(--color-crimson)',
             opacity: 0.02,  /* PERBAIKAN: Lebih subtle */
-            width: `${Math.random() * 300 + 150}px`,
-            height: `${Math.random() * 300 + 150}px`,
-            top: `${Math.random() * 100}%`,
-            left: `${Math.random() * 100}%`,
+            width: `${bubble.width}px`,
+            height: `${bubble.height}px`,
+            top: `${bubble.top}%`,
+            left: `${bubble.left}%`,
           }}
           animate={{
             x: [0, 30, -30, 0],
@@ -31,7 +38,7 @@ const AtmosphericBackground = () => {
             scale: [1, 1.1, 0.95, 1],
           }}
           transition={{
-            duration: 20 + Math.random() * 10,
+            duration: bubble.duration,
             repeat: Infinity,
             ease: "easeInOut",
           }}

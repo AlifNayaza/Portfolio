@@ -1,8 +1,61 @@
+/* eslint-disable no-unused-vars */
 import { Link } from "react-router-dom";
 import { usePortfolio } from "../context/PortfolioContext";
 import PageTransition from "../components/layout/PageTransition";
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { useState, useRef, useEffect } from "react";
+
+class Particle {
+  constructor(canvasWidth, canvasHeight) {
+    this.reset(canvasWidth, canvasHeight);
+  }
+
+  reset(canvasWidth, canvasHeight) {
+    this.x = Math.random() * canvasWidth;
+    this.y = Math.random() * canvasHeight;
+    this.baseX = this.x;
+    this.baseY = this.y;
+    this.size = Math.random() * 1.5 + 0.5;
+    this.speedX = (Math.random() - 0.5) * 0.2;
+    this.speedY = (Math.random() - 0.5) * 0.2;
+    this.opacity = Math.random() * 0.3 + 0.1;
+    this.hue = Math.random() > 0.5 ? 0 : 20; // Red or orange tint
+  }
+
+  update(canvasWidth, canvasHeight, mouseX, mouseY) {
+    // Gentle floating
+    this.baseX += this.speedX;
+    this.baseY += this.speedY;
+
+    // Mouse interaction - subtle attraction
+    const dx = mouseX - this.baseX;
+    const dy = mouseY - this.baseY;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    
+    if (distance < 150) {
+      const force = (150 - distance) / 150;
+      this.x = this.baseX + (dx * force * 0.03);
+      this.y = this.baseY + (dy * force * 0.03);
+    } else {
+      this.x = this.baseX;
+      this.y = this.baseY;
+    }
+
+    // Wrap around edges
+    if (this.baseX < -50) this.baseX = canvasWidth + 50;
+    if (this.baseX > canvasWidth + 50) this.baseX = -50;
+    if (this.baseY < -50) this.baseY = canvasHeight + 50;
+    if (this.baseY > canvasHeight + 50) this.baseY = -50;
+  }
+
+  draw(ctx) {
+    ctx.globalAlpha = this.opacity;
+    ctx.fillStyle = `hsl(${this.hue}, 80%, 50%)`;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
 
 // === ELEGANT AMBIENT PARTICLES ===
 const AmbientParticles = () => {
@@ -29,62 +82,10 @@ const AmbientParticles = () => {
     };
     window.addEventListener('mousemove', handleMouseMove);
 
-    class Particle {
-      constructor() {
-        this.reset();
-      }
-
-      reset() {
-        this.x = Math.random() * canvas.width;
-        this.y = Math.random() * canvas.height;
-        this.baseX = this.x;
-        this.baseY = this.y;
-        this.size = Math.random() * 1.5 + 0.5;
-        this.speedX = (Math.random() - 0.5) * 0.2;
-        this.speedY = (Math.random() - 0.5) * 0.2;
-        this.opacity = Math.random() * 0.3 + 0.1;
-        this.hue = Math.random() > 0.5 ? 0 : 20; // Red or orange tint
-      }
-
-      update() {
-        // Gentle floating
-        this.baseX += this.speedX;
-        this.baseY += this.speedY;
-
-        // Mouse interaction - subtle attraction
-        const dx = mouseRef.current.x - this.baseX;
-        const dy = mouseRef.current.y - this.baseY;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        
-        if (distance < 150) {
-          const force = (150 - distance) / 150;
-          this.x = this.baseX + (dx * force * 0.03);
-          this.y = this.baseY + (dy * force * 0.03);
-        } else {
-          this.x = this.baseX;
-          this.y = this.baseY;
-        }
-
-        // Wrap around edges
-        if (this.baseX < -50) this.baseX = canvas.width + 50;
-        if (this.baseX > canvas.width + 50) this.baseX = -50;
-        if (this.baseY < -50) this.baseY = canvas.height + 50;
-        if (this.baseY > canvas.height + 50) this.baseY = -50;
-      }
-
-      draw() {
-        ctx.globalAlpha = this.opacity;
-        ctx.fillStyle = `hsl(${this.hue}, 80%, 50%)`;
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
-
     // Create particles
     const particleCount = window.innerWidth < 768 ? 25 : 40;
     for (let i = 0; i < particleCount; i++) {
-      particlesRef.current.push(new Particle());
+      particlesRef.current.push(new Particle(canvas.width, canvas.height));
     }
 
     let animationId;
@@ -92,8 +93,8 @@ const AmbientParticles = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       
       particlesRef.current.forEach(p => {
-        p.update();
-        p.draw();
+        p.update(canvas.width, canvas.height, mouseRef.current.x, mouseRef.current.y);
+        p.draw(ctx);
       });
 
       animationId = requestAnimationFrame(animate);
@@ -118,7 +119,7 @@ const AmbientParticles = () => {
 };
 
 // === INTERACTIVE PROJECT CARD WITH 3D TILT ===
-const ProjectCard = ({ project, index, totalProjects }) => {
+const ProjectCard = ({ project, index }) => {
   const [isHovered, setIsHovered] = useState(false);
   const cardRef = useRef(null);
   

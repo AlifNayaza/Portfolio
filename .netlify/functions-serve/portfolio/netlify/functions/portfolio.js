@@ -43,7 +43,7 @@ var require_bson = __commonJS({
       }
     }
     var BSON_MAJOR_VERSION = 7;
-    var BSON_VERSION_SYMBOL = Symbol.for("@@mdb.bson.version");
+    var BSON_VERSION_SYMBOL = /* @__PURE__ */ Symbol.for("@@mdb.bson.version");
     var BSON_INT32_MAX = 2147483647;
     var BSON_INT32_MIN = -2147483648;
     var BSON_INT64_MAX = Math.pow(2, 63) - 1;
@@ -413,7 +413,7 @@ var require_bson = __commonJS({
     };
     var hasGlobalBuffer = typeof Buffer === "function" && Buffer.prototype?._isBuffer !== true;
     var ByteUtils = hasGlobalBuffer ? nodeJsByteUtils : webByteUtils;
-    var bsonType = Symbol.for("@@mdb.bson.type");
+    var bsonType = /* @__PURE__ */ Symbol.for("@@mdb.bson.type");
     var BSONValue = class {
       get [bsonType]() {
         return this._bsontype;
@@ -421,7 +421,7 @@ var require_bson = __commonJS({
       get [BSON_VERSION_SYMBOL]() {
         return BSON_MAJOR_VERSION;
       }
-      [Symbol.for("nodejs.util.inspect.custom")](depth, options, inspect) {
+      [/* @__PURE__ */ Symbol.for("nodejs.util.inspect.custom")](depth, options, inspect) {
         return this.inspect(depth, options, inspect);
       }
     };
@@ -5589,8 +5589,8 @@ var require_constants2 = __commonJS({
     ]);
     exports2.LEGACY_HELLO_COMMAND = "ismaster";
     exports2.LEGACY_HELLO_COMMAND_CAMEL_CASE = "isMaster";
-    exports2.kDecorateResult = Symbol.for("@@mdb.decorateDecryptionResult");
-    exports2.kDecoratedKeys = Symbol.for("@@mdb.decryptedKeys");
+    exports2.kDecorateResult = /* @__PURE__ */ Symbol.for("@@mdb.decorateDecryptionResult");
+    exports2.kDecoratedKeys = /* @__PURE__ */ Symbol.for("@@mdb.decryptedKeys");
   }
 });
 
@@ -6572,7 +6572,7 @@ var require_utils = __commonJS({
         }
         Object.freeze(this);
       }
-      [Symbol.for("nodejs.util.inspect.custom")]() {
+      [/* @__PURE__ */ Symbol.for("nodejs.util.inspect.custom")]() {
         return this.inspect();
       }
       inspect() {
@@ -6850,7 +6850,7 @@ var require_utils = __commonJS({
         decorateDecryptionResult(decrypted[k], originalValue, false);
       }
     }
-    exports2.kDispose = Symbol.dispose ?? Symbol("dispose");
+    exports2.kDispose = Symbol.dispose ?? /* @__PURE__ */ Symbol("dispose");
     function addAbortListener(signal, listener) {
       if (signal == null)
         return;
@@ -7428,15 +7428,15 @@ var require_operation = __commonJS({
     var bson_1 = require_bson2();
     var read_preference_1 = require_read_preference();
     exports2.Aspect = {
-      READ_OPERATION: Symbol("READ_OPERATION"),
-      WRITE_OPERATION: Symbol("WRITE_OPERATION"),
-      RETRYABLE: Symbol("RETRYABLE"),
-      EXPLAINABLE: Symbol("EXPLAINABLE"),
-      SKIP_COLLATION: Symbol("SKIP_COLLATION"),
-      CURSOR_CREATING: Symbol("CURSOR_CREATING"),
-      MUST_SELECT_SAME_SERVER: Symbol("MUST_SELECT_SAME_SERVER"),
-      COMMAND_BATCHING: Symbol("COMMAND_BATCHING"),
-      SUPPORTS_RAW_DATA: Symbol("SUPPORTS_RAW_DATA")
+      READ_OPERATION: /* @__PURE__ */ Symbol("READ_OPERATION"),
+      WRITE_OPERATION: /* @__PURE__ */ Symbol("WRITE_OPERATION"),
+      RETRYABLE: /* @__PURE__ */ Symbol("RETRYABLE"),
+      EXPLAINABLE: /* @__PURE__ */ Symbol("EXPLAINABLE"),
+      SKIP_COLLATION: /* @__PURE__ */ Symbol("SKIP_COLLATION"),
+      CURSOR_CREATING: /* @__PURE__ */ Symbol("CURSOR_CREATING"),
+      MUST_SELECT_SAME_SERVER: /* @__PURE__ */ Symbol("MUST_SELECT_SAME_SERVER"),
+      COMMAND_BATCHING: /* @__PURE__ */ Symbol("COMMAND_BATCHING"),
+      SUPPORTS_RAW_DATA: /* @__PURE__ */ Symbol("SUPPORTS_RAW_DATA")
     };
     var AbstractOperation = class {
       constructor(options = {}) {
@@ -8268,7 +8268,7 @@ var require_execute_operation = __commonJS({
       let session = operation.session;
       let owner;
       if (session == null) {
-        owner = Symbol();
+        owner = /* @__PURE__ */ Symbol();
         session = client.startSession({ owner, explicit: false });
       } else if (session.hasEnded) {
         throw new error_1.MongoExpiredSessionError("Use of expired sessions is not permitted");
@@ -15092,7 +15092,7 @@ var require_drop2 = __commonJS({
         const listCollectionsResult = await db.listCollections({ name }, {
           nameOnly: false,
           session: options.session,
-          timeoutContext: new abstract_cursor_1.CursorTimeoutContext(timeoutContext, Symbol())
+          timeoutContext: new abstract_cursor_1.CursorTimeoutContext(timeoutContext, /* @__PURE__ */ Symbol())
         }).toArray();
         encryptedFields = listCollectionsResult?.[0]?.options?.encryptedFields;
       }
@@ -16863,10 +16863,10 @@ var require_utils2 = __commonJS({
         Object.getOwnPropertyDescriptors(object)
       );
     }
-    var wrapperSymbol = Symbol("wrapper");
-    var implSymbol = Symbol("impl");
-    var sameObjectCaches = Symbol("SameObject caches");
-    var ctorRegistrySymbol = Symbol.for("[webidl2js] constructor registry");
+    var wrapperSymbol = /* @__PURE__ */ Symbol("wrapper");
+    var implSymbol = /* @__PURE__ */ Symbol("impl");
+    var sameObjectCaches = /* @__PURE__ */ Symbol("SameObject caches");
+    var ctorRegistrySymbol = /* @__PURE__ */ Symbol.for("[webidl2js] constructor registry");
     var AsyncIteratorPrototype = Object.getPrototypeOf(Object.getPrototypeOf(async function* () {
     }).prototype);
     function initCtorRegistry(globalObject) {
@@ -16914,7 +16914,7 @@ var require_utils2 = __commonJS({
       const impl = implForWrapper(wrapper);
       return impl ? impl : wrapper;
     }
-    var iterInternalSymbol = Symbol("internal");
+    var iterInternalSymbol = /* @__PURE__ */ Symbol("internal");
     function isArrayIndexPropName(P) {
       if (typeof P !== "string") {
         return false;
@@ -16953,21 +16953,21 @@ var require_utils2 = __commonJS({
       }
       return { value: result, done: false };
     }
-    var supportsPropertyIndex = Symbol("supports property index");
-    var supportedPropertyIndices = Symbol("supported property indices");
-    var supportsPropertyName = Symbol("supports property name");
-    var supportedPropertyNames = Symbol("supported property names");
-    var indexedGet = Symbol("indexed property get");
-    var indexedSetNew = Symbol("indexed property set new");
-    var indexedSetExisting = Symbol("indexed property set existing");
-    var namedGet = Symbol("named property get");
-    var namedSetNew = Symbol("named property set new");
-    var namedSetExisting = Symbol("named property set existing");
-    var namedDelete = Symbol("named property delete");
-    var asyncIteratorNext = Symbol("async iterator get the next iteration result");
-    var asyncIteratorReturn = Symbol("async iterator return steps");
-    var asyncIteratorInit = Symbol("async iterator initialization steps");
-    var asyncIteratorEOI = Symbol("async iterator end of iteration");
+    var supportsPropertyIndex = /* @__PURE__ */ Symbol("supports property index");
+    var supportedPropertyIndices = /* @__PURE__ */ Symbol("supported property indices");
+    var supportsPropertyName = /* @__PURE__ */ Symbol("supports property name");
+    var supportedPropertyNames = /* @__PURE__ */ Symbol("supported property names");
+    var indexedGet = /* @__PURE__ */ Symbol("indexed property get");
+    var indexedSetNew = /* @__PURE__ */ Symbol("indexed property set new");
+    var indexedSetExisting = /* @__PURE__ */ Symbol("indexed property set existing");
+    var namedGet = /* @__PURE__ */ Symbol("named property get");
+    var namedSetNew = /* @__PURE__ */ Symbol("named property set new");
+    var namedSetExisting = /* @__PURE__ */ Symbol("named property set existing");
+    var namedDelete = /* @__PURE__ */ Symbol("named property delete");
+    var asyncIteratorNext = /* @__PURE__ */ Symbol("async iterator get the next iteration result");
+    var asyncIteratorReturn = /* @__PURE__ */ Symbol("async iterator return steps");
+    var asyncIteratorInit = /* @__PURE__ */ Symbol("async iterator initialization steps");
+    var asyncIteratorEOI = /* @__PURE__ */ Symbol("async iterator end of iteration");
     module2.exports = exports2 = {
       isObject,
       hasOwn,
@@ -17758,7 +17758,7 @@ var require_url_state_machine = __commonJS({
       ws: 80,
       wss: 443
     };
-    var failure = Symbol("failure");
+    var failure = /* @__PURE__ */ Symbol("failure");
     function countSymbols(str) {
       return [...str].length;
     }
@@ -20399,7 +20399,7 @@ var require_lib2 = __commonJS({
         const _sametype = false;
         return this.searchParams;
       }
-      [Symbol.for("nodejs.util.inspect.custom")]() {
+      [/* @__PURE__ */ Symbol.for("nodejs.util.inspect.custom")]() {
         const { href, origin, protocol, username, password, hosts, pathname, search, searchParams, hash } = this;
         return {
           href,
@@ -21720,7 +21720,7 @@ var require_state_machine = __commonJS({
         const cursor = client.db(db).listCollections(filter, {
           promoteLongs: false,
           promoteValues: false,
-          timeoutContext: options?.timeoutContext && new abstract_cursor_1.CursorTimeoutContext(options?.timeoutContext, Symbol()),
+          timeoutContext: options?.timeoutContext && new abstract_cursor_1.CursorTimeoutContext(options?.timeoutContext, /* @__PURE__ */ Symbol()),
           signal: options?.signal,
           nameOnly: false
         });
@@ -21769,7 +21769,7 @@ var require_state_machine = __commonJS({
           signal: void 0
         };
         if (options?.timeoutContext != null) {
-          commandOptions.timeoutContext = new abstract_cursor_1.CursorTimeoutContext(options.timeoutContext, Symbol());
+          commandOptions.timeoutContext = new abstract_cursor_1.CursorTimeoutContext(options.timeoutContext, /* @__PURE__ */ Symbol());
         }
         if (options?.signal != null) {
           commandOptions.signal = options.signal;
@@ -29169,7 +29169,7 @@ var require_executor = __commonJS({
         } else {
           const resultsMerger = new results_merger_1.ClientBulkWriteResultsMerger(this.options);
           while (commandBuilder.hasNextBatch()) {
-            const cursorContext = new abstract_cursor_1.CursorTimeoutContext(context, Symbol());
+            const cursorContext = new abstract_cursor_1.CursorTimeoutContext(context, /* @__PURE__ */ Symbol());
             const options = {
               ...this.options,
               timeoutContext: cursorContext,
@@ -30407,7 +30407,7 @@ var require_mongo_client = __commonJS({
       async withSession(optionsOrExecutor, executor) {
         const options = {
           // Always define an owner
-          owner: Symbol(),
+          owner: /* @__PURE__ */ Symbol(),
           // If it's an object inherit the options
           ...typeof optionsOrExecutor === "object" ? optionsOrExecutor : {}
         };
@@ -30523,9 +30523,9 @@ var require_change_stream = __commonJS({
     var timeout_1 = require_timeout();
     var utils_1 = require_utils();
     var CHANGE_DOMAIN_TYPES = {
-      COLLECTION: Symbol("Collection"),
-      DATABASE: Symbol("Database"),
-      CLUSTER: Symbol("Cluster")
+      COLLECTION: /* @__PURE__ */ Symbol("Collection"),
+      DATABASE: /* @__PURE__ */ Symbol("Database"),
+      CLUSTER: /* @__PURE__ */ Symbol("Cluster")
     };
     var CHANGE_STREAM_EVENTS = [constants_1.RESUME_TOKEN_CHANGED, constants_1.END, constants_1.CLOSE];
     var NO_RESUME_TOKEN_ERROR = "A change stream document has been received that lacks a resume token (_id).";
@@ -30590,7 +30590,7 @@ var require_change_stream = __commonJS({
         } else {
           throw new error_1.MongoChangeStreamError("Parent provided to ChangeStream constructor must be an instance of Collection, Db, or MongoClient");
         }
-        this.contextOwner = Symbol();
+        this.contextOwner = /* @__PURE__ */ Symbol();
         this.parent = parent;
         this.namespace = parent.s.namespace;
         if (!this.options.readPreference && parent.readPreference) {
@@ -32165,24 +32165,24 @@ var require_lib3 = __commonJS({
 var require_symbols = __commonJS({
   "node_modules/mongoose/lib/helpers/symbols.js"(exports2) {
     "use strict";
-    exports2.arrayAtomicsBackupSymbol = Symbol("mongoose#Array#atomicsBackup");
-    exports2.arrayAtomicsSymbol = Symbol("mongoose#Array#_atomics");
-    exports2.arrayParentSymbol = Symbol("mongoose#Array#_parent");
-    exports2.arrayPathSymbol = Symbol("mongoose#Array#_path");
-    exports2.arraySchemaSymbol = Symbol("mongoose#Array#_schema");
-    exports2.documentArrayParent = Symbol("mongoose#documentArrayParent");
-    exports2.documentIsSelected = Symbol("mongoose#Document#isSelected");
-    exports2.documentIsModified = Symbol("mongoose#Document#isModified");
-    exports2.documentModifiedPaths = Symbol("mongoose#Document#modifiedPaths");
-    exports2.documentSchemaSymbol = Symbol("mongoose#Document#schema");
-    exports2.getSymbol = Symbol("mongoose#Document#get");
-    exports2.modelSymbol = Symbol("mongoose#Model");
-    exports2.objectIdSymbol = Symbol("mongoose#ObjectId");
-    exports2.populateModelSymbol = Symbol("mongoose#PopulateOptions#Model");
-    exports2.schemaTypeSymbol = Symbol("mongoose#schemaType");
-    exports2.sessionNewDocuments = Symbol("mongoose#ClientSession#newDocuments");
-    exports2.scopeSymbol = Symbol("mongoose#Document#scope");
-    exports2.validatorErrorSymbol = Symbol("mongoose#validatorError");
+    exports2.arrayAtomicsBackupSymbol = /* @__PURE__ */ Symbol("mongoose#Array#atomicsBackup");
+    exports2.arrayAtomicsSymbol = /* @__PURE__ */ Symbol("mongoose#Array#_atomics");
+    exports2.arrayParentSymbol = /* @__PURE__ */ Symbol("mongoose#Array#_parent");
+    exports2.arrayPathSymbol = /* @__PURE__ */ Symbol("mongoose#Array#_path");
+    exports2.arraySchemaSymbol = /* @__PURE__ */ Symbol("mongoose#Array#_schema");
+    exports2.documentArrayParent = /* @__PURE__ */ Symbol("mongoose#documentArrayParent");
+    exports2.documentIsSelected = /* @__PURE__ */ Symbol("mongoose#Document#isSelected");
+    exports2.documentIsModified = /* @__PURE__ */ Symbol("mongoose#Document#isModified");
+    exports2.documentModifiedPaths = /* @__PURE__ */ Symbol("mongoose#Document#modifiedPaths");
+    exports2.documentSchemaSymbol = /* @__PURE__ */ Symbol("mongoose#Document#schema");
+    exports2.getSymbol = /* @__PURE__ */ Symbol("mongoose#Document#get");
+    exports2.modelSymbol = /* @__PURE__ */ Symbol("mongoose#Model");
+    exports2.objectIdSymbol = /* @__PURE__ */ Symbol("mongoose#ObjectId");
+    exports2.populateModelSymbol = /* @__PURE__ */ Symbol("mongoose#PopulateOptions#Model");
+    exports2.schemaTypeSymbol = /* @__PURE__ */ Symbol("mongoose#schemaType");
+    exports2.sessionNewDocuments = /* @__PURE__ */ Symbol("mongoose#ClientSession#newDocuments");
+    exports2.scopeSymbol = /* @__PURE__ */ Symbol("mongoose#Document#scope");
+    exports2.validatorErrorSymbol = /* @__PURE__ */ Symbol("mongoose#validatorError");
   }
 });
 
@@ -32333,7 +32333,7 @@ var require_isPOJO = __commonJS({
 var require_trusted = __commonJS({
   "node_modules/mongoose/lib/helpers/query/trusted.js"(exports2) {
     "use strict";
-    var trustedSymbol = Symbol("mongoose#trustedSymbol");
+    var trustedSymbol = /* @__PURE__ */ Symbol("mongoose#trustedSymbol");
     exports2.trustedSymbol = trustedSymbol;
     exports2.trusted = function trusted(obj) {
       if (obj == null || typeof obj !== "object") {
@@ -34729,8 +34729,8 @@ var require_buffer = __commonJS({
       buf._subtype = 0;
       return buf;
     }
-    var pathSymbol = Symbol.for("mongoose#Buffer#_path");
-    var parentSymbol = Symbol.for("mongoose#Buffer#_parent");
+    var pathSymbol = /* @__PURE__ */ Symbol.for("mongoose#Buffer#_path");
+    var parentSymbol = /* @__PURE__ */ Symbol.for("mongoose#Buffer#_parent");
     MongooseBuffer.pathSymbol = pathSymbol;
     MongooseBuffer.mixin = {
       /**
@@ -34880,8 +34880,8 @@ var require_buffer = __commonJS({
 var require_symbols2 = __commonJS({
   "node_modules/mongoose/lib/schema/symbols.js"(exports2) {
     "use strict";
-    exports2.schemaMixedSymbol = Symbol.for("mongoose:schema_mixed");
-    exports2.builtInMiddleware = Symbol.for("mongoose:built-in-middleware");
+    exports2.schemaMixedSymbol = /* @__PURE__ */ Symbol.for("mongoose:schema_mixed");
+    exports2.builtInMiddleware = /* @__PURE__ */ Symbol.for("mongoose:built-in-middleware");
   }
 });
 
@@ -36594,7 +36594,7 @@ var require_methods = __commonJS({
     var arrayPathSymbol = require_symbols().arrayPathSymbol;
     var arraySchemaSymbol = require_symbols().arraySchemaSymbol;
     var populateModelSymbol = require_symbols().populateModelSymbol;
-    var slicedSymbol = Symbol("mongoose#Array#sliced");
+    var slicedSymbol = /* @__PURE__ */ Symbol("mongoose#Array#sliced");
     var _basePush = Array.prototype.push;
     var methods = {
       /**
@@ -48285,7 +48285,7 @@ var require_union = __commonJS({
     "use strict";
     var SchemaUnionOptions = require_schemaUnionOptions();
     var SchemaType = require_schemaType();
-    var firstValueSymbol = Symbol("firstValue");
+    var firstValueSymbol = /* @__PURE__ */ Symbol("firstValue");
     var Union = class extends SchemaType {
       /**
        * Create a Union schema type.
@@ -58731,7 +58731,7 @@ var require_assignRawDocsToIdStructure = __commonJS({
     var modelSymbol = require_symbols().modelSymbol;
     var utils = require_utils3();
     module2.exports = assignRawDocsToIdStructure;
-    var kHasArray = Symbol("mongoose#assignRawDocsToIdStructure#hasArray");
+    var kHasArray = /* @__PURE__ */ Symbol("mongoose#assignRawDocsToIdStructure#hasArray");
     function assignRawDocsToIdStructure(rawIds, resultDocs, resultOrder, options, recursed) {
       const newOrder = [];
       const sorting = options.isVirtual && options.justOne && rawIds.length > 1 ? false : options.sort && rawIds.length > 1;
@@ -61170,10 +61170,10 @@ var require_model = __commonJS({
     var MongooseBulkSaveIncompleteError = require_bulkSaveIncompleteError();
     var ObjectExpectedError = require_objectExpected();
     var decorateBulkWriteResult = require_decorateBulkWriteResult();
-    var modelCollectionSymbol = Symbol("mongoose#Model#collection");
-    var modelDbSymbol = Symbol("mongoose#Model#db");
+    var modelCollectionSymbol = /* @__PURE__ */ Symbol("mongoose#Model#collection");
+    var modelDbSymbol = /* @__PURE__ */ Symbol("mongoose#Model#db");
     var modelSymbol = require_symbols().modelSymbol;
-    var subclassedSymbol = Symbol("mongoose#Model#subclassed");
+    var subclassedSymbol = /* @__PURE__ */ Symbol("mongoose#Model#subclassed");
     var { VERSION_INC, VERSION_WHERE, VERSION_ALL } = Document;
     var saveToObjectOptions = Object.assign({}, internalToObjectOptions, {
       bson: true
@@ -63738,8 +63738,8 @@ var require_mongoose = __commonJS({
     var MongooseError = require_mongooseError();
     var SetOptionError = require_setOptionError();
     var applyEmbeddedDiscriminators = require_applyEmbeddedDiscriminators();
-    var defaultMongooseSymbol = Symbol.for("mongoose:default");
-    var defaultConnectionSymbol = Symbol("mongoose:defaultConnection");
+    var defaultMongooseSymbol = /* @__PURE__ */ Symbol.for("mongoose:default");
+    var defaultConnectionSymbol = /* @__PURE__ */ Symbol("mongoose:defaultConnection");
     require_printJestWarning();
     var objectIdHexRegexp = /^[0-9A-Fa-f]{24}$/;
     var { AsyncLocalStorage } = require("async_hooks");

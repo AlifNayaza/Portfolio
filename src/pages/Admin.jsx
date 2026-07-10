@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { toast } from "react-hot-toast";
@@ -99,28 +100,35 @@ const mergeWithDefaults = (fetchedData) => {
 const AdminInput = ({ label, textarea, ...props }) => {
     const Comp = textarea ? "textarea" : "input";
     return (
-        <div className="w-full">
-            <label className="block font-mono text-[10px] text-[var(--color-muted)] uppercase tracking-widest mb-2 border-l-2 border-[var(--color-crimson)] pl-2">
+        <div className="w-full space-y-2 group">
+            <label className="block font-mono text-[9px] text-[var(--color-muted)] uppercase tracking-[0.2em] border-l border-[var(--color-crimson)] pl-2 transition-colors group-focus-within:text-[var(--color-crimson)]">
                 {label}
             </label>
             <Comp 
-                className="w-full bg-[var(--color-bg)] border border-[var(--color-border)] text-[var(--color-paper)] p-3 font-serif focus:border-[var(--color-crimson)] focus:outline-none focus:ring-1 focus:ring-[var(--color-crimson)]/50 placeholder:text-[var(--color-muted)]/50 transition-all rounded-md shadow-inner"
+                className="w-full bg-[var(--color-line)]/30 border border-[var(--color-border)] text-[var(--color-paper)] p-3.5 font-serif focus:border-[var(--color-crimson)] focus:bg-[var(--color-bg)] focus:outline-none focus:ring-1 focus:ring-[var(--color-crimson)]/30 placeholder:text-[var(--color-muted)]/40 transition-all rounded-lg shadow-sm"
                 {...props}
             />
         </div>
     );
 };
 
-const SectionHeader = ({ title, onAddItem, buttonLabel }) => (
-    <div className="flex justify-between items-end border-b border-[var(--color-border)] pb-4 mb-8">
-        <h2 className="text-3xl font-display text-[var(--color-paper)]">{title}</h2>
-        {onAddItem && (
-            <button 
-                onClick={onAddItem} 
-                className="font-mono text-xs text-[var(--color-crimson)] hover:text-[var(--color-paper)] transition-colors font-bold px-3 py-1 rounded hover:bg-[var(--color-crimson)] hover:text-white"
-            >
-                {buttonLabel}
-            </button>
+const SectionHeader = ({ title, onAddItem, buttonLabel, description }) => (
+    <div className="border-b border-[var(--color-border)] pb-5 mb-8 space-y-2">
+        <div className="flex justify-between items-end">
+            <h2 className="text-2xl md:text-3xl font-display text-[var(--color-paper)] tracking-wide">{title}</h2>
+            {onAddItem && (
+                <button 
+                    onClick={onAddItem} 
+                    className="font-mono text-[10px] tracking-wider text-[var(--color-crimson)] hover:text-white border border-[var(--color-crimson)] hover:bg-[var(--color-crimson)] transition-all font-bold px-3 py-1.5 rounded-lg"
+                >
+                    {buttonLabel}
+                </button>
+            )}
+        </div>
+        {description && (
+            <p className="text-xs text-[var(--color-muted)] font-serif italic max-w-2xl leading-relaxed">
+                {description}
+            </p>
         )}
     </div>
 );
@@ -392,7 +400,7 @@ const TechStackInput = ({ technologies = [], onChange, projectIndex }) => {
 
 const icons = {
   home: '📖', profile: '👤', aboutpage: '📄', skills: '✨', projects: '💼', 
-  experience: '⏳', soundtrack: '🎵', contact: '📨',
+  experience: '⏳', soundtrack: '🎵', contact: '📨', messages: '✉️',
 };
 
 const tabContentVariants = {
@@ -430,6 +438,47 @@ export default function Admin() {
     });
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
+    const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [messages, setMessages] = useState([]);
+    const [loadingMessages, setLoadingMessages] = useState(false);
+
+    const fetchMessages = async () => {
+        setLoadingMessages(true);
+        try {
+            const token = getAuthToken();
+            const response = await axios.get("/.netlify/functions/contact", {
+                headers: { Authorization: token },
+                timeout: 10000
+            });
+            setMessages(response.data);
+        } catch (error) {
+            console.error("Error fetching messages:", error);
+            toast.error("Failed to load messages.");
+        } finally {
+            setLoadingMessages(false);
+        }
+    };
+
+    const deleteMessage = async (id) => {
+        if (!window.confirm("Are you sure you want to delete this message?")) return;
+        try {
+            const token = getAuthToken();
+            await axios.delete(`/.netlify/functions/contact?id=${id}`, {
+                headers: { Authorization: token }
+            });
+            toast.success("Message deleted.");
+            setMessages(prev => prev.filter(m => m._id !== id));
+        } catch (error) {
+            console.error("Error deleting message:", error);
+            toast.error("Failed to delete message.");
+        }
+    };
+
+    useEffect(() => {
+        if (activeTab === "messages") {
+            fetchMessages();
+        }
+    }, [activeTab]);
 
     useEffect(() => {
         const token = getAuthToken();
@@ -546,28 +595,70 @@ export default function Admin() {
         { id: 'projects', label: 'Projects', icon: icons.projects },
         { id: 'experience', label: 'Experience', icon: icons.experience },
         { id: 'soundtrack', label: 'Music', icon: icons.soundtrack },
-        { id: 'contact', label: 'Contact', icon: icons.contact }
+        { id: 'contact', label: 'Contact', icon: icons.contact },
+        { id: 'messages', label: 'Messages', icon: icons.messages }
     ];
 
     return (
-        <div className="min-h-screen bg-[var(--color-bg)] text-[var(--color-paper)]">
+        <div className="min-h-screen bg-[var(--color-bg)] text-[var(--color-paper)] flex flex-col">
             <div className="noise-overlay fixed top-0 left-0 w-full h-full pointer-events-none z-[1] opacity-[0.03]"></div>
             
-            <div className="flex relative">
-                <aside className="w-64 min-h-screen bg-[var(--color-bg)] border-r border-[var(--color-border)] fixed left-0 top-0 z-40 overflow-y-auto">
-                    <div className="p-6 border-b border-[var(--color-border)]">
-                        <h1 className="font-display text-2xl text-[var(--color-paper)] mb-1">ARCHIVIST</h1>
-                        <p className="font-mono text-xs text-[var(--color-muted)] tracking-widest">CONTROL PANEL</p>
+            {/* Mobile Header */}
+            <header className="lg:hidden flex items-center justify-between h-16 px-6 border-b border-[var(--color-border)] bg-[var(--color-bg)] sticky top-0 z-30">
+                <button 
+                    onClick={() => setSidebarOpen(true)}
+                    className="font-mono text-xs border border-[var(--color-border)] px-3 py-1.5 rounded text-[var(--color-paper)] hover:border-[var(--color-crimson)] transition-colors"
+                >
+                    ☰ MENU
+                </button>
+                <span className="font-display font-medium text-lg tracking-wider">ARCHIVIST</span>
+                <button 
+                    onClick={handleSave}
+                    disabled={isSaving}
+                    className="font-mono text-xs bg-[var(--color-crimson)] text-white px-3 py-1.5 rounded shadow-sm disabled:opacity-50"
+                >
+                    {isSaving ? "SAVING..." : "[ SAVE ]"}
+                </button>
+            </header>
+
+            <div className="flex flex-1 relative">
+                {/* Mobile Sidebar Overlay */}
+                {sidebarOpen && (
+                    <div 
+                        onClick={() => setSidebarOpen(false)} 
+                        className="fixed inset-0 bg-black/50 z-30 lg:hidden"
+                    />
+                )}
+
+                <aside 
+                    className={`w-64 min-h-screen bg-[var(--color-bg)] border-r border-[var(--color-border)] fixed left-0 top-0 z-40 overflow-y-auto transition-transform duration-300 ${
+                        sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+                    } lg:translate-x-0`}
+                >
+                    <div className="p-6 border-b border-[var(--color-border)] flex justify-between items-center">
+                        <div>
+                            <h1 className="font-display text-2xl text-[var(--color-paper)] mb-1">ARCHIVIST</h1>
+                            <p className="font-mono text-xs text-[var(--color-muted)] tracking-widest">CONTROL PANEL</p>
+                        </div>
+                        <button 
+                            onClick={() => setSidebarOpen(false)} 
+                            className="lg:hidden font-mono text-xs text-[var(--color-muted)] hover:text-red-500 border border-[var(--color-border)] px-2 py-1 rounded"
+                        >
+                            CLOSE
+                        </button>
                     </div>
 
                     <nav className="p-4 space-y-2">
                         {tabs.map(tab => (
                             <button
                                 key={tab.id}
-                                onClick={() => setActiveTab(tab.id)}
+                                onClick={() => {
+                                    setActiveTab(tab.id);
+                                    setSidebarOpen(false);
+                                }}
                                 className={`w-full text-left px-4 py-3 font-mono text-sm transition-all flex items-center gap-3 rounded-lg ${
                                     activeTab === tab.id 
-                                        ? 'bg-[var(--color-crimson)] text-white shadow-md' 
+                                        ? 'bg-[var(--color-crimson)] text-white shadow-md font-bold' 
                                         : 'text-[var(--color-muted)] hover:text-[var(--color-paper)] hover:bg-[var(--color-line)]'
                                 }`}
                             >
@@ -594,7 +685,7 @@ export default function Admin() {
                     </div>
                 </aside>
 
-                <main className="ml-64 flex-1 p-8 relative z-10">
+                <main className="flex-grow lg:ml-64 p-6 md:p-10 relative z-10 w-full overflow-x-hidden">
                     <AnimatePresence mode="wait">
                         <motion.div 
                             key={activeTab} 
@@ -606,7 +697,10 @@ export default function Admin() {
                         >
                             {activeTab === "home" && (
                                 <div>
-                                    <SectionHeader title="Home Page Settings" />
+                                    <SectionHeader 
+                                        title="Home Page Settings" 
+                                        description="Configure the primary branding name, main headline, and subtitle on the opening landing page."
+                                    />
                                     <div className="space-y-6">
                                         <AdminInput label="Author Name (Logo)" value={formData.home?.logoName || ""} onChange={e=>setNest('home','logoName',e.target.value)} />
                                         <AdminInput label="Main Headline" value={formData.home?.headline || ""} onChange={e=>setNest('home','headline',e.target.value)} />
@@ -617,7 +711,10 @@ export default function Admin() {
 
                             {activeTab === "profile" && (
                                 <div>
-                                    <SectionHeader title="Biography & Profile Images" />
+                                    <SectionHeader 
+                                        title="Biography & Profile Images" 
+                                        description="Edit your biographical details, tell your professional story, and arrange your gallery images."
+                                    />
                                     <div className="space-y-8">
                                         {/* About Section */}
                                         <div className="bg-[var(--color-line)] border border-[var(--color-border)] rounded-lg p-6 shadow-sm">
@@ -661,7 +758,10 @@ export default function Admin() {
 
                             {activeTab === "aboutpage" && (
                                 <div>
-                                    <SectionHeader title="About Page Settings" />
+                                    <SectionHeader 
+                                        title="About Page Settings" 
+                                        description="Configure your current location, work availability, core professional values, and personal strengths."
+                                    />
                                     
                                     <div className="space-y-8">
                                         <div className="bg-[var(--color-line)] border border-[var(--color-border)] rounded-lg p-6 space-y-6 shadow-sm">
@@ -843,7 +943,12 @@ export default function Admin() {
                             
                             {activeTab === "soundtrack" && (
                                 <div>
-                                    <SectionHeader title="Background Audio" onAddItem={() => addItem('soundtrack', { url: "", title: "", artist: "" })} buttonLabel="[ + ADD TRACK ]" />
+                                    <SectionHeader 
+                                        title="Background Audio" 
+                                        onAddItem={() => addItem('soundtrack', { url: "", title: "", artist: "" })} 
+                                        buttonLabel="[ + ADD TRACK ]" 
+                                        description="Provide background soundtrack music for visitors. You can upload tracks and edit details."
+                                    />
                                     <div className="space-y-4">
                                         <AnimatePresence>
                                             {formData.soundtrack?.map((track, i) => (
@@ -864,7 +969,12 @@ export default function Admin() {
                             
                             {activeTab === "skills" && (
                                 <div>
-                                    <SectionHeader title="Skills & Abilities" onAddItem={()=>addItem('skills', { name: "", level: "Intermediate" })} buttonLabel="[ + ADD SKILL ]" />
+                                    <SectionHeader 
+                                        title="Skills & Abilities" 
+                                        onAddItem={()=>addItem('skills', { name: "", level: "Intermediate" })} 
+                                        buttonLabel="[ + ADD SKILL ]" 
+                                        description="List your tech stack skills and assign proficiency levels from Beginner to Expert."
+                                    />
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <AnimatePresence>
                                             {formData.skills?.map((skill, i) => {
@@ -890,7 +1000,12 @@ export default function Admin() {
 
                             {activeTab === "experience" && (
                                 <div>
-                                    <SectionHeader title="Work Experience" onAddItem={()=>addItem('experience', {role:"", company:"", year:""})} buttonLabel="[ + ADD EXPERIENCE ]" />
+                                    <SectionHeader 
+                                        title="Work Experience" 
+                                        onAddItem={()=>addItem('experience', {role:"", company:"", year:""})} 
+                                        buttonLabel="[ + ADD EXPERIENCE ]" 
+                                        description="Outline your past roles, companies, and timelines in a chronological sequence."
+                                    />
                                     <div className="space-y-4">
                                         <AnimatePresence>
                                             {formData.experience?.map((exp, i) => (
@@ -909,7 +1024,12 @@ export default function Admin() {
 
                             {activeTab === "projects" && (
                                 <div>
-                                    <SectionHeader title="Projects Portfolio" onAddItem={()=>addItem('projects', {name:"",description:"",image:"",link:"",technologies:[]})} buttonLabel="[ + NEW PROJECT ]" />
+                                    <SectionHeader 
+                                        title="Projects Portfolio" 
+                                        onAddItem={()=>addItem('projects', {name:"",description:"",image:"",link:"",technologies:[]})} 
+                                        buttonLabel="[ + NEW PROJECT ]" 
+                                        description="Highlight your crafted projects, technology tags, preview images, and links."
+                                    />
                                     <div className="space-y-6">
                                         <AnimatePresence>
                                             {formData.projects?.map((p, i) => (
@@ -945,7 +1065,10 @@ export default function Admin() {
 
                             {activeTab === "contact" && (
                                 <div>
-                                    <SectionHeader title="Contact Information" />
+                                    <SectionHeader 
+                                        title="Contact Information" 
+                                        description="Update your active social links and email address to maintain connection routes."
+                                    />
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <AdminInput label="Email Address" placeholder="your@email.com" value={formData.contact?.email || ""} onChange={e=>setNest('contact','email',e.target.value)} />
                                         <AdminInput label="LinkedIn URL" placeholder="https://linkedin.com/in/..." value={formData.contact?.linkedin || ""} onChange={e=>setNest('contact','linkedin',e.target.value)} />
@@ -953,6 +1076,67 @@ export default function Admin() {
                                         <AdminInput label="Instagram URL" placeholder="https://instagram.com/..." value={formData.contact?.instagram || ""} onChange={e=>setNest('contact','instagram',e.target.value)} />
                                         <AdminInput label="Twitter / X URL" placeholder="https://twitter.com/..." value={formData.contact?.twitter || ""} onChange={e=>setNest('contact','twitter',e.target.value)} />
                                     </div>
+                                </div>
+                            )}
+
+                            {activeTab === "messages" && (
+                                <div>
+                                    <SectionHeader 
+                                        title="Received Messages" 
+                                        onAddItem={fetchMessages} 
+                                        buttonLabel="[ ↻ REFRESH ]" 
+                                        description="Read and manage direct messages sent by visitors through the terminal connection."
+                                    />
+                                    {loadingMessages ? (
+                                        <p className="text-center text-[var(--color-muted)] font-mono text-xs py-10 animate-pulse">
+                                            RETRIEVING INCOMING TRANSMISSIONS...
+                                        </p>
+                                    ) : messages.length === 0 ? (
+                                        <p className="text-center text-[var(--color-muted)] font-mono text-xs py-10 border border-dashed border-[var(--color-border)] rounded-xl">
+                                            NO TRANSMISSIONS RECEIVED YET
+                                        </p>
+                                    ) : (
+                                        <div className="space-y-4">
+                                            {messages.map((msg) => (
+                                                <div 
+                                                    key={msg._id} 
+                                                    className="relative border border-[var(--color-border)] rounded-xl p-5 md:p-6 bg-[var(--color-line)]/20 hover:border-[var(--color-crimson)]/50 transition-all duration-300 shadow-sm"
+                                                >
+                                                    <button 
+                                                        onClick={() => deleteMessage(msg._id)} 
+                                                        className="absolute top-4 right-4 text-[var(--color-muted)] hover:text-red-500 text-sm font-mono tracking-wider transition-colors border border-[var(--color-border)] hover:border-red-500/50 px-2.5 py-1 rounded"
+                                                        title="Delete message"
+                                                    >
+                                                        [ DELETE ]
+                                                    </button>
+                                                    <div className="space-y-3">
+                                                        <div className="flex flex-wrap gap-x-4 gap-y-1 items-baseline">
+                                                            <h4 className="font-display text-base text-[var(--color-paper)]">
+                                                                {msg.name}
+                                                            </h4>
+                                                            <a 
+                                                                href={`mailto:${msg.email}`} 
+                                                                className="font-mono text-xs text-[var(--color-crimson)] hover:underline"
+                                                            >
+                                                                &lt;{msg.email}&gt;
+                                                            </a>
+                                                            <span className="font-mono text-[10px] text-[var(--color-muted)] ml-auto">
+                                                                {new Date(msg.createdAt).toLocaleString()}
+                                                            </span>
+                                                        </div>
+                                                        {msg.subject && (
+                                                            <div className="font-mono text-xs text-[var(--color-paper)] opacity-80 border-b border-[var(--color-border)]/50 pb-2">
+                                                                <span className="text-[var(--color-muted)]">Subject:</span> {msg.subject}
+                                                            </div>
+                                                        )}
+                                                        <p className="text-sm text-[var(--color-paper)] opacity-90 leading-relaxed font-serif whitespace-pre-wrap mt-2">
+                                                            {msg.message}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </motion.div>

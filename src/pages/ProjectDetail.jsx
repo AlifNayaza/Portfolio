@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import { useEffect, useState, useRef } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { usePortfolio } from "../context/PortfolioContext";
@@ -29,7 +30,7 @@ const FloatingOrbs = () => {
       radius: Math.random() * 100 + 50,
       vx: (Math.random() - 0.5) * 0.3,
       vy: (Math.random() - 0.5) * 0.3,
-      color: Math.random() > 0.5 ? 'var(--color-crimson)' : 'var(--color-gold)'
+      color: Math.random() > 0.5 ? '#9f1239' : '#c2410c'
     }));
 
     const animate = () => {

@@ -17,6 +17,7 @@ const Login = lazy(() => import("./pages/Login"));
 import Navbar from "./components/layout/Navbar";
 import MusicPlayer from "./components/ui/MusicPlayer";
 import Cursor from "./components/ui/Cursor";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 const ADMIN_PATH = import.meta.env.VITE_ADMIN_PATH || "/admin";
 
@@ -44,6 +45,8 @@ const LoadingFallback = () => (
 
 function Layout() {
   const { data, loading } = usePortfolio();
+  const { pathname } = useLocation();
+  const isHome = pathname === "/";
 
   let playlist = [];
   if (data) {
@@ -78,17 +81,22 @@ function Layout() {
       <MusicPlayer playlist={playlist} />
       
       <main 
-        className="flex-grow pt-28 md:pt-36 px-6 md:px-12 max-w-7xl mx-auto w-full min-h-screen relative z-10 shadow-[0_0_100px_rgba(0,0,0,0.8)]" 
+        className={isHome 
+          ? "flex-grow pt-28 md:pt-36 px-6 md:px-12 max-w-7xl mx-auto w-full min-h-screen relative z-10 shadow-[0_0_100px_rgba(0,0,0,0.8)]"
+          : "flex-grow pt-28 md:pt-36 px-6 md:px-12 w-full min-h-screen relative z-10"
+        } 
         style={{ 
-          borderLeft: '1px solid var(--color-border)',
-          borderRight: '1px solid var(--color-border)',
+          borderLeft: isHome ? '1px solid var(--color-border)' : 'none',
+          borderRight: isHome ? '1px solid var(--color-border)' : 'none',
           backgroundColor: 'var(--color-bg)'
         }}
       >
-        <div 
-          className="absolute top-0 left-6 bottom-0 w-[1px] hidden md:block" 
-          style={{ backgroundColor: 'var(--color-border)' }}
-        ></div>
+        {isHome && (
+          <div 
+            className="absolute top-0 left-6 bottom-0 w-[1px] hidden md:block" 
+            style={{ backgroundColor: 'var(--color-border)' }}
+          ></div>
+        )}
         <Suspense fallback={<LoadingFallback />}>
           <Outlet />
         </Suspense>
@@ -102,16 +110,13 @@ function Layout() {
           color: 'var(--color-muted)'
         }}
       >
-        <p>CHRONICLES OF {data?.home?.logoName?.toUpperCase() || "DEV"}. ALL RIGHTS RESERVED.</p>
+        <p>© {new Date().getFullYear()} CHRONICLES OF {data?.home?.logoName?.toUpperCase() || "DEV"}. ALL RIGHTS RESERVED.</p>
       </footer>
     </div>
   );
 }
 
-function ProtectedRoute() {
-  const isAuth = localStorage.getItem("admin_session");
-  return isAuth ? <Outlet /> : <Navigate to="/keyhole" replace />;
-}
+
 
 export default function App() {
   return (

@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /adomin
+Disallow: /admin
+Disallow: /keyhole
+Disallow: /keyhole/
+Disallow: /.netlify/

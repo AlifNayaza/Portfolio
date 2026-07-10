@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -10,17 +11,18 @@ export default function MusicPlayer({ playlist }) {
   const [currentTime, setCurrentTime] = useState(0);
   const audioRef = useRef(null);
 
-  if (!playlist || playlist.length === 0) {
-    return null;
-  }
-
   const currentTrack = playlist[currentIndex];
+
+  const isPlayingRef = useRef(isPlaying);
+  useEffect(() => {
+    isPlayingRef.current = isPlaying;
+  }, [isPlaying]);
 
   useEffect(() => {
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.load();
-      if (isPlaying) {
+      if (isPlayingRef.current) {
         audioRef.current.play().catch(e => console.error("Auto-play was prevented:", e));
       }
     }
@@ -115,13 +117,16 @@ export default function MusicPlayer({ playlist }) {
     }
   };
 
+  if (!playlist || playlist.length === 0) {
+    return null;
+  }
+
   return (
     <div className="fixed bottom-4 md:bottom-6 left-4 md:left-6 z-50">
       <audio 
         ref={audioRef} 
         src={currentTrack?.url} 
         onEnded={handleNext} 
-        key={currentTrack?.url} 
       />
       
       <AnimatePresence mode="wait">
@@ -265,6 +270,7 @@ export default function MusicPlayer({ playlist }) {
                   borderColor: 'var(--color-border)',
                   color: 'var(--color-muted)'
                 }}
+                aria-label="Previous track"
                 onMouseEnter={(e) => {
                   if (!e.currentTarget.disabled) {
                     e.currentTarget.style.borderColor = 'var(--color-crimson)';
@@ -287,6 +293,7 @@ export default function MusicPlayer({ playlist }) {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 className="w-14 h-14 flex items-center justify-center rounded-full text-white shadow-lg transition-all relative group"
+                aria-label={isPlaying ? "Pause track" : "Play track"}
                 style={{
                   background: 'linear-gradient(to right, var(--color-crimson), var(--color-gold))',
                   boxShadow: '0 10px 15px -3px rgba(159, 18, 57, 0.3)'
@@ -328,6 +335,7 @@ export default function MusicPlayer({ playlist }) {
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
                 className="w-8 h-8 flex items-center justify-center rounded-full border transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                aria-label="Next track"
                 style={{
                   borderColor: 'var(--color-border)',
                   color: 'var(--color-muted)'
