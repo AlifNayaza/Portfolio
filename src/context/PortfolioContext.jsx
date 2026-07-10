@@ -8,24 +8,39 @@ const PortfolioContext = createContext();
 export const usePortfolio = () => useContext(PortfolioContext);
 
 export const PortfolioProvider = ({ children }) => {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState(() => {
+    try {
+      const cached = localStorage.getItem("portfolio_data_cache");
+      return cached ? JSON.parse(cached) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [loading, setLoading] = useState(() => !data);
 
   const fetchData = async (silent = false) => {
-    if (!silent) setLoading(true);
+    if (!silent && !data) setLoading(true);
     try {
       const res = await axios.get("/.netlify/functions/portfolio");
       setData(res.data);
+      try {
+        localStorage.setItem("portfolio_data_cache", JSON.stringify(res.data));
+      } catch (e) {
+        console.warn("Failed to cache portfolio data", e);
+      }
     } catch (error) {
       console.error(error);
-      toast.error("Gagal memuat data portofolio.");
+      if (!data) {
+        toast.error("Gagal memuat data portofolio.");
+      }
     } finally {
-      if (!silent) setLoading(false);
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchData();
+    fetchData(!!data);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
