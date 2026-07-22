@@ -212,7 +212,7 @@ const AuthorPortrait = ({ images, name }) => {
                <button onClick={prevImage} className="w-8 h-8 border border-[var(--color-border)] text-[var(--color-muted)] hover:text-[var(--color-paper)] hover:border-[var(--color-crimson)] transition-all rounded-full flex items-center justify-center">←</button>
                <div className="flex gap-1 items-center">
                  {profileImages.map((_, i) => (
-                   <div key={i} className={`w-1 h-1 rounded-full transition-all ${i === currentImage ? 'bg-[var(--color-crimson)] w-4' : 'bg-[#333]'}`} />
+                   <div key={i} className={`w-1 h-1 rounded-full transition-all ${i === currentImage ? 'bg-[var(--color-crimson)] w-4' : 'bg-[var(--color-border)]'}`} />
                  ))}
                </div>
                <button onClick={nextImage} className="w-8 h-8 border border-[var(--color-border)] text-[var(--color-muted)] hover:text-[var(--color-paper)] hover:border-[var(--color-crimson)] transition-all rounded-full flex items-center justify-center">→</button>
@@ -222,7 +222,7 @@ const AuthorPortrait = ({ images, name }) => {
               style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
               onMouseMove={handleMouseMove}
               onMouseLeave={handleMouseLeave}
-              className="relative w-64 h-80 md:w-80 md:h-[30rem] p-4 border border-[var(--color-border)] bg-[#0f0f0f] shadow-2xl cursor-grab active:cursor-grabbing"
+              className="relative w-64 h-80 md:w-80 md:h-[30rem] p-4 border border-[var(--color-border)] bg-[var(--color-line)] shadow-2xl cursor-grab active:cursor-grabbing"
             >
               {/* Decorative Corners */}
               <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-[var(--color-crimson)]" />
@@ -230,7 +230,7 @@ const AuthorPortrait = ({ images, name }) => {
               <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-[var(--color-crimson)]" />
               <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-[var(--color-crimson)]" />
 
-              <div className="w-full h-full overflow-hidden relative grayscale hover:grayscale-0 transition-all duration-1000 ease-in-out">
+              <div className="w-full h-full overflow-hidden relative transition-all duration-700 ease-in-out">
                 <AnimatePresence mode="wait">
                   <motion.img
                     key={currentImage}
@@ -294,15 +294,15 @@ const ChronicleCard = ({ project, index }) => {
         transition={{ duration: 0.8 }}
       >
         <div className="relative aspect-[4/3] overflow-hidden rounded-sm border border-[var(--color-border)] transition-colors duration-500 group-hover:border-[var(--color-crimson)]/50">
-          {project.image ? (
+            {project.image ? (
             <img 
               src={project.image} 
               alt={project.name}
-              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 filter grayscale group-hover:grayscale-0"
+              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
             />
           ) : (
             <div className="w-full h-full bg-[var(--color-line)] flex items-center justify-center">
-              <span className="font-display text-4xl text-[#222]">PREVIEW N/A</span>
+              <span className="font-display text-4xl text-[var(--color-muted)]">PREVIEW N/A</span>
             </div>
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-60 transition-opacity duration-500 group-hover:opacity-30" />
@@ -421,13 +421,13 @@ const InteractiveSkillManuscript = ({ skills, projects }) => {
               transition={{ delay: idx * 0.05, duration: 0.5 }}
               className={`relative group cursor-pointer flex flex-col items-center p-4 border rounded-lg transition-all duration-300 min-w-[140px] ${
                 isActive 
-                  ? "bg-[#1a1a1a] border-[var(--color-crimson)] shadow-lg shadow-[#9f1239]/10" 
+                  ? "bg-[var(--color-line)] border-[var(--color-crimson)] shadow-lg shadow-[var(--color-crimson-shadow)]" 
                   : "bg-transparent border-transparent hover:bg-[var(--color-line)] hover:border-[var(--color-border)]"
               }`}
             >
               {/* Skill Name */}
               <span className={`font-serif text-lg md:text-xl transition-colors duration-300 ${
-                isActive ? "text-[var(--color-paper)]" : "text-[var(--color-muted)] group-hover:text-zinc-300"
+                isActive ? "text-[var(--color-paper)]" : "text-[var(--color-muted)] group-hover:text-[var(--color-paper)]"
               }`}>
                 {name}
               </span>
@@ -478,7 +478,7 @@ const InteractiveSkillManuscript = ({ skills, projects }) => {
                   <Link 
                     key={idx} 
                     to={`/project/${projects.indexOf(project)}`}
-                    className="flex items-center gap-4 p-4 border border-[var(--color-border)] hover:border-[var(--color-crimson)] hover:bg-[#1a1a1a] transition-all group rounded-md"
+                    className="flex items-center gap-4 p-4 border border-[var(--color-border)] hover:border-[var(--color-crimson)] hover:bg-[var(--color-line)] transition-all group rounded-md"
                   >
                     <div className="w-12 h-12 bg-[var(--color-line)] flex items-center justify-center border border-[var(--color-border)] group-hover:border-[var(--color-crimson)] transition-colors rounded">
                       <span className="font-display text-lg text-[var(--color-paper)] group-hover:text-[var(--color-crimson)]">
@@ -530,13 +530,13 @@ const Epilogue = () => {
           <div className="flex flex-col md:flex-row items-center justify-center gap-6">
             <Link 
               to="/contact"
-              className="px-8 py-4 bg-[var(--color-crimson)] text-[var(--color-paper)] font-display tracking-wider hover:bg-[#881337] transition-all transform hover:-translate-y-1 shadow-lg shadow-[#9f1239]/20"
+              className="px-8 py-4 bg-[var(--color-crimson)] text-white font-display tracking-wider hover:opacity-90 transition-all transform hover:-translate-y-1 shadow-lg shadow-red-950/20"
             >
               Get in Touch
             </Link>
             <Link 
               to="/about"
-              className="px-8 py-4 border border-[var(--color-border)] text-[var(--color-muted)] font-display tracking-wider hover:border-white hover:text-[var(--color-paper)] transition-all"
+              className="px-8 py-4 border border-[var(--color-border)] text-[var(--color-muted)] font-display tracking-wider hover:border-[var(--color-paper)] hover:text-[var(--color-paper)] transition-all"
             >
               Full Biography
             </Link>
@@ -601,7 +601,7 @@ export default function Home() {
                 <span className="font-mono text-xs text-[var(--color-muted)] tracking-widest group-hover:text-[var(--color-crimson)] transition-colors">
                   VIEW FULL ARCHIVE
                 </span>
-                <span className="h-[1px] w-12 bg-[#333] group-hover:w-24 group-hover:bg-[var(--color-crimson)] transition-all duration-300" />
+                <span className="h-[1px] w-12 bg-[var(--color-border)] group-hover:w-24 group-hover:bg-[var(--color-crimson)] transition-all duration-300" />
               </Link>
             </div>
           </div>

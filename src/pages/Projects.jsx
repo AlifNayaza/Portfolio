@@ -303,7 +303,7 @@ const FilterTabs = ({ allTechs, filterTech, setFilterTech, projects }) => {
           whileTap={{ scale: 0.98 }}
           className={`px-4 py-2.5 font-mono text-xs border transition-all ${
             filterTech === "all"
-              ? "bg-[var(--color-crimson)] border-[var(--color-crimson)] text-[var(--color-paper)] shadow-lg shadow-[#9f1239]/20"
+              ? "bg-[var(--color-crimson)] border-[var(--color-crimson)] text-white shadow-lg shadow-red-950/20"
               : "bg-[var(--color-bg)] border-[var(--color-border)] text-[var(--color-muted)] hover:border-[var(--color-crimson)]/50 hover:text-[var(--color-paper)]"
           }`}
         >
@@ -318,7 +318,7 @@ const FilterTabs = ({ allTechs, filterTech, setFilterTech, projects }) => {
             whileTap={{ scale: 0.98 }}
             className={`px-4 py-2.5 font-mono text-xs border transition-all ${
               filterTech === tech
-                ? "bg-[var(--color-crimson)] border-[var(--color-crimson)] text-[var(--color-paper)] shadow-lg shadow-[#9f1239]/20"
+                ? "bg-[var(--color-crimson)] border-[var(--color-crimson)] text-white shadow-lg shadow-red-950/20"
                 : "bg-[var(--color-bg)] border-[var(--color-border)] text-[var(--color-muted)] hover:border-[var(--color-crimson)]/50 hover:text-[var(--color-paper)]"
             }`}
           >
@@ -418,7 +418,7 @@ const ViewModeToggle = ({ viewMode, setViewMode }) => {
           onClick={() => setViewMode("grid")}
           className={`px-3 py-1.5 font-mono text-[10px] transition-all ${
             viewMode === "grid"
-              ? "bg-[var(--color-crimson)] text-[var(--color-paper)]"
+              ? "bg-[var(--color-crimson)] text-white"
               : "text-[var(--color-muted)] hover:text-[var(--color-paper)]"
           }`}
         >
@@ -428,7 +428,7 @@ const ViewModeToggle = ({ viewMode, setViewMode }) => {
           onClick={() => setViewMode("list")}
           className={`px-3 py-1.5 font-mono text-[10px] transition-all border-l border-[var(--color-border)] ${
             viewMode === "list"
-              ? "bg-[var(--color-crimson)] text-[var(--color-paper)]"
+              ? "bg-[var(--color-crimson)] text-white"
               : "text-[var(--color-muted)] hover:text-[var(--color-paper)]"
           }`}
         >

@@ -15,7 +15,7 @@
 			"longitude": 109.3257,
 			"postalCode": "78111"
 		},
-		"timestamp": 1783656245135
+		"timestamp": 1784700535297
 	},
-	"dbConnectionString": "postgres://localhost:50620/postgres"
+	"dbConnectionString": "postgres://localhost:63459/postgres"
 }

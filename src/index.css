@@ -24,12 +24,12 @@
 /* === LIGHT MODE === */
 :root[data-theme="light"] {
   --color-bg: #fafafa;        
-  --color-paper: #0a0a0a;     /* Hitam pekat untuk text */
+  --color-paper: #09090b;     /* High-contrast text */
   --color-crimson: #dc2626;   
   --color-gold: #ea580c;      
-  --color-line: #f5f5f5;      
-  --color-border: #e5e5e5;    
-  --color-muted: #52525b;     /* Lebih gelap untuk readability */
+  --color-line: #f4f4f5;      
+  --color-border: #d4d4d8;    /* Slightly darker for clear component borders */
+  --color-muted: #3f3f46;     /* Darker muted text for high contrast readability */
   --noise-opacity: 0.015;
 }
 

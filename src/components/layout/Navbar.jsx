@@ -214,10 +214,11 @@ export default function Navbar({ home }) {
                       {/* Active indicator */}
                       {isActive && (
                         <motion.div
-                          layoutId="navbar-indicator"
-                          className="absolute -bottom-2 left-0 right-0 h-0.5"
-                          style={{ backgroundColor: 'var(--color-crimson)' }}
-                          transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                          initial={{ scaleX: 0 }}
+                          animate={{ scaleX: 1 }}
+                          transition={{ duration: 0.25, ease: "easeOut" }}
+                          className="absolute -bottom-2 left-0 right-0 h-0.5 rounded-full"
+                          style={{ backgroundColor: 'var(--color-crimson)', transformOrigin: 'left' }}
                         />
                       )}
 

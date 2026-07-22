@@ -67,6 +67,17 @@ export default function MusicPlayer({ playlist }) {
     setCurrentIndex((prevIndex) => (prevIndex - 1 + playlist.length) % playlist.length);
   };
 
+  const handleSeek = (e) => {
+    const seekTime = parseFloat(e.target.value);
+    if (audioRef.current && !isNaN(seekTime)) {
+      audioRef.current.currentTime = seekTime;
+      setCurrentTime(seekTime);
+      if (duration > 0) {
+        setProgress((seekTime / duration) * 100);
+      }
+    }
+  };
+
   const formatTime = (time) => {
     if (!time || isNaN(time)) return "0:00";
     const minutes = Math.floor(time / 60);
@@ -232,21 +243,30 @@ export default function MusicPlayer({ playlist }) {
               </div>
             </div>
 
-            {/* Progress bar */}
-            <div className="relative z-10 mb-4">
+            {/* Interactive Progress bar & Timeline Slider */}
+            <div className="relative z-10 mb-4 group">
               <div 
-                className="h-1 rounded-full overflow-hidden"
+                className="h-2 rounded-full overflow-hidden relative cursor-pointer"
                 style={{ backgroundColor: 'var(--color-border)' }}
               >
-                <motion.div
-                  className="h-full"
+                <div
+                  className="h-full rounded-full transition-all"
                   style={{ 
                     width: `${progress}%`,
                     background: 'linear-gradient(to right, var(--color-crimson), var(--color-gold))'
                   }}
-                  transition={{ duration: 0.1 }}
                 />
               </div>
+              <input 
+                type="range"
+                min={0}
+                max={duration || 100}
+                step={0.1}
+                value={currentTime || 0}
+                onChange={handleSeek}
+                aria-label="Seek track timeline"
+                className="absolute top-0 left-0 w-full h-2 opacity-0 cursor-pointer z-20"
+              />
               {/* Time stamps */}
               <div 
                 className="flex justify-between mt-1 text-[10px] font-mono"

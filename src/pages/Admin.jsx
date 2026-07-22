@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import ImageUploader from "../components/admin/ImageUploader";
 import AudioUploader from "../components/admin/AudioUploader";
+import ThemeToggle from "../components/ui/ThemeToggle";
 import { usePortfolio } from "../context/PortfolioContext";
 
 const API_URL = "/.netlify/functions/portfolio";
@@ -114,19 +115,20 @@ const AdminInput = ({ label, textarea, ...props }) => {
 
 const SectionHeader = ({ title, onAddItem, buttonLabel, description }) => (
     <div className="border-b border-[var(--color-border)] pb-5 mb-8 space-y-2">
-        <div className="flex justify-between items-end">
+        <div className="flex flex-wrap justify-between items-center gap-4">
             <h2 className="text-2xl md:text-3xl font-display text-[var(--color-paper)] tracking-wide">{title}</h2>
             {onAddItem && (
                 <button 
                     onClick={onAddItem} 
-                    className="font-mono text-[10px] tracking-wider text-[var(--color-crimson)] hover:text-white border border-[var(--color-crimson)] hover:bg-[var(--color-crimson)] transition-all font-bold px-3 py-1.5 rounded-lg"
+                    className="inline-flex items-center gap-2 bg-[var(--color-crimson)] text-white hover:bg-[#b91c1c] font-mono text-xs font-medium px-4 py-2 rounded-lg transition-all shadow-md active:scale-95"
                 >
-                    {buttonLabel}
+                    <span className="text-sm font-bold">+</span>
+                    <span>{buttonLabel ? buttonLabel.replace(/^\[|\s*\+\s*|\]$/g, '').trim() : 'Add Item'}</span>
                 </button>
             )}
         </div>
         {description && (
-            <p className="text-xs text-[var(--color-muted)] font-serif italic max-w-2xl leading-relaxed">
+            <p className="text-xs md:text-sm text-[var(--color-muted)] font-serif italic max-w-2xl leading-relaxed">
                 {description}
             </p>
         )}
@@ -577,6 +579,19 @@ export default function Admin() {
         }));
     };
 
+    // Keyboard shortcut Ctrl+S / Cmd+S for instant saving
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                e.preventDefault();
+                handleSave();
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [formData]);
+
     if (isLoading) {
         return (
             <div className="min-h-screen bg-[var(--color-bg)] flex items-center justify-center">
@@ -587,16 +602,23 @@ export default function Admin() {
         );
     }
 
+    const stats = [
+        { title: "Projects", count: formData.projects?.length || 0, icon: "💻", tab: "projects" },
+        { title: "Skills", count: formData.skills?.length || 0, icon: "⚡", tab: "skills" },
+        { title: "Soundtracks", count: formData.soundtrack?.length || 0, icon: "🎵", tab: "soundtrack" },
+        { title: "Messages", count: messages?.length || 0, icon: "✉️", tab: "messages" }
+    ];
+
     const tabs = [
         { id: 'home', label: 'Home Page', icon: icons.home },
         { id: 'profile', label: 'Biography', icon: icons.profile },
         { id: 'aboutpage', label: 'About Page', icon: icons.aboutpage },
-        { id: 'skills', label: 'Skills', icon: icons.skills },
-        { id: 'projects', label: 'Projects', icon: icons.projects },
-        { id: 'experience', label: 'Experience', icon: icons.experience },
-        { id: 'soundtrack', label: 'Music', icon: icons.soundtrack },
+        { id: 'skills', label: 'Skills', icon: icons.skills, count: formData.skills?.length },
+        { id: 'projects', label: 'Projects', icon: icons.projects, count: formData.projects?.length },
+        { id: 'experience', label: 'Experience', icon: icons.experience, count: formData.experience?.length },
+        { id: 'soundtrack', label: 'Music', icon: icons.soundtrack, count: formData.soundtrack?.length },
         { id: 'contact', label: 'Contact', icon: icons.contact },
-        { id: 'messages', label: 'Messages', icon: icons.messages }
+        { id: 'messages', label: 'Messages', icon: icons.messages, count: messages?.length }
     ];
 
     return (
@@ -605,17 +627,20 @@ export default function Admin() {
             
             {/* Mobile Header */}
             <header className="lg:hidden flex items-center justify-between h-16 px-6 border-b border-[var(--color-border)] bg-[var(--color-bg)] sticky top-0 z-30">
-                <button 
-                    onClick={() => setSidebarOpen(true)}
-                    className="font-mono text-xs border border-[var(--color-border)] px-3 py-1.5 rounded text-[var(--color-paper)] hover:border-[var(--color-crimson)] transition-colors"
-                >
-                    ☰ MENU
-                </button>
+                <div className="flex items-center gap-3">
+                    <button 
+                        onClick={() => setSidebarOpen(true)}
+                        className="font-mono text-xs border border-[var(--color-border)] px-3 py-1.5 rounded text-[var(--color-paper)] hover:border-[var(--color-crimson)] transition-colors"
+                    >
+                        ☰ MENU
+                    </button>
+                    <ThemeToggle />
+                </div>
                 <span className="font-display font-medium text-lg tracking-wider">ARCHIVIST</span>
                 <button 
                     onClick={handleSave}
                     disabled={isSaving}
-                    className="font-mono text-xs bg-[var(--color-crimson)] text-white px-3 py-1.5 rounded shadow-sm disabled:opacity-50"
+                    className="font-mono text-xs bg-[var(--color-crimson)] text-white px-3 py-1.5 rounded shadow-sm disabled:opacity-50 font-bold"
                 >
                     {isSaving ? "SAVING..." : "[ SAVE ]"}
                 </button>
@@ -640,15 +665,18 @@ export default function Admin() {
                             <h1 className="font-display text-2xl text-[var(--color-paper)] mb-1">ARCHIVIST</h1>
                             <p className="font-mono text-xs text-[var(--color-muted)] tracking-widest">CONTROL PANEL</p>
                         </div>
-                        <button 
-                            onClick={() => setSidebarOpen(false)} 
-                            className="lg:hidden font-mono text-xs text-[var(--color-muted)] hover:text-red-500 border border-[var(--color-border)] px-2 py-1 rounded"
-                        >
-                            CLOSE
-                        </button>
+                        <div className="flex items-center gap-2">
+                            <ThemeToggle />
+                            <button 
+                                onClick={() => setSidebarOpen(false)} 
+                                className="lg:hidden font-mono text-xs text-[var(--color-muted)] hover:text-red-500 border border-[var(--color-border)] px-2 py-1 rounded"
+                            >
+                                CLOSE
+                            </button>
+                        </div>
                     </div>
 
-                    <nav className="p-4 space-y-2">
+                    <nav className="p-4 space-y-1.5">
                         {tabs.map(tab => (
                             <button
                                 key={tab.id}
@@ -656,14 +684,25 @@ export default function Admin() {
                                     setActiveTab(tab.id);
                                     setSidebarOpen(false);
                                 }}
-                                className={`w-full text-left px-4 py-3 font-mono text-sm transition-all flex items-center gap-3 rounded-lg ${
+                                className={`w-full text-left px-4 py-3 font-mono text-xs transition-all flex items-center justify-between rounded-lg ${
                                     activeTab === tab.id 
                                         ? 'bg-[var(--color-crimson)] text-white shadow-md font-bold' 
                                         : 'text-[var(--color-muted)] hover:text-[var(--color-paper)] hover:bg-[var(--color-line)]'
                                 }`}
                             >
-                                <span className="text-lg">{tab.icon}</span>
-                                {tab.label}
+                                <div className="flex items-center gap-3">
+                                    <span className="text-base">{tab.icon}</span>
+                                    <span>{tab.label}</span>
+                                </div>
+                                {tab.count !== undefined && tab.count > 0 && (
+                                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono font-bold ${
+                                        activeTab === tab.id 
+                                            ? 'bg-white/20 text-white' 
+                                            : 'bg-[var(--color-line)] text-[var(--color-muted)] border border-[var(--color-border)]'
+                                    }`}>
+                                        {tab.count}
+                                    </span>
+                                )}
                             </button>
                         ))}
                     </nav>
@@ -672,20 +711,51 @@ export default function Admin() {
                         <button 
                             onClick={handleSave} 
                             disabled={isSaving}
-                            className="w-full bg-[var(--color-crimson)] hover:bg-[#7f0e2a] text-white py-3 font-mono text-xs tracking-widest transition-colors rounded shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full bg-[var(--color-crimson)] hover:bg-[#7f0e2a] text-white py-3 font-mono text-xs tracking-widest transition-colors rounded-lg shadow-md disabled:opacity-50 disabled:cursor-not-allowed font-bold"
                         >
-                            {isSaving ? 'SAVING...' : '[ COMMIT CHANGES ]'}
+                            {isSaving ? 'SAVING...' : '[ SAVE (Ctrl+S) ]'}
+                        </button>
+                        <button 
+                            onClick={() => window.open('/', '_blank')}
+                            className="w-full border border-[var(--color-border)] hover:border-[var(--color-paper)] text-[var(--color-muted)] hover:text-[var(--color-paper)] py-2.5 font-mono text-xs tracking-widest transition-colors rounded-lg hover:bg-[var(--color-line)]"
+                        >
+                            ↗ VIEW LIVE SITE
                         </button>
                         <button 
                             onClick={handleLogout}
-                            className="w-full border border-[var(--color-border)] hover:border-[var(--color-crimson)] text-[var(--color-muted)] hover:text-[var(--color-paper)] py-3 font-mono text-xs tracking-widest transition-colors rounded hover:bg-[var(--color-line)]"
+                            className="w-full text-red-500/80 hover:text-red-500 py-2 font-mono text-xs tracking-widest transition-colors rounded hover:bg-red-500/10"
                         >
-                            [ LOGOUT ]
+                            LOGOUT
                         </button>
                     </div>
                 </aside>
 
                 <main className="flex-grow lg:ml-64 p-6 md:p-10 relative z-10 w-full overflow-x-hidden">
+                    {/* Command Center Stats Bar */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                        {stats.map((stat, i) => (
+                            <motion.div
+                                key={i}
+                                whileHover={{ y: -3, scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                                onClick={() => setActiveTab(stat.tab)}
+                                className={`cursor-pointer bg-[var(--color-line)]/50 border rounded-xl p-4 transition-all shadow-sm ${
+                                    activeTab === stat.tab 
+                                        ? 'border-[var(--color-crimson)] shadow-md shadow-red-950/10' 
+                                        : 'border-[var(--color-border)] hover:border-[var(--color-crimson)]/40'
+                                }`}
+                            >
+                                <div className="flex justify-between items-center mb-2">
+                                    <span className="text-2xl">{stat.icon}</span>
+                                    <span className="font-mono text-[10px] text-[var(--color-muted)] tracking-wider uppercase font-bold">{stat.title}</span>
+                                </div>
+                                <div className="font-display text-2xl font-bold text-[var(--color-paper)]">
+                                    {stat.count}
+                                </div>
+                            </motion.div>
+                        ))}
+                    </div>
+
                     <AnimatePresence mode="wait">
                         <motion.div 
                             key={activeTab} 
@@ -1100,39 +1170,45 @@ export default function Admin() {
                                             {messages.map((msg) => (
                                                 <div 
                                                     key={msg._id} 
-                                                    className="relative border border-[var(--color-border)] rounded-xl p-5 md:p-6 bg-[var(--color-line)]/20 hover:border-[var(--color-crimson)]/50 transition-all duration-300 shadow-sm"
+                                                    className="border border-[var(--color-border)] rounded-xl p-5 md:p-6 bg-[var(--color-line)]/40 hover:border-[var(--color-crimson)]/50 transition-all duration-300 shadow-sm space-y-4"
                                                 >
-                                                    <button 
-                                                        onClick={() => deleteMessage(msg._id)} 
-                                                        className="absolute top-4 right-4 text-[var(--color-muted)] hover:text-red-500 text-sm font-mono tracking-wider transition-colors border border-[var(--color-border)] hover:border-red-500/50 px-2.5 py-1 rounded"
-                                                        title="Delete message"
-                                                    >
-                                                        [ DELETE ]
-                                                    </button>
-                                                    <div className="space-y-3">
-                                                        <div className="flex flex-wrap gap-x-4 gap-y-1 items-baseline">
-                                                            <h4 className="font-display text-base text-[var(--color-paper)]">
-                                                                {msg.name}
-                                                            </h4>
-                                                            <a 
-                                                                href={`mailto:${msg.email}`} 
-                                                                className="font-mono text-xs text-[var(--color-crimson)] hover:underline"
-                                                            >
-                                                                &lt;{msg.email}&gt;
-                                                            </a>
-                                                            <span className="font-mono text-[10px] text-[var(--color-muted)] ml-auto">
-                                                                {new Date(msg.createdAt).toLocaleString()}
-                                                            </span>
-                                                        </div>
-                                                        {msg.subject && (
-                                                            <div className="font-mono text-xs text-[var(--color-paper)] opacity-80 border-b border-[var(--color-border)]/50 pb-2">
-                                                                <span className="text-[var(--color-muted)]">Subject:</span> {msg.subject}
+                                                    {/* Clean Flex Header without overlaps */}
+                                                    <div className="flex flex-wrap justify-between items-start gap-4 border-b border-[var(--color-border)]/50 pb-3">
+                                                        <div className="space-y-1">
+                                                            <div className="flex flex-wrap gap-x-3 items-center">
+                                                                <h4 className="font-display text-base md:text-lg text-[var(--color-paper)] font-bold">
+                                                                    {msg.name}
+                                                                </h4>
+                                                                <a 
+                                                                    href={`mailto:${msg.email}`} 
+                                                                    className="font-mono text-xs text-[var(--color-crimson)] hover:underline"
+                                                                >
+                                                                    &lt;{msg.email}&gt;
+                                                                </a>
                                                             </div>
-                                                        )}
-                                                        <p className="text-sm text-[var(--color-paper)] opacity-90 leading-relaxed font-serif whitespace-pre-wrap mt-2">
-                                                            {msg.message}
-                                                        </p>
+                                                            <div className="font-mono text-[11px] text-[var(--color-muted)]">
+                                                                🕒 {new Date(msg.createdAt).toLocaleString()}
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        <button 
+                                                            onClick={() => deleteMessage(msg._id)} 
+                                                            className="inline-flex items-center gap-1.5 text-xs font-mono text-red-500 hover:text-white bg-red-500/10 hover:bg-red-500 border border-red-500/30 px-3 py-1.5 rounded-lg transition-all shadow-sm"
+                                                            title="Delete message"
+                                                        >
+                                                            <span>🗑️</span>
+                                                            <span>Delete</span>
+                                                        </button>
                                                     </div>
+
+                                                    {msg.subject && (
+                                                        <div className="font-mono text-xs text-[var(--color-paper)] opacity-90 bg-[var(--color-bg)]/50 p-2.5 rounded-md border border-[var(--color-border)]/30">
+                                                            <span className="text-[var(--color-muted)] font-bold">Subject:</span> {msg.subject}
+                                                        </div>
+                                                    )}
+                                                    <p className="text-sm md:text-base text-[var(--color-paper)] opacity-95 leading-relaxed font-serif whitespace-pre-wrap pt-1">
+                                                        {msg.message}
+                                                    </p>
                                                 </div>
                                             ))}
                                         </div>

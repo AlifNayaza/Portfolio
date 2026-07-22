@@ -231,7 +231,7 @@ const TechStack = ({ technologies }) => {
             boxShadow: "0 10px 40px rgba(159, 18, 57, 0.3)",
             y: -5
           }}
-          className="relative bg-gradient-to-br from-[#1a1a1a] to-[#0d0d0d] border border-[var(--color-border)] rounded-xl p-6 text-center group cursor-pointer overflow-hidden"
+          className="relative bg-[var(--color-line)] border border-[var(--color-border)] hover:border-[var(--color-crimson)] rounded-xl p-6 text-center group cursor-pointer overflow-hidden transition-colors"
         >
           {/* Shine effect */}
           <motion.div
@@ -242,10 +242,10 @@ const TechStack = ({ technologies }) => {
           />
 
           <div className="relative z-10">
-            <div className="text-3xl mb-3 filter grayscale group-hover:grayscale-0 transition-all">
+            <div className="text-3xl mb-3 transition-transform group-hover:scale-110">
               💎
             </div>
-            <span className="font-mono text-sm text-[var(--color-muted)] group-hover:text-[var(--color-paper)] transition-colors">
+            <span className="font-mono text-sm text-[var(--color-paper)] transition-colors font-medium">
               {tech}
             </span>
           </div>
@@ -258,27 +258,100 @@ const TechStack = ({ technologies }) => {
   );
 };
 
-// ========== NARRATIVE TEXT ==========
+// ========== ELEGANT & STRUCTURED NARRATIVE TEXT ==========
 const NarrativeText = ({ text }) => {
   if (!text) return null;
+
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
   
-  const paragraphs = text.split('\n').filter(p => p.trim());
+  if (lines.length === 0) return null;
+
+  const introParagraphs = [];
+  const listItems = [];
+  const regularParagraphs = [];
+
+  lines.forEach((line) => {
+    const isBullet = /^[•\-*\d+.]\s*/.test(line);
+    if (isBullet) {
+      const cleanLine = line.replace(/^[•\-*\d+.]\s*/, '');
+      listItems.push(cleanLine);
+    } else if (introParagraphs.length === 0) {
+      introParagraphs.push(line);
+    } else {
+      regularParagraphs.push(line);
+    }
+  });
 
   return (
-    <div className="space-y-6 text-zinc-300 leading-relaxed">
-      {paragraphs.map((paragraph, idx) => (
-        <motion.p
-          key={idx}
-          initial={{ opacity: 0, x: -20 }}
-          whileInView={{ opacity: 1, x: 0 }}
+    <div className="space-y-8">
+      {/* Executive Intro Lead Paragraph */}
+      {introParagraphs.map((paragraph, idx) => (
+        <motion.div
+          key={`intro-${idx}`}
+          initial={{ opacity: 0, y: 15 }}
+          whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ delay: idx * 0.1 }}
-          className="text-base md:text-lg font-serif first:indent-0"
-          style={{ textIndent: idx === 0 ? '0' : '2rem' }}
+          transition={{ duration: 0.5 }}
+          className="relative border-l-4 border-[var(--color-crimson)] pl-5 md:pl-7 py-3 bg-[var(--color-line)]/50 rounded-r-xl shadow-sm"
         >
-          <span className="text-[var(--color-crimson)] text-2xl leading-none">❝</span>
+          <p className="text-base md:text-xl font-serif text-[var(--color-paper)] leading-relaxed italic">
+            "{paragraph}"
+          </p>
+        </motion.div>
+      ))}
+
+      {/* Structured Feature List / Bullet Highlights */}
+      {listItems.length > 0 && (
+        <div className="grid grid-cols-1 gap-3.5 pt-2">
+          {listItems.map((item, idx) => {
+            const parts = item.split(/–|-|:/);
+            const hasSplit = parts.length > 1;
+            const title = hasSplit ? parts[0].trim() : null;
+            const desc = hasSplit ? parts.slice(1).join('–').trim() : item;
+
+            return (
+              <motion.div
+                key={`feature-${idx}`}
+                initial={{ opacity: 0, x: -15 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: idx * 0.05, duration: 0.4 }}
+                className="group flex items-start gap-4 p-4 md:p-5 rounded-xl border border-[var(--color-border)] bg-[var(--color-line)]/40 hover:border-[var(--color-crimson)]/50 hover:bg-[var(--color-line)] transition-all duration-300 shadow-sm"
+              >
+                <div className="w-2.5 h-2.5 rounded-full bg-[var(--color-crimson)] mt-2 flex-shrink-0 group-hover:scale-125 group-hover:shadow-[0_0_8px_var(--color-crimson)] transition-all" />
+                <div className="flex-1 min-w-0">
+                  {title ? (
+                    <div>
+                      <h4 className="font-display font-semibold text-base md:text-lg text-[var(--color-paper)] mb-1 group-hover:text-[var(--color-crimson)] transition-colors">
+                        {title}
+                      </h4>
+                      <p className="font-sans text-sm md:text-base text-[var(--color-muted)] leading-relaxed">
+                        {desc}
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="font-sans text-base text-[var(--color-paper)] leading-relaxed">
+                      {desc}
+                    </p>
+                  )}
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Remaining Paragraphs */}
+      {regularParagraphs.map((paragraph, idx) => (
+        <motion.p
+          key={`regular-${idx}`}
+          initial={{ opacity: 0, y: 15 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: idx * 0.1 }}
+          className="text-base md:text-lg font-serif text-[var(--color-paper)]/90 leading-relaxed"
+        >
           {paragraph}
-          <span className="text-[var(--color-crimson)] text-2xl leading-none">❞</span>
         </motion.p>
       ))}
     </div>
@@ -299,7 +372,7 @@ const NavigationCard = ({ direction, projectIndex, totalProjects, projects }) =>
     <Link to={`/project/${targetIndex}`}>
       <motion.div
         whileHover={{ x: isNext ? 10 : -10, scale: 1.02 }}
-        className="group relative bg-gradient-to-br from-[#1a1a1a] to-[#0d0d0d] border border-[var(--color-border)] hover:border-[var(--color-crimson)] rounded-xl p-6 overflow-hidden cursor-pointer transition-all"
+        className="group relative bg-[var(--color-line)] border border-[var(--color-border)] hover:border-[var(--color-crimson)] rounded-xl p-6 overflow-hidden cursor-pointer transition-all"
       >
         <div className={`flex items-center gap-4 ${isNext ? 'flex-row' : 'flex-row-reverse'}`}>
           <div className="flex-1">
@@ -525,7 +598,7 @@ export default function ProjectDetail() {
                   onZoom={() => setIsZoomed(true)}
                 />
               ) : (
-                <div className="aspect-video bg-gradient-to-br from-[#1a1a1a] to-[#0d0d0d] rounded-2xl border border-[var(--color-border)] flex items-center justify-center">
+                <div className="aspect-video bg-[var(--color-line)] rounded-2xl border border-[var(--color-border)] flex items-center justify-center">
                   <span className="font-mono text-[var(--color-muted)]">No preview available</span>
                 </div>
               )}
@@ -563,7 +636,7 @@ export default function ProjectDetail() {
                   rel="noopener noreferrer"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-[var(--color-crimson)] to-[var(--color-gold)] text-[var(--color-paper)] font-display text-lg rounded-full shadow-lg shadow-[#9f1239]/30 hover:shadow-[#9f1239]/50 transition-all"
+                  className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-[var(--color-crimson)] to-[var(--color-gold)] text-white font-display text-lg rounded-full shadow-lg shadow-red-950/30 hover:shadow-red-950/50 transition-all"
                 >
                   <span>Experience Live</span>
                   <span className="text-2xl">🚀</span>

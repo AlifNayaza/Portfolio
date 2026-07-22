@@ -751,8 +751,7 @@ export default function Contact() {
           >
             {/* Terminal Header */}
             <motion.div 
-              className="flex items-center justify-between px-6 py-4 border-b border-[var(--color-border)] bg-gradient-to-r from-[#0a0a0a] to-[var(--color-line)]"
-              whileHover={{ backgroundColor: "rgba(10, 10, 10, 0.9)" }}
+              className="flex items-center justify-between px-6 py-4 border-b border-[var(--color-border)] bg-[var(--color-line)]"
             >
               <div className="flex items-center gap-3">
                 <div className="flex gap-2">
@@ -774,7 +773,7 @@ export default function Contact() {
                   ))}
                 </div>
                 <motion.span 
-                  className="font-mono text-sm text-zinc-300 tracking-wide"
+                  className="font-mono text-sm text-[var(--color-paper)] tracking-wide"
                   animate={{ opacity: [0.8, 1, 0.8] }}
                   transition={{ duration: 2, repeat: Infinity }}
                 >
@@ -892,7 +891,7 @@ export default function Contact() {
                   opacity: { duration: 0.3 },
                   height: { type: "spring", damping: 25 }
                 }}
-                className="bg-gradient-to-b from-[var(--color-line)]/80 to-[#0a0a0a]/80 border border-[var(--color-border)] rounded-xl p-6 overflow-hidden backdrop-blur-sm"
+                className="bg-[var(--color-line)]/90 border border-[var(--color-border)] rounded-xl p-6 overflow-hidden backdrop-blur-sm"
               >
                 <motion.div 
                   className="flex items-center gap-3 mb-6"
@@ -1028,7 +1027,7 @@ export default function Contact() {
                       }}
                       style={{ opacity: 0.1 }}
                     />
-                    <div className="relative px-6 py-3 bg-[var(--color-crimson)] text-[var(--color-paper)] font-medium rounded-lg hover:bg-[#7f0e2a] transition-colors">
+                    <div className="relative px-6 py-3 bg-[var(--color-crimson)] text-white font-medium rounded-lg hover:opacity-90 transition-opacity">
                       Initiate Transmission
                     </div>
                   </motion.a>

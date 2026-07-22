@@ -173,19 +173,19 @@ export default function ImageUploader({ currentImage, onUpload, onDelete, compac
   }
 
   return (
-    <div className="relative w-full aspect-video bg-[#0c0c0c] border border-dashed border-[#333] hover:border-zinc-500 transition-colors flex items-center justify-center overflow-hidden group">
+    <div className="relative w-full aspect-video bg-[var(--color-line)] border border-dashed border-[var(--color-border)] hover:border-[var(--color-crimson)] transition-colors flex items-center justify-center overflow-hidden rounded-lg group">
       {uploading && (
-        <div className="absolute inset-0 bg-black/90 flex items-center justify-center z-10 font-mono text-xs text-[#9f1239]">
+        <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-10 font-mono text-xs text-[var(--color-crimson)]">
           <div className="text-center">
-            <div className="w-12 h-12 border-4 border-[#9f1239] border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
-            <div className="text-white mb-2">UPLOADING...</div>
-            <div className="w-48 h-2 bg-[#333] rounded-full overflow-hidden mx-auto">
+            <div className="w-12 h-12 border-4 border-[var(--color-crimson)] border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+            <div className="text-white mb-2 font-bold">UPLOADING...</div>
+            <div className="w-48 h-2 bg-black/40 rounded-full overflow-hidden mx-auto">
               <div 
-                className="h-full bg-[#9f1239] transition-all duration-300"
+                className="h-full bg-[var(--color-crimson)] transition-all duration-300"
                 style={{ width: `${progress}%` }}
               ></div>
             </div>
-            <div className="mt-2 text-[10px]">{progress}%</div>
+            <div className="mt-2 text-[10px] text-white font-bold">{progress}%</div>
           </div>
         </div>
       )}
@@ -195,11 +195,11 @@ export default function ImageUploader({ currentImage, onUpload, onDelete, compac
           <img 
             src={currentImage} 
             alt="Preview" 
-            className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all" 
+            className="w-full h-full object-cover transition-all" 
           />
-          <div className="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4 font-mono text-xs">
-            <label className="cursor-pointer text-white hover:text-[#9f1239] border-b border-transparent hover:border-[#9f1239] px-3 py-1">
-              [ CHANGE ]
+          <div className="absolute inset-0 bg-black/75 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4 font-mono text-xs">
+            <label className="cursor-pointer text-white hover:text-[var(--color-crimson)] border border-white/30 hover:border-[var(--color-crimson)] px-3 py-1.5 rounded transition-all">
+              Change Image
               <input 
                 type="file" 
                 className="hidden" 
@@ -210,31 +210,23 @@ export default function ImageUploader({ currentImage, onUpload, onDelete, compac
             </label>
             <button 
               onClick={onDelete} 
-              className="text-white hover:text-red-500 border-b border-transparent hover:border-red-500 px-3 py-1"
+              className="text-white hover:text-red-400 border border-white/30 hover:border-red-500 px-3 py-1.5 rounded transition-all"
               disabled={uploading}
             >
-              [ DELETE ]
+              Delete
             </button>
-          </div>
-          
-          {/* Image Info */}
-          <div className="absolute top-2 left-2 bg-black/70 text-white text-[10px] px-2 py-1 rounded font-mono opacity-0 group-hover:opacity-100 transition-opacity">
-            Click to change
           </div>
         </>
       ) : (
         <label className="cursor-pointer w-full h-full flex flex-col items-center justify-center">
-          <div className="text-zinc-600 group-hover:text-zinc-400 text-xs font-mono tracking-widest text-center">
-            <div className="text-2xl mb-2">📷</div>
-            [ DRAG & DROP IMAGE ]
-            <div className="text-[10px] text-zinc-700 mt-2">
-              or click to browse
+          <div className="text-[var(--color-muted)] group-hover:text-[var(--color-paper)] text-xs font-mono tracking-widest text-center p-4">
+            <div className="text-3xl mb-2">📷</div>
+            <div className="font-bold">UPLOAD IMAGE</div>
+            <div className="text-[10px] text-[var(--color-muted)] mt-1">
+              Drag & drop or click to browse
             </div>
-            <div className="text-[8px] text-zinc-800 mt-1">
+            <div className="text-[9px] text-[var(--color-muted)]/70 mt-1">
               Supports: JPG, PNG, WebP (Max 10MB)
-            </div>
-            <div className="text-[8px] text-zinc-700 mt-1">
-              Auto-compressed for optimal quality
             </div>
           </div>
           <input 

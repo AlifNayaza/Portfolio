@@ -38,30 +38,30 @@ export default function AudioUploader({ currentAudio, onUpload, onDelete }) {
   return (
     <div className="w-full">
       {currentAudio ? (
-        <div className="flex items-center gap-4 border border-[#333] bg-[#111] p-3">
-            <div className="w-8 h-8 bg-[#9f1239] flex items-center justify-center text-white font-mono text-xs">
+        <div className="flex flex-wrap items-center gap-4 border border-[var(--color-border)] bg-[var(--color-line)] p-4 rounded-lg shadow-sm">
+            <div className="w-10 h-10 bg-[var(--color-crimson)] rounded-lg flex items-center justify-center text-white font-mono text-xs font-bold shadow-md">
                 MP3
             </div>
-            <div className="flex-1 overflow-hidden">
-                <p className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider mb-1">Current File:</p>
-                <audio controls src={currentAudio} className="h-6 w-full opacity-60 invert" />
+            <div className="flex-1 min-w-[200px]">
+                <p className="text-[10px] font-mono text-[var(--color-muted)] uppercase tracking-wider mb-1">Active Soundtrack:</p>
+                <audio controls src={currentAudio} className="h-8 w-full rounded" />
             </div>
             <div className="flex gap-2 font-mono text-xs">
-                <label className="cursor-pointer text-zinc-400 hover:text-white border-b border-transparent hover:border-white transition-all">
-                    [ GANTI ] <input type="file" className="hidden" accept="audio/*" onChange={handleUpload} />
+                <label className="cursor-pointer text-[var(--color-paper)] hover:text-[var(--color-crimson)] border border-[var(--color-border)] hover:border-[var(--color-crimson)] px-3 py-1.5 rounded transition-all">
+                    Change <input type="file" className="hidden" accept="audio/*" onChange={handleUpload} />
                 </label>
-                <button onClick={onDelete} className="text-[#9f1239] hover:text-red-400 border-b border-transparent hover:border-red-400 transition-all">
-                    [ HAPUS ]
+                <button onClick={onDelete} className="text-red-500 hover:text-white hover:bg-red-500 border border-red-500/30 px-3 py-1.5 rounded transition-all">
+                    Delete
                 </button>
             </div>
         </div>
       ) : (
-        <label className="cursor-pointer flex flex-col items-center justify-center gap-2 py-6 border border-dashed border-[#333] hover:border-[#9f1239] hover:bg-[#111] transition-all group">
+        <label className="cursor-pointer flex flex-col items-center justify-center gap-2 py-6 border border-dashed border-[var(--color-border)] hover:border-[var(--color-crimson)] bg-[var(--color-line)]/50 hover:bg-[var(--color-line)] transition-all rounded-lg group">
            {uploading ? (
-               <span className="text-xs font-mono animate-pulse text-[#9f1239]">UPLOADING DATA...</span>
+               <span className="text-xs font-mono animate-pulse text-[var(--color-crimson)] font-bold">UPLOADING SOUNDTRACK...</span>
            ) : (
                <>
-                <span className="font-mono text-xs text-zinc-500 group-hover:text-white tracking-widest">[ CLICK TO UPLOAD AUDIO ]</span>
+                <span className="font-mono text-xs text-[var(--color-muted)] group-hover:text-[var(--color-paper)] tracking-widest font-bold">🎵 CLICK TO UPLOAD SOUNDTRACK AUDIO</span>
                </>
            )}
            <input type="file" className="hidden" accept="audio/*" onChange={handleUpload} />
