@@ -17,5 +17,5 @@
 		},
 		"timestamp": 1784700535297
 	},
-	"dbConnectionString": "postgres://localhost:63459/postgres"
+	"dbConnectionString": "postgres://localhost:60572/postgres"
 }

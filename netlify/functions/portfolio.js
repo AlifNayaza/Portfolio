@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const MONGODB_URI = process.env.MONGODB_URI;
 const ADMIN_SECRET = process.env.ADMIN_SECRET;
@@ -18,7 +18,12 @@ try {
 let isConnected = false;
 const connectToDatabase = async () => {
   if (isConnected) return;
-  await mongoose.connect(MONGODB_URI);
+  if (!MONGODB_URI) {
+    throw new Error("MONGODB_URI environment variable is missing on Netlify environment settings");
+  }
+  await mongoose.connect(MONGODB_URI, {
+    serverSelectionTimeoutMS: 5000
+  });
   isConnected = true;
 };
 
@@ -128,7 +133,7 @@ const normalizeData = (data) => {
   return normalized;
 };
 
-exports.handler = async (event) => {
+export const handler = async (event) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',

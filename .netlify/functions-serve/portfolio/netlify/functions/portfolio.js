@@ -1,7 +1,33 @@
+var __create = Object.create;
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
+var __getProtoOf = Object.getPrototypeOf;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __commonJS = (cb, mod) => function __require() {
   return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
 };
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
+  // If the importer is in node compatibility mode or this is not an ESM
+  // file that has been converted to a CommonJS file using a Babel-
+  // compatible transform (i.e. "__esModule" has not been set), then set
+  // "default" to the CommonJS "module.exports" for node compatibility.
+  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
+  mod
+));
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
 // node_modules/bson/lib/bson.cjs
 var require_bson = __commonJS({
@@ -32961,26 +32987,26 @@ var require_changeStream = __commonJS({
         }
         return this.driverChangeStream.next(cb);
       }
-      addListener(event, handler) {
+      addListener(event, handler2) {
         if (this.errored) {
           throw new MongooseError("Cannot call addListener() on errored ChangeStream");
         }
         this._bindEvents();
-        return super.addListener(event, handler);
+        return super.addListener(event, handler2);
       }
-      on(event, handler) {
+      on(event, handler2) {
         if (this.errored) {
           throw new MongooseError("Cannot call on() on errored ChangeStream");
         }
         this._bindEvents();
-        return super.on(event, handler);
+        return super.on(event, handler2);
       }
-      once(event, handler) {
+      once(event, handler2) {
         if (this.errored) {
           throw new MongooseError("Cannot call once() on errored ChangeStream");
         }
         this._bindEvents();
-        return super.once(event, handler);
+        return super.once(event, handler2);
       }
       _queue(cb) {
         this.once("ready", () => cb());
@@ -42261,13 +42287,13 @@ var require_schemaType = __commonJS({
       $type
     };
     SchemaType.prototype.castForQuery = function($conditional, val, context) {
-      let handler;
+      let handler2;
       if ($conditional != null) {
-        handler = this.$conditionalHandlers[$conditional];
-        if (!handler) {
+        handler2 = this.$conditionalHandlers[$conditional];
+        if (!handler2) {
           throw new Error("Can't use " + $conditional);
         }
-        return handler.call(this, val, context);
+        return handler2.call(this, val, context);
       }
       try {
         return this.applySetters(val, context);
@@ -44645,13 +44671,13 @@ var require_number2 = __commonJS({
       value: $conditionalHandlers
     });
     SchemaNumber.prototype.castForQuery = function($conditional, val, context) {
-      let handler;
+      let handler2;
       if ($conditional != null) {
-        handler = this.$conditionalHandlers[$conditional];
-        if (!handler) {
+        handler2 = this.$conditionalHandlers[$conditional];
+        if (!handler2) {
           throw new CastError("number", val, this.path, null, this);
         }
-        return handler.call(this, val, context);
+        return handler2.call(this, val, context);
       }
       try {
         val = this.applySetters(val, context);
@@ -45069,13 +45095,13 @@ var require_array2 = __commonJS({
       return val;
     };
     SchemaArray.prototype.castForQuery = function($conditional, val, context) {
-      let handler;
+      let handler2;
       if ($conditional != null) {
-        handler = this.$conditionalHandlers[$conditional];
-        if (!handler) {
+        handler2 = this.$conditionalHandlers[$conditional];
+        if (!handler2) {
           throw new Error("Can't use " + $conditional + " with Array.");
         }
-        return handler.call(this, val, context);
+        return handler2.call(this, val, context);
       } else {
         return this._castForQuery(val, context);
       }
@@ -45267,11 +45293,11 @@ var require_bigint2 = __commonJS({
       return this.castForQuery(null, val, context);
     }
     SchemaBigInt.prototype.castForQuery = function($conditional, val, context) {
-      let handler;
+      let handler2;
       if ($conditional != null) {
-        handler = this.$conditionalHandlers[$conditional];
-        if (handler) {
-          return handler.call(this, val);
+        handler2 = this.$conditionalHandlers[$conditional];
+        if (handler2) {
+          return handler2.call(this, val);
         }
         return this.applySetters(val, context);
       }
@@ -45378,11 +45404,11 @@ var require_boolean2 = __commonJS({
       value: $conditionalHandlers
     });
     SchemaBoolean.prototype.castForQuery = function($conditional, val, context) {
-      let handler;
+      let handler2;
       if ($conditional != null) {
-        handler = this.$conditionalHandlers[$conditional];
-        if (handler) {
-          return handler.call(this, val);
+        handler2 = this.$conditionalHandlers[$conditional];
+        if (handler2) {
+          return handler2.call(this, val);
         }
         return this.applySetters(val, context);
       }
@@ -45562,13 +45588,13 @@ var require_buffer2 = __commonJS({
       value: $conditionalHandlers
     });
     SchemaBuffer.prototype.castForQuery = function($conditional, val, context) {
-      let handler;
+      let handler2;
       if ($conditional != null) {
-        handler = this.$conditionalHandlers[$conditional];
-        if (!handler) {
+        handler2 = this.$conditionalHandlers[$conditional];
+        if (!handler2) {
           throw new Error("Can't use " + $conditional + " with Buffer.");
         }
-        return handler.call(this, val);
+        return handler2.call(this, val);
       }
       let casted;
       try {
@@ -45792,11 +45818,11 @@ var require_date2 = __commonJS({
           throw err;
         }
       }
-      const handler = this.$conditionalHandlers[$conditional];
-      if (!handler) {
+      const handler2 = this.$conditionalHandlers[$conditional];
+      if (!handler2) {
         throw new Error("Can't use " + $conditional + " with Date.");
       }
-      return handler.call(this, val);
+      return handler2.call(this, val);
     };
     SchemaDate.prototype.toJSONSchema = function toJSONSchema(options) {
       const isRequired = this.options.required && typeof this.options.required !== "function";
@@ -46672,13 +46698,13 @@ var require_subdocument2 = __commonJS({
       return subdoc;
     };
     SchemaSubdocument.prototype.castForQuery = function($conditional, val, context, options) {
-      let handler;
+      let handler2;
       if ($conditional != null) {
-        handler = this.$conditionalHandlers[$conditional];
-        if (!handler) {
+        handler2 = this.$conditionalHandlers[$conditional];
+        if (!handler2) {
           throw new Error("Can't use " + $conditional);
         }
-        return handler.call(this, val);
+        return handler2.call(this, val);
       }
       if (val == null) {
         return val;
@@ -47443,11 +47469,11 @@ var require_int322 = __commonJS({
       return this.castForQuery(null, val, context);
     }
     SchemaInt32.prototype.castForQuery = function($conditional, val, context) {
-      let handler;
+      let handler2;
       if ($conditional != null) {
-        handler = this.$conditionalHandlers[$conditional];
-        if (handler) {
-          return handler.call(this, val);
+        handler2 = this.$conditionalHandlers[$conditional];
+        if (handler2) {
+          return handler2.call(this, val);
         }
         return this.applySetters(val, context);
       }
@@ -48086,13 +48112,13 @@ var require_string2 = __commonJS({
       value: $conditionalHandlers
     });
     SchemaString.prototype.castForQuery = function($conditional, val, context) {
-      let handler;
+      let handler2;
       if ($conditional != null) {
-        handler = this.$conditionalHandlers[$conditional];
-        if (!handler) {
+        handler2 = this.$conditionalHandlers[$conditional];
+        if (!handler2) {
           throw new Error("Can't use " + $conditional + " with String.");
         }
-        return handler.call(this, val, context);
+        return handler2.call(this, val, context);
       }
       if (Object.prototype.toString.call(val) === "[object RegExp]" || isBsonType(val, "BSONRegExp")) {
         return val;
@@ -48239,12 +48265,12 @@ var require_uuid3 = __commonJS({
       value: $conditionalHandlers
     });
     SchemaUUID.prototype.castForQuery = function($conditional, val, context) {
-      let handler;
+      let handler2;
       if ($conditional != null) {
-        handler = this.$conditionalHandlers[$conditional];
-        if (!handler)
+        handler2 = this.$conditionalHandlers[$conditional];
+        if (!handler2)
           throw new Error("Can't use " + $conditional + " with UUID.");
-        return handler.call(this, val, context);
+        return handler2.call(this, val, context);
       }
       try {
         return this.applySetters(val, context);
@@ -64201,23 +64227,33 @@ var require_mongoose2 = __commonJS({
 });
 
 // netlify/functions/portfolio.js
-var mongoose = require_mongoose2();
+var portfolio_exports = {};
+__export(portfolio_exports, {
+  handler: () => handler
+});
+module.exports = __toCommonJS(portfolio_exports);
+var import_mongoose = __toESM(require_mongoose2(), 1);
 var MONGODB_URI = process.env.MONGODB_URI;
 var ADMIN_SECRET = process.env.ADMIN_SECRET;
-var PortfolioSchema = new mongoose.Schema({
+var PortfolioSchema = new import_mongoose.default.Schema({
   identifier: { type: String, default: "main_portfolio" },
   data: { type: Object, required: true }
 });
 var PortfolioModel;
 try {
-  PortfolioModel = mongoose.model("Portfolio");
+  PortfolioModel = import_mongoose.default.model("Portfolio");
 } catch (e) {
-  PortfolioModel = mongoose.model("Portfolio", PortfolioSchema);
+  PortfolioModel = import_mongoose.default.model("Portfolio", PortfolioSchema);
 }
 var isConnected = false;
 var connectToDatabase = async () => {
   if (isConnected) return;
-  await mongoose.connect(MONGODB_URI);
+  if (!MONGODB_URI) {
+    throw new Error("MONGODB_URI environment variable is missing on Netlify environment settings");
+  }
+  await import_mongoose.default.connect(MONGODB_URI, {
+    serverSelectionTimeoutMS: 5e3
+  });
   isConnected = true;
 };
 var normalizeData = (data) => {
@@ -64304,7 +64340,7 @@ var normalizeData = (data) => {
   }
   return normalized;
 };
-exports.handler = async (event) => {
+var handler = async (event) => {
   const headers = {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Headers": "Content-Type, Authorization",
@@ -64431,6 +64467,10 @@ exports.handler = async (event) => {
     };
   }
 };
+// Annotate the CommonJS export names for ESM import in node:
+0 && (module.exports = {
+  handler
+});
 /*! Bundled license information:
 
 mongoose/lib/connectionState.js:
