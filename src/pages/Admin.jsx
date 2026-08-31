@@ -636,7 +636,7 @@ export default function Admin() {
                     </button>
                     <ThemeToggle />
                 </div>
-                <span className="font-display font-medium text-lg tracking-wider">ARCHIVIST</span>
+                <span className="font-display font-bold text-lg tracking-wider">STUDIO</span>
                 <button 
                     onClick={handleSave}
                     disabled={isSaving}
@@ -662,8 +662,8 @@ export default function Admin() {
                 >
                     <div className="p-6 border-b border-[var(--color-border)] flex justify-between items-center">
                         <div>
-                            <h1 className="font-display text-2xl text-[var(--color-paper)] mb-1">ARCHIVIST</h1>
-                            <p className="font-mono text-xs text-[var(--color-muted)] tracking-widest">CONTROL PANEL</p>
+                            <h1 className="font-display font-bold text-2xl text-[var(--color-paper)] mb-1">STUDIO</h1>
+                            <p className="font-mono text-xs text-[var(--color-muted)] tracking-widest">CONTROL CENTER</p>
                         </div>
                         <div className="flex items-center gap-2">
                             <ThemeToggle />

@@ -1,523 +1,171 @@
 /* eslint-disable no-unused-vars */
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { usePortfolio } from "../context/PortfolioContext";
 import PageTransition from "../components/layout/PageTransition";
 import { motion, AnimatePresence } from "framer-motion";
+import toast from "react-hot-toast";
 
-// ========== FLOATING ORBS BACKGROUND ==========
-const FloatingOrbs = () => {
-  const canvasRef = useRef(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext('2d');
-    let animationId;
-    
-    const resize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = Math.max(document.body.scrollHeight, window.innerHeight);
-    };
-    
-    resize();
-    window.addEventListener('resize', resize);
-
-    const orbs = Array.from({ length: 8 }, () => ({
-      x: Math.random() * canvas.width,
-      y: Math.random() * canvas.height,
-      radius: Math.random() * 100 + 50,
-      vx: (Math.random() - 0.5) * 0.3,
-      vy: (Math.random() - 0.5) * 0.3,
-      color: Math.random() > 0.5 ? '#9f1239' : '#c2410c'
-    }));
-
-    const animate = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      orbs.forEach(orb => {
-        orb.x += orb.vx;
-        orb.y += orb.vy;
-
-        if (orb.x < -orb.radius || orb.x > canvas.width + orb.radius) orb.vx *= -1;
-        if (orb.y < -orb.radius || orb.y > canvas.height + orb.radius) orb.vy *= -1;
-
-        const gradient = ctx.createRadialGradient(orb.x, orb.y, 0, orb.x, orb.y, orb.radius);
-        gradient.addColorStop(0, orb.color + '08');
-        gradient.addColorStop(1, orb.color + '00');
-
-        ctx.fillStyle = gradient;
-        ctx.beginPath();
-        ctx.arc(orb.x, orb.y, orb.radius, 0, Math.PI * 2);
-        ctx.fill();
-      });
-
-      animationId = requestAnimationFrame(animate);
-    };
-
-    const timer = setTimeout(() => animate(), 300);
-
-    return () => {
-      clearTimeout(timer);
-      window.removeEventListener('resize', resize);
-      cancelAnimationFrame(animationId);
-    };
-  }, []);
-
-  return <canvas ref={canvasRef} className="fixed inset-0 pointer-events-none opacity-40" style={{ zIndex: 0 }} />;
-};
-
-// ========== CHAPTER HEADER ==========
-const ChapterHeader = ({ projectNumber, projectName }) => {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: -30 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.8 }}
-      className="text-center mb-16"
-    >
-      <motion.div
-        initial={{ width: 0 }}
-        animate={{ width: "100%" }}
-        transition={{ duration: 1.2, delay: 0.3 }}
-        className="h-px bg-gradient-to-r from-transparent via-[var(--color-crimson)] to-transparent mb-8"
-      />
-      
-      <div className="inline-block relative">
-        <motion.span
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.4 }}
-          className="font-mono text-xs tracking-[0.5em] text-[var(--color-crimson)] uppercase block mb-4"
-        >
-          Chapter {projectNumber}
-        </motion.span>
-        
-        <motion.h1
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6 }}
-          className="font-display text-4xl md:text-6xl text-[var(--color-paper)] mb-6 leading-tight px-4"
-        >
-          {projectName}
-        </motion.h1>
-        
-        <motion.div
-          initial={{ scaleX: 0 }}
-          animate={{ scaleX: 1 }}
-          transition={{ delay: 0.8, duration: 0.6 }}
-          className="h-1 bg-[var(--color-crimson)] mx-auto"
-          style={{ width: '80px' }}
-        />
-      </div>
-      
-      <motion.div
-        initial={{ width: 0 }}
-        animate={{ width: "100%" }}
-        transition={{ duration: 1.2, delay: 1 }}
-        className="h-px bg-gradient-to-r from-transparent via-[var(--color-crimson)] to-transparent mt-8"
-      />
-    </motion.div>
-  );
-};
-
-// ========== STORY SECTION ==========
-const StorySection = ({ title, children, icon, delay = 0 }) => {
-  return (
-    <motion.section
-      initial={{ opacity: 0, y: 40 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-100px" }}
-      transition={{ duration: 0.8, delay }}
-      className="mb-20"
-    >
-      <div className="flex items-center gap-4 mb-8">
-        <motion.div
-          whileHover={{ rotate: 360, scale: 1.2 }}
-          transition={{ duration: 0.6 }}
-          className="text-4xl"
-        >
-          {icon}
-        </motion.div>
-        <div className="flex-1">
-          <h2 className="font-display text-2xl md:text-3xl text-[var(--color-paper)] mb-2">{title}</h2>
-          <div className="h-px bg-gradient-to-r from-[var(--color-crimson)] to-transparent" />
-        </div>
-      </div>
-      
-      <div className="pl-0 md:pl-16">
-        {children}
-      </div>
-    </motion.section>
-  );
-};
-
-// ========== IMAGE SHOWCASE ==========
-const ImageShowcase = ({ image, alt, onZoom }) => {
-  const [isHovered, setIsHovered] = useState(false);
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.8 }}
-      className="relative group cursor-pointer"
-      onHoverStart={() => setIsHovered(true)}
-      onHoverEnd={() => setIsHovered(false)}
-      onClick={onZoom}
-    >
-      <div className="relative overflow-hidden rounded-2xl border border-[var(--color-border)] shadow-2xl">
-        <motion.img
-          src={image}
-          alt={alt}
-          className="w-full h-auto"
-          animate={{ scale: isHovered ? 1.05 : 1 }}
-          transition={{ duration: 0.6 }}
-        />
-        
-        <motion.div
-          className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"
-          animate={{ opacity: isHovered ? 1 : 0.6 }}
-          transition={{ duration: 0.3 }}
-        />
-
-        <AnimatePresence>
-          {isHovered && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 20 }}
-              className="absolute bottom-6 left-0 right-0 text-center"
-            >
-              <span className="inline-flex items-center gap-2 px-6 py-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-full text-[var(--color-paper)] font-mono text-sm">
-                <span>Click to expand</span>
-                <span className="text-lg">🔍</span>
-              </span>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-
-      {/* Decorative corners */}
-      <div className="absolute -top-2 -left-2 w-8 h-8 border-t-2 border-l-2 border-[var(--color-crimson)] opacity-0 group-hover:opacity-100 transition-opacity" />
-      <div className="absolute -top-2 -right-2 w-8 h-8 border-t-2 border-r-2 border-[var(--color-crimson)] opacity-0 group-hover:opacity-100 transition-opacity" />
-      <div className="absolute -bottom-2 -left-2 w-8 h-8 border-b-2 border-l-2 border-[var(--color-crimson)] opacity-0 group-hover:opacity-100 transition-opacity" />
-      <div className="absolute -bottom-2 -right-2 w-8 h-8 border-b-2 border-r-2 border-[var(--color-crimson)] opacity-0 group-hover:opacity-100 transition-opacity" />
-    </motion.div>
-  );
-};
-
-// ========== TECH STACK CARDS ==========
-const TechStack = ({ technologies }) => {
-  if (!technologies || technologies.length === 0) return null;
-
-  return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-      {technologies.map((tech, idx) => (
-        <motion.div
-          key={idx}
-          initial={{ opacity: 0, scale: 0.8, rotateY: -90 }}
-          whileInView={{ opacity: 1, scale: 1, rotateY: 0 }}
-          viewport={{ once: true }}
-          transition={{
-            duration: 0.6,
-            delay: idx * 0.1,
-            type: "spring",
-            stiffness: 100
-          }}
-          whileHover={{ 
-            scale: 1.05, 
-            boxShadow: "0 10px 40px rgba(159, 18, 57, 0.3)",
-            y: -5
-          }}
-          className="relative bg-[var(--color-line)] border border-[var(--color-border)] hover:border-[var(--color-crimson)] rounded-xl p-6 text-center group cursor-pointer overflow-hidden transition-colors"
-        >
-          {/* Shine effect */}
-          <motion.div
-            className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent"
-            initial={{ x: "-100%" }}
-            whileHover={{ x: "100%" }}
-            transition={{ duration: 0.6 }}
-          />
-
-          <div className="relative z-10">
-            <div className="text-3xl mb-3 transition-transform group-hover:scale-110">
-              💎
-            </div>
-            <span className="font-mono text-sm text-[var(--color-paper)] transition-colors font-medium">
-              {tech}
-            </span>
-          </div>
-
-          {/* Corner accent */}
-          <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-[var(--color-crimson)] opacity-0 group-hover:opacity-100 transition-opacity" />
-        </motion.div>
-      ))}
-    </div>
-  );
-};
-
-// ========== ELEGANT & STRUCTURED NARRATIVE TEXT ==========
-const NarrativeText = ({ text }) => {
-  if (!text) return null;
-
-  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
-  
-  if (lines.length === 0) return null;
-
-  const introParagraphs = [];
-  const listItems = [];
-  const regularParagraphs = [];
-
-  lines.forEach((line) => {
-    const isBullet = /^[•\-*\d+.]\s*/.test(line);
-    if (isBullet) {
-      const cleanLine = line.replace(/^[•\-*\d+.]\s*/, '');
-      listItems.push(cleanLine);
-    } else if (introParagraphs.length === 0) {
-      introParagraphs.push(line);
-    } else {
-      regularParagraphs.push(line);
-    }
-  });
-
-  return (
-    <div className="space-y-8">
-      {/* Executive Intro Lead Paragraph */}
-      {introParagraphs.map((paragraph, idx) => (
-        <motion.div
-          key={`intro-${idx}`}
-          initial={{ opacity: 0, y: 15 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-          className="relative border-l-4 border-[var(--color-crimson)] pl-5 md:pl-7 py-3 bg-[var(--color-line)]/50 rounded-r-xl shadow-sm"
-        >
-          <p className="text-base md:text-xl font-serif text-[var(--color-paper)] leading-relaxed italic">
-            "{paragraph}"
-          </p>
-        </motion.div>
-      ))}
-
-      {/* Structured Feature List / Bullet Highlights */}
-      {listItems.length > 0 && (
-        <div className="grid grid-cols-1 gap-3.5 pt-2">
-          {listItems.map((item, idx) => {
-            const parts = item.split(/–|-|:/);
-            const hasSplit = parts.length > 1;
-            const title = hasSplit ? parts[0].trim() : null;
-            const desc = hasSplit ? parts.slice(1).join('–').trim() : item;
-
-            return (
-              <motion.div
-                key={`feature-${idx}`}
-                initial={{ opacity: 0, x: -15 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: idx * 0.05, duration: 0.4 }}
-                className="group flex items-start gap-4 p-4 md:p-5 rounded-xl border border-[var(--color-border)] bg-[var(--color-line)]/40 hover:border-[var(--color-crimson)]/50 hover:bg-[var(--color-line)] transition-all duration-300 shadow-sm"
-              >
-                <div className="w-2.5 h-2.5 rounded-full bg-[var(--color-crimson)] mt-2 flex-shrink-0 group-hover:scale-125 group-hover:shadow-[0_0_8px_var(--color-crimson)] transition-all" />
-                <div className="flex-1 min-w-0">
-                  {title ? (
-                    <div>
-                      <h4 className="font-display font-semibold text-base md:text-lg text-[var(--color-paper)] mb-1 group-hover:text-[var(--color-crimson)] transition-colors">
-                        {title}
-                      </h4>
-                      <p className="font-sans text-sm md:text-base text-[var(--color-muted)] leading-relaxed">
-                        {desc}
-                      </p>
-                    </div>
-                  ) : (
-                    <p className="font-sans text-base text-[var(--color-paper)] leading-relaxed">
-                      {desc}
-                    </p>
-                  )}
-                </div>
-              </motion.div>
-            );
-          })}
-        </div>
-      )}
-
-      {/* Remaining Paragraphs */}
-      {regularParagraphs.map((paragraph, idx) => (
-        <motion.p
-          key={`regular-${idx}`}
-          initial={{ opacity: 0, y: 15 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5, delay: idx * 0.1 }}
-          className="text-base md:text-lg font-serif text-[var(--color-paper)]/90 leading-relaxed"
-        >
-          {paragraph}
-        </motion.p>
-      ))}
-    </div>
-  );
-};
-
-// ========== NAVIGATION CARD ==========
-const NavigationCard = ({ direction, projectIndex, totalProjects, projects }) => {
-  const isNext = direction === "next";
-  const isDisabled = (isNext && projectIndex >= totalProjects - 1) || (!isNext && projectIndex <= 0);
-  
-  if (isDisabled) return null;
-
-  const targetIndex = isNext ? projectIndex + 1 : projectIndex - 1;
-  const targetProject = projects[targetIndex];
-
-  return (
-    <Link to={`/project/${targetIndex}`}>
-      <motion.div
-        whileHover={{ x: isNext ? 10 : -10, scale: 1.02 }}
-        className="group relative bg-[var(--color-line)] border border-[var(--color-border)] hover:border-[var(--color-crimson)] rounded-xl p-6 overflow-hidden cursor-pointer transition-all"
-      >
-        <div className={`flex items-center gap-4 ${isNext ? 'flex-row' : 'flex-row-reverse'}`}>
-          <div className="flex-1">
-            <span className="font-mono text-xs text-[var(--color-muted)] block mb-2">
-              {isNext ? "Next Chapter" : "Previous Chapter"}
-            </span>
-            <span className="font-display text-lg text-[var(--color-paper)] group-hover:text-[var(--color-crimson)] transition-colors line-clamp-1">
-              {targetProject?.name || `Project ${targetIndex + 1}`}
-            </span>
-          </div>
-          <motion.div
-            animate={{ x: isNext ? [0, 5, 0] : [0, -5, 0] }}
-            transition={{ duration: 1.5, repeat: Infinity }}
-            className="text-2xl text-[var(--color-crimson)]"
-          >
-            {isNext ? "→" : "←"}
-          </motion.div>
-        </div>
-
-        <motion.div
-          className="absolute inset-0 bg-gradient-to-r from-[var(--color-crimson)]/0 via-[var(--color-crimson)]/5 to-[var(--color-crimson)]/0"
-          initial={{ x: "-100%" }}
-          whileHover={{ x: "100%" }}
-          transition={{ duration: 0.6 }}
-        />
-      </motion.div>
-    </Link>
-  );
-};
-
-// ========== IMAGE ZOOM MODAL ==========
-const ImageZoomModal = ({ image, alt, onClose }) => {
-  useEffect(() => {
-    const handleEsc = (e) => e.key === 'Escape' && onClose();
-    document.body.style.overflow = 'hidden';
-    window.addEventListener('keydown', handleEsc);
-    
-    return () => {
-      document.body.style.overflow = 'unset';
-      window.removeEventListener('keydown', handleEsc);
-    };
-  }, [onClose]);
+// === LIGHTBOX MODAL ===
+const ImageModal = ({ isOpen, onClose, image, alt }) => {
+  if (!isOpen || !image) return null;
 
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md cursor-zoom-out"
       onClick={onClose}
-      className="fixed inset-0 z-50 bg-black/95 backdrop-blur-lg flex items-center justify-center p-4 cursor-zoom-out"
     >
       <button
         onClick={onClose}
-        className="absolute top-6 right-6 w-12 h-12 bg-white/10 hover:bg-white/20 border border-white/20 rounded-full flex items-center justify-center text-[var(--color-paper)] text-2xl transition-all z-50"
+        className="absolute top-6 right-6 text-white hover:text-[var(--color-crimson)] text-3xl font-mono transition-colors"
       >
         ✕
       </button>
-
       <motion.img
+        initial={{ scale: 0.9 }}
+        animate={{ scale: 1 }}
         src={image}
-        alt={alt}
-        initial={{ scale: 0.9, rotateY: -10 }}
-        animate={{ scale: 1, rotateY: 0 }}
-        className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl cursor-default"
+        alt={alt || "Project showcase"}
+        className="max-w-full max-h-[85vh] object-contain rounded-2xl shadow-2xl cursor-default"
         onClick={(e) => e.stopPropagation()}
       />
     </motion.div>
   );
 };
 
-// ========== MAIN COMPONENT ==========
+// === EXTRACTOR: SHORT PUNCHY HIGHLIGHTS ===
+const extractHighlights = (text) => {
+  if (!text) return [];
+  const rawParagraphs = text.split(/\n+/).map((p) => p.trim()).filter(Boolean);
+  
+  const highlights = [];
+  rawParagraphs.forEach((p, idx) => {
+    const lower = p.toLowerCase();
+    let title = "Feature";
+    let icon = "✦";
+
+    if (lower.includes("admin") || lower.includes("dashboard") || lower.includes("role")) {
+      icon = "🔒";
+      title = "Role-Protected Management";
+    } else if (lower.includes("chat") || lower.includes("socket") || lower.includes("real-time") || lower.includes("realtime")) {
+      icon = "💬";
+      title = "Real-Time Communication";
+    } else if (lower.includes("frontend") || lower.includes("interface") || lower.includes("ui") || lower.includes("react")) {
+      icon = "🎨";
+      title = "Modern Responsive UI";
+    } else if (lower.includes("performance") || lower.includes("lazy") || lower.includes("optimized") || lower.includes("fast")) {
+      icon = "⚡";
+      title = "Optimized Performance";
+    } else if (lower.includes("database") || lower.includes("api") || lower.includes("backend")) {
+      icon = "⚙️";
+      title = "Structured Backend & APIs";
+    } else if (lower.includes("queue") || lower.includes("appointment") || lower.includes("schedule")) {
+      icon = "📊";
+      title = "Smart Workflow & Queues";
+    } else if (lower.includes("library") || lower.includes("read") || lower.includes("comic") || lower.includes("book")) {
+      icon = "📚";
+      title = "Interactive Library System";
+    } else {
+      icon = "🚀";
+      title = `Key Capability #${idx + 1}`;
+    }
+
+    // Take the first sentence or 140 chars for punchy scannability
+    const firstSentence = p.split(/(?<=[.?!])\s+/)[0] || p;
+    highlights.push({
+      icon,
+      title,
+      summary: firstSentence.length > 150 ? firstSentence.slice(0, 147) + "..." : firstSentence,
+      fullText: p,
+    });
+  });
+
+  return highlights;
+};
+
 export default function ProjectDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { data, loading } = usePortfolio();
   const [isZoomed, setIsZoomed] = useState(false);
-  const [scrollProgress, setScrollProgress] = useState(0);
+  const [showFullStory, setShowFullStory] = useState(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [id]);
 
-  useEffect(() => {
-    const handleScroll = () => {
-      const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
-      const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-      const scrolled = (winScroll / height) * 100;
-      setScrollProgress(scrolled);
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[var(--color-bg)]">
-        <motion.div
-          animate={{ opacity: [0.5, 1, 0.5] }}
-          transition={{ duration: 1.5, repeat: Infinity }}
-          className="text-center"
-        >
-          <div className="w-16 h-16 border-4 border-[var(--color-crimson)] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="font-mono text-sm text-[var(--color-muted)]">Loading chapter...</p>
-        </motion.div>
+      <div className="min-h-[60vh] flex flex-col items-center justify-center">
+        <div className="w-12 h-12 border-2 border-[var(--color-crimson)] border-t-transparent rounded-full animate-spin mb-4" />
+        <span className="font-mono text-xs text-[var(--color-muted)] tracking-widest uppercase">
+          Loading Project...
+        </span>
       </div>
     );
   }
 
   const projectIndex = parseInt(id);
-  const project = data?.projects?.[projectIndex];
   const projects = data?.projects || [];
+  const project = projects[projectIndex];
 
   if (!project) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[var(--color-bg)] text-[var(--color-paper)] px-4">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="text-center"
+      <div className="text-center py-24 p-8 rounded-3xl border border-[var(--color-border)] bg-[var(--card-bg)] my-12 max-w-2xl mx-auto">
+        <span className="text-5xl mb-4 block">🔍</span>
+        <h1 className="font-display text-3xl font-bold text-[var(--color-paper)] mb-3">
+          Project Not Found
+        </h1>
+        <p className="text-sm text-[var(--color-muted)] mb-8">
+          The requested project does not exist in the catalog.
+        </p>
+        <button
+          onClick={() => navigate("/projects")}
+          className="px-6 py-3 rounded-full bg-[var(--color-crimson)] text-white font-mono text-xs font-bold"
         >
-          <span className="text-6xl mb-6 block">📖</span>
-          <h1 className="font-display text-3xl mb-4">Chapter Not Found</h1>
-          <p className="text-[var(--color-muted)] mb-8">This story hasn't been written yet.</p>
-          <button
-            onClick={() => navigate("/projects")}
-            className="px-6 py-3 bg-[var(--color-crimson)] text-[var(--color-paper)] font-medium rounded-lg hover:bg-[#7f0e2a] transition-colors"
-          >
-            Return to Library
-          </button>
-        </motion.div>
+          Return to Projects
+        </button>
       </div>
     );
   }
 
-  const projectNumber = projectIndex + 1;
+  const prevIndex = projectIndex > 0 ? projectIndex - 1 : null;
+  const nextIndex = projectIndex < projects.length - 1 ? projectIndex + 1 : null;
+  
+  const rawParagraphs = (project.description || "").split(/\n+/).map((p) => p.trim()).filter(Boolean);
+  const leadSummary = rawParagraphs[0] || "A modern web application built with clean architecture and responsive user experience.";
+  const highlights = extractHighlights(project.description);
+
+  const handleShare = async () => {
+    if (navigator.vibrate) navigator.vibrate(25);
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `${project.name} | Project Case Study`,
+          text: `Check out ${project.name} by Alif Haikal Nayaza`,
+          url: window.location.href,
+        });
+      } catch {
+        // User dismissed share dialog
+      }
+    } else {
+      navigator.clipboard.writeText(window.location.href);
+      toast.success("Project link copied to clipboard!", { id: "share-proj" });
+    }
+  };
 
   return (
     <PageTransition>
-      <div className="min-h-screen bg-[var(--color-bg)] text-[var(--color-paper)] relative overflow-hidden">
-        <FloatingOrbs />
-
+      <div className="relative pb-4 sm:pb-8 w-full">
+        
+        {/* Lightbox Modal */}
         <AnimatePresence>
-          {isZoomed && project.image && (
-            <ImageZoomModal
+          {isZoomed && (
+            <ImageModal
+              isOpen={isZoomed}
               image={project.image}
               alt={project.name}
               onClose={() => setIsZoomed(false)}
@@ -525,175 +173,208 @@ export default function ProjectDetail() {
           )}
         </AnimatePresence>
 
-        {/* Progress bar */}
-        <motion.div
-          className="fixed top-0 left-0 h-1 bg-gradient-to-r from-[var(--color-crimson)] to-[var(--color-gold)] z-50"
-          style={{ width: `${scrollProgress}%` }}
-        />
-
-        <div className="relative z-10">
-          {/* Back Navigation */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="max-w-6xl mx-auto px-6 pt-8 pb-4"
+        {/* === BACK BREADCRUMB === */}
+        <div className="pt-2 pb-5 flex items-center justify-between">
+          <Link
+            to="/projects"
+            className="inline-flex items-center gap-1.5 font-mono text-xs font-semibold text-[var(--color-muted)] hover:text-[var(--color-crimson)] transition-colors"
           >
-            <Link
-              to="/projects"
-              className="inline-flex items-center gap-2 text-[var(--color-muted)] hover:text-[var(--color-paper)] font-mono text-sm transition-colors group"
-            >
-              <motion.span
-                animate={{ x: [-2, 0, -2] }}
-                transition={{ duration: 1.5, repeat: Infinity }}
-              >
-                ←
-              </motion.span>
-              <span>Back to Library</span>
-            </Link>
-          </motion.div>
+            <span>←</span>
+            <span>All Projects</span>
+          </Link>
 
-          {/* Main Content */}
-          <div className="max-w-6xl mx-auto px-6 py-12">
-            <ChapterHeader
-              projectNumber={projectNumber}
-              projectName={project.name}
-            />
-
-            {/* Opening Quote */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 1 }}
-              className="text-center mb-20 max-w-3xl mx-auto px-4"
-            >
-              <p className="font-serif italic text-xl text-[var(--color-muted)] leading-relaxed">
-                "Every great project begins with a vision and evolves through dedication, 
-                creativity, and countless iterations."
-              </p>
-              <div className="mt-6 flex justify-center gap-2">
-                {[1, 2, 3].map((dot) => (
-                  <motion.div
-                    key={dot}
-                    animate={{
-                      scale: [1, 1.3, 1],
-                      opacity: [0.3, 1, 0.3]
-                    }}
-                    transition={{
-                      duration: 2,
-                      delay: dot * 0.2,
-                      repeat: Infinity
-                    }}
-                    className="w-1 h-1 rounded-full bg-[var(--color-crimson)]"
-                  />
-                ))}
-              </div>
-            </motion.div>
-
-            {/* Visual Showcase */}
-            <StorySection title="Visual Chronicle" icon="🎨" delay={0.1}>
-              {project.image ? (
-                <ImageShowcase
-                  image={project.image}
-                  alt={project.name}
-                  onZoom={() => setIsZoomed(true)}
-                />
-              ) : (
-                <div className="aspect-video bg-[var(--color-line)] rounded-2xl border border-[var(--color-border)] flex items-center justify-center">
-                  <span className="font-mono text-[var(--color-muted)]">No preview available</span>
-                </div>
-              )}
-            </StorySection>
-
-            {/* Project Story */}
-            <StorySection title="The Journey" icon="📜" delay={0.2}>
-              {project.description ? (
-                <NarrativeText text={project.description} />
-              ) : (
-                <p className="text-[var(--color-muted)] italic text-center py-12">
-                  The story of this project is yet to be told...
-                </p>
-              )}
-            </StorySection>
-
-            {/* Technologies */}
-            {project.technologies && project.technologies.length > 0 && (
-              <StorySection title="Crafted With" icon="⚙️" delay={0.3}>
-                <TechStack technologies={project.technologies} />
-              </StorySection>
-            )}
-
-            {/* Project Link */}
-            {project.link && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                className="text-center my-20"
-              >
-                <motion.a
-                  href={project.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-[var(--color-crimson)] to-[var(--color-gold)] text-white font-display text-lg rounded-full shadow-lg shadow-red-950/30 hover:shadow-red-950/50 transition-all"
-                >
-                  <span>Experience Live</span>
-                  <span className="text-2xl">🚀</span>
-                </motion.a>
-              </motion.div>
-            )}
-
-            {/* Navigation */}
-            <motion.div
-              initial={{ opacity: 0, y: 40 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-20 pt-12 border-t border-[var(--color-border)]"
-            >
-              <NavigationCard
-                direction="prev"
-                projectIndex={projectIndex}
-                totalProjects={projects.length}
-                projects={projects}
-              />
-              <NavigationCard
-                direction="next"
-                projectIndex={projectIndex}
-                totalProjects={projects.length}
-                projects={projects}
-              />
-            </motion.div>
-
-            {/* Closing */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              viewport={{ once: true }}
-              className="text-center mt-20 pb-12"
-            >
-              <motion.div
-                initial={{ width: 0 }}
-                whileInView={{ width: "100%" }}
-                viewport={{ once: true }}
-                transition={{ duration: 1.2 }}
-                className="h-px bg-gradient-to-r from-transparent via-[var(--color-crimson)] to-transparent mb-12"
-              />
-              
-              <p className="font-serif italic text-[var(--color-muted)] mb-8">
-                "Thank you for reading this chapter of my journey."
-              </p>
-              
-              <Link
-                to="/contact"
-                className="inline-flex items-center gap-2 font-mono text-sm text-[var(--color-crimson)] hover:text-[var(--color-paper)] transition-colors"
-              >
-                <span>Let's create something together</span>
-                <span>→</span>
-              </Link>
-            </motion.div>
-          </div>
+          <button
+            onClick={handleShare}
+            className="inline-flex items-center gap-1.5 font-mono text-xs text-[var(--color-muted)] hover:text-[var(--color-crimson)] transition-colors"
+            title="Share project"
+          >
+            <span>🔗</span>
+            <span>Share</span>
+          </button>
         </div>
+
+        {/* === HERO PROJECT INFO === */}
+        <section className="mb-8">
+          <div className="flex flex-wrap items-center gap-2 mb-3">
+            <span className="px-3 py-1 rounded-full font-mono text-[10px] font-bold bg-[var(--color-line)] text-[var(--color-crimson)] border border-[var(--color-border)]">
+              PROJECT #{projectIndex + 1}
+            </span>
+            <span className="px-3 py-1 rounded-full font-mono text-[10px] text-[var(--color-muted)] border border-[var(--color-border)] bg-[var(--card-bg)]">
+              Web Application
+            </span>
+            <span className="px-3 py-1 rounded-full font-mono text-[10px] text-[var(--color-muted)] border border-[var(--color-border)] bg-[var(--card-bg)]">
+              ⏱️ ~2 min case study
+            </span>
+          </div>
+
+          <h1 className="font-display text-3xl sm:text-5xl md:text-6xl font-extrabold text-[var(--color-paper)] tracking-tight leading-[1.08] mb-4">
+            {project.name}
+          </h1>
+
+          {/* Punchy 1-sentence Lead Summary */}
+          <p className="text-base sm:text-lg text-[var(--color-muted)] leading-relaxed max-w-3xl font-normal">
+            {leadSummary}
+          </p>
+
+          {/* Action Link Bar */}
+          <div className="mt-6 flex flex-wrap items-center gap-3">
+            {project.link && (
+              <a
+                href={project.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-6 py-3 rounded-full bg-[var(--color-crimson)] text-white font-mono text-xs font-bold tracking-wider hover:opacity-90 transition-all shadow-md flex items-center gap-2"
+              >
+                <span>Visit Live Application</span>
+                <span>↗</span>
+              </a>
+            )}
+
+            <button
+              onClick={handleShare}
+              className="px-5 py-3 rounded-full border border-[var(--color-border)] bg-[var(--card-bg)] text-[var(--color-paper)] font-mono text-xs font-semibold tracking-wider hover:border-[var(--color-crimson)] hover:bg-[var(--color-line)] transition-all flex items-center gap-2"
+            >
+              <span>🔗</span>
+              <span>Share Project</span>
+            </button>
+          </div>
+        </section>
+
+        {/* === SHOWCASE IMAGE BANNER === */}
+        {project.image && (
+          <section className="my-8">
+            <div
+              onClick={() => setIsZoomed(true)}
+              className="group relative rounded-2xl sm:rounded-3xl overflow-hidden border border-[var(--color-border)] bg-[var(--card-bg)] shadow-xl cursor-zoom-in"
+            >
+              <div className="aspect-[16/10] sm:aspect-[16/9] overflow-hidden bg-[var(--color-line)]">
+                <img
+                  src={project.image}
+                  alt={project.name}
+                  className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-500"
+                />
+              </div>
+              <div className="p-3 sm:p-4 border-t border-[var(--color-border)] flex items-center justify-between font-mono text-xs text-[var(--color-muted)] bg-[var(--card-bg)]">
+                <span className="text-[11px] sm:text-xs">Tap image to zoom full resolution</span>
+                <span className="text-[var(--color-crimson)] font-bold">🔍 ZOOM</span>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* === PUNCHY SCANNABLE HIGHLIGHTS BENTO === */}
+        {highlights.length > 0 && (
+          <section className="my-10 space-y-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="font-mono text-xs font-bold text-[var(--color-crimson)] uppercase tracking-wider">
+                KEY HIGHLIGHTS & ARCHITECTURE
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
+              {highlights.map((item, idx) => (
+                <div
+                  key={idx}
+                  className="p-5 sm:p-6 rounded-2xl border border-[var(--color-border)] bg-[var(--card-bg)] shadow-sm hover:border-[var(--color-crimson)] transition-all flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-lg">{item.icon}</span>
+                      <h3 className="font-display font-bold text-sm sm:text-base text-[var(--color-paper)]">
+                        {item.title}
+                      </h3>
+                    </div>
+                    <p className="text-xs sm:text-sm text-[var(--color-muted)] leading-relaxed font-normal">
+                      {item.summary}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* === EXPANDABLE IN-DEPTH STORY (OPTIONAL TOGGLE) === */}
+        {rawParagraphs.length > 1 && (
+          <section className="my-8">
+            <button
+              onClick={() => setShowFullStory(!showFullStory)}
+              className="w-full p-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-line)]/50 hover:bg-[var(--color-line)] font-mono text-xs font-semibold text-[var(--color-paper)] flex items-center justify-between transition-all"
+            >
+              <span>{showFullStory ? "Hide Full Narrative Details" : "Read Full In-Depth Breakdown"}</span>
+              <span className="text-[var(--color-crimson)]">{showFullStory ? "▲" : "▼"}</span>
+            </button>
+
+            <AnimatePresence>
+              {showFullStory && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="overflow-hidden mt-4 p-6 sm:p-8 rounded-2xl border border-[var(--color-border)] bg-[var(--card-bg)] space-y-4"
+                >
+                  {rawParagraphs.map((para, i) => (
+                    <p key={i} className="text-xs sm:text-sm text-[var(--color-muted)] leading-relaxed font-normal">
+                      {para}
+                    </p>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </section>
+        )}
+
+        {/* === TECH STACK CHIPS === */}
+        {project.technologies && project.technologies.length > 0 && (
+          <section className="my-10 p-6 sm:p-8 rounded-2xl sm:rounded-3xl border border-[var(--color-border)] bg-[var(--card-bg)] shadow-sm">
+            <span className="font-mono text-xs font-bold text-[var(--color-crimson)] uppercase tracking-wider block mb-4">
+              TECHNOLOGIES USED
+            </span>
+            <div className="flex flex-wrap gap-2">
+              {project.technologies.map((tech, i) => (
+                <span
+                  key={i}
+                  className="px-3.5 py-1.5 rounded-full border border-[var(--color-border)] bg-[var(--color-line)] text-xs font-mono font-medium text-[var(--color-paper)]"
+                >
+                  {tech}
+                </span>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* === NEXT / PREV NAVIGATION RIBBON === */}
+        <section className="mt-14 pt-6 border-t border-[var(--color-border)] grid grid-cols-2 gap-3 sm:gap-4">
+          {prevIndex !== null ? (
+            <Link
+              to={`/project/${prevIndex}`}
+              className="p-3.5 sm:p-5 rounded-2xl border border-[var(--color-border)] bg-[var(--card-bg)] hover:border-[var(--color-crimson)] transition-all group"
+            >
+              <span className="font-mono text-[9px] sm:text-[10px] text-[var(--color-muted)] uppercase tracking-wider block mb-1">
+                ← PREVIOUS
+              </span>
+              <h4 className="font-display font-bold text-xs sm:text-sm text-[var(--color-paper)] group-hover:text-[var(--color-crimson)] transition-colors truncate">
+                {projects[prevIndex].name}
+              </h4>
+            </Link>
+          ) : <div />}
+
+          {nextIndex !== null ? (
+            <Link
+              to={`/project/${nextIndex}`}
+              className="p-3.5 sm:p-5 rounded-2xl border border-[var(--color-border)] bg-[var(--card-bg)] hover:border-[var(--color-crimson)] transition-all text-right group col-start-2"
+            >
+              <span className="font-mono text-[9px] sm:text-[10px] text-[var(--color-muted)] uppercase tracking-wider block mb-1">
+                NEXT →
+              </span>
+              <h4 className="font-display font-bold text-xs sm:text-sm text-[var(--color-paper)] group-hover:text-[var(--color-crimson)] transition-colors truncate">
+                {projects[nextIndex].name}
+              </h4>
+            </Link>
+          ) : <div />}
+        </section>
+
       </div>
     </PageTransition>
   );

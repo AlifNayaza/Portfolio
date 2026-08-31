@@ -4,14 +4,37 @@ import { motion, AnimatePresence } from "framer-motion";
 
 export default function MusicPlayer({ playlist }) { 
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isMinimized, setIsMinimized] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [progress, setProgress] = useState(0);
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const audioRef = useRef(null);
+  const autoCloseTimerRef = useRef(null);
 
   const currentTrack = playlist[currentIndex];
+
+  const resetAutoCloseTimer = () => {
+    if (autoCloseTimerRef.current) {
+      clearTimeout(autoCloseTimerRef.current);
+    }
+    if (!isMinimized) {
+      autoCloseTimerRef.current = setTimeout(() => {
+        setIsMinimized(true);
+      }, 6000); // 6 seconds of inactivity
+    }
+  };
+
+  useEffect(() => {
+    if (!isMinimized) {
+      resetAutoCloseTimer();
+    }
+    return () => {
+      if (autoCloseTimerRef.current) {
+        clearTimeout(autoCloseTimerRef.current);
+      }
+    };
+  }, [isMinimized, currentIndex, isPlaying]);
 
   const isPlayingRef = useRef(isPlaying);
   useEffect(() => {
@@ -148,58 +171,38 @@ export default function MusicPlayer({ playlist }) {
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="relative rounded-2xl p-4 md:p-5 shadow-2xl backdrop-blur-xl w-[300px] md:w-[340px]"
-            style={{
-              background: `linear-gradient(to bottom right, var(--color-bg), var(--color-bg), var(--color-bg))`,
-              border: '1px solid var(--color-border)'
-            }}
+            onMouseEnter={resetAutoCloseTimer}
+            onClick={resetAutoCloseTimer}
+            onTouchStart={resetAutoCloseTimer}
+            className="relative rounded-2xl p-4 md:p-5 shadow-2xl backdrop-blur-xl w-[290px] md:w-[330px] border border-[var(--color-border)] bg-[var(--color-bg)]/95"
           >
             {/* Decorative glow */}
             <div 
-              className="absolute inset-0 rounded-2xl opacity-50 blur-xl"
+              className="absolute inset-0 rounded-2xl opacity-40 blur-xl pointer-events-none"
               style={{
-                background: 'linear-gradient(to right, rgba(159, 18, 57, 0.1), transparent, rgba(194, 65, 12, 0.1))'
+                background: 'linear-gradient(to right, rgba(220, 38, 38, 0.12), transparent, rgba(234, 88, 12, 0.12))'
               }}
             />
 
             {/* Close/Minimize button */}
             <motion.button
               onClick={() => setIsMinimized(true)}
-              whileHover={{ scale: 1.1, rotate: 180 }}
+              whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
-              className="absolute -top-2 -right-2 w-8 h-8 border rounded-full flex items-center justify-center transition-all z-10 shadow-lg"
-              style={{
-                backgroundColor: 'var(--color-bg)',
-                borderColor: 'var(--color-border)',
-                color: 'var(--color-muted)'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'var(--color-crimson)';
-                e.currentTarget.style.color = 'white';
-                e.currentTarget.style.borderColor = 'var(--color-crimson)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'var(--color-bg)';
-                e.currentTarget.style.color = 'var(--color-muted)';
-                e.currentTarget.style.borderColor = 'var(--color-border)';
-              }}
+              className="absolute -top-2 -right-2 w-7 h-7 rounded-full border border-[var(--color-border)] bg-[var(--color-bg)] text-[var(--color-muted)] hover:text-white hover:bg-[var(--color-crimson)] hover:border-[var(--color-crimson)] flex items-center justify-center transition-all z-10 shadow-md"
               aria-label="Minimize player"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
               </svg>
             </motion.button>
 
             {/* Track info with visualizer */}
-            <div className="relative z-10 mb-4">
-              <div className="flex items-center gap-4">
+            <div className="relative z-10 mb-3.5">
+              <div className="flex items-center gap-3.5">
                 {/* Visualizer */}
                 <div 
-                  className="flex gap-1 items-end h-12 w-12 flex-shrink-0 rounded-lg border p-2 justify-center"
-                  style={{
-                    backgroundColor: 'var(--color-bg)',
-                    borderColor: 'var(--color-border)'
-                  }}
+                  className="flex gap-1 items-end h-11 w-11 flex-shrink-0 rounded-xl border border-[var(--color-border)] bg-[var(--color-line)] p-2 justify-center"
                 >
                   <VisualizerBar delay={0} index={0} />
                   <VisualizerBar delay={0.1} index={1} />
@@ -214,8 +217,7 @@ export default function MusicPlayer({ playlist }) {
                     key={currentTrack?.title}
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
-                    className="text-sm md:text-base font-display font-bold truncate"
-                    style={{ color: 'var(--color-paper)' }}
+                    className="text-xs md:text-sm font-display font-bold truncate text-[var(--color-paper)]"
                   >
                     {currentTrack?.title || "Untitled Track"}
                   </motion.h3>
@@ -224,8 +226,7 @@ export default function MusicPlayer({ playlist }) {
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.1 }}
-                    className="text-xs font-mono truncate"
-                    style={{ color: 'var(--color-muted)' }}
+                    className="text-[11px] font-mono truncate text-[var(--color-muted)]"
                   >
                     {currentTrack?.artist || "Unknown Artist"}
                   </motion.p>
@@ -233,8 +234,7 @@ export default function MusicPlayer({ playlist }) {
                   {/* Track count */}
                   {playlist.length > 1 && (
                     <div 
-                      className="mt-1 text-[10px] font-mono"
-                      style={{ color: 'var(--color-line)' }}
+                      className="mt-0.5 text-[9px] font-mono text-[var(--color-muted)]/70"
                     >
                       Track {currentIndex + 1} of {playlist.length}
                     </div>
@@ -244,10 +244,9 @@ export default function MusicPlayer({ playlist }) {
             </div>
 
             {/* Interactive Progress bar & Timeline Slider */}
-            <div className="relative z-10 mb-4 group">
+            <div className="relative z-10 mb-3.5 group">
               <div 
-                className="h-2 rounded-full overflow-hidden relative cursor-pointer"
-                style={{ backgroundColor: 'var(--color-border)' }}
+                className="h-2 rounded-full overflow-hidden relative cursor-pointer bg-[var(--color-border)]"
               >
                 <div
                   className="h-full rounded-full transition-all"
@@ -269,8 +268,7 @@ export default function MusicPlayer({ playlist }) {
               />
               {/* Time stamps */}
               <div 
-                className="flex justify-between mt-1 text-[10px] font-mono"
-                style={{ color: 'var(--color-muted)' }}
+                className="flex justify-between mt-1 text-[9px] font-mono text-[var(--color-muted)]"
               >
                 <span>{formatTime(currentTime)}</span>
                 <span>{formatTime(duration)}</span>
@@ -285,24 +283,10 @@ export default function MusicPlayer({ playlist }) {
                 disabled={playlist.length <= 1}
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
-                className="w-8 h-8 flex items-center justify-center rounded-full border transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                style={{
-                  borderColor: 'var(--color-border)',
-                  color: 'var(--color-muted)'
-                }}
+                className="w-8 h-8 flex items-center justify-center rounded-full border border-[var(--color-border)] text-[var(--color-muted)] hover:border-[var(--color-crimson)] hover:text-[var(--color-paper)] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                 aria-label="Previous track"
-                onMouseEnter={(e) => {
-                  if (!e.currentTarget.disabled) {
-                    e.currentTarget.style.borderColor = 'var(--color-crimson)';
-                    e.currentTarget.style.color = 'var(--color-paper)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = 'var(--color-border)';
-                  e.currentTarget.style.color = 'var(--color-muted)';
-                }}
               >
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M8.445 14.832A1 1 0 0010 14.832V5.168a1 1 0 00-1.555-.832L4.12 8.168a1 1 0 000 1.664l4.325 3.001z" />
                 </svg>
               </motion.button>
@@ -312,24 +296,13 @@ export default function MusicPlayer({ playlist }) {
                 onClick={togglePlay}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="w-14 h-14 flex items-center justify-center rounded-full text-white shadow-lg transition-all relative group"
+                className="w-12 h-12 flex items-center justify-center rounded-full text-white shadow-lg shadow-red-950/20 transition-all relative group bg-gradient-to-r from-[var(--color-crimson)] to-[var(--color-gold)]"
                 aria-label={isPlaying ? "Pause track" : "Play track"}
-                style={{
-                  background: 'linear-gradient(to right, var(--color-crimson), var(--color-gold))',
-                  boxShadow: '0 10px 15px -3px rgba(159, 18, 57, 0.3)'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(159, 18, 57, 0.5)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(159, 18, 57, 0.3)';
-                }}
               >
                 {/* Pulse effect when playing */}
                 {isPlaying && (
                   <motion.div
-                    className="absolute inset-0 rounded-full border-2"
-                    style={{ borderColor: 'var(--color-crimson)' }}
+                    className="absolute inset-0 rounded-full border-2 border-[var(--color-crimson)]"
                     initial={{ scale: 1, opacity: 0.5 }}
                     animate={{ scale: 1.3, opacity: 0 }}
                     transition={{ duration: 1.5, repeat: Infinity }}
@@ -338,11 +311,11 @@ export default function MusicPlayer({ playlist }) {
                 
                 {isPlaying ? (
                   <div className="flex gap-1">
-                    <div className="w-1 h-4 bg-white rounded-full"></div>
-                    <div className="w-1 h-4 bg-white rounded-full"></div>
+                    <div className="w-1 h-3.5 bg-white rounded-full"></div>
+                    <div className="w-1 h-3.5 bg-white rounded-full"></div>
                   </div>
                 ) : (
-                  <svg className="w-5 h-5 ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 ml-0.5" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M8 5v14l11-7z"/>
                   </svg>
                 )}
@@ -354,46 +327,14 @@ export default function MusicPlayer({ playlist }) {
                 disabled={playlist.length <= 1}
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
-                className="w-8 h-8 flex items-center justify-center rounded-full border transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                className="w-8 h-8 flex items-center justify-center rounded-full border border-[var(--color-border)] text-[var(--color-muted)] hover:border-[var(--color-crimson)] hover:text-[var(--color-paper)] transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                 aria-label="Next track"
-                style={{
-                  borderColor: 'var(--color-border)',
-                  color: 'var(--color-muted)'
-                }}
-                onMouseEnter={(e) => {
-                  if (!e.currentTarget.disabled) {
-                    e.currentTarget.style.borderColor = 'var(--color-crimson)';
-                    e.currentTarget.style.color = 'var(--color-paper)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = 'var(--color-border)';
-                  e.currentTarget.style.color = 'var(--color-muted)';
-                }}
               >
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M4.555 5.168A1 1 0 003 6v8a1 1 0 001.555.832l4.325-3.001a1 1 0 000-1.664L4.555 5.168z" />
                 </svg>
               </motion.button>
             </div>
-
-            {/* Decorative corners */}
-            <div 
-              className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 rounded-tl-2xl"
-              style={{ borderColor: 'rgba(159, 18, 57, 0.3)' }}
-            />
-            <div 
-              className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 rounded-tr-2xl"
-              style={{ borderColor: 'rgba(159, 18, 57, 0.3)' }}
-            />
-            <div 
-              className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 rounded-bl-2xl"
-              style={{ borderColor: 'rgba(159, 18, 57, 0.3)' }}
-            />
-            <div 
-              className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 rounded-br-2xl"
-              style={{ borderColor: 'rgba(159, 18, 57, 0.3)' }}
-            />
           </motion.div>
         ) : (
           <motion.button 
@@ -403,30 +344,26 @@ export default function MusicPlayer({ playlist }) {
             initial="hidden" 
             animate="visible" 
             exit="exit"
-            whileHover={{ scale: 1.05, rotate: 5 }}
+            whileHover={{ scale: 1.08 }}
             whileTap={{ scale: 0.95 }}
-            className="relative w-16 h-16 md:w-20 md:h-20 border rounded-full flex items-center justify-center shadow-2xl group" 
-            style={{
-              background: 'linear-gradient(to bottom right, var(--color-bg), var(--color-bg), var(--color-bg))',
-              borderColor: 'var(--color-border)'
-            }}
+            className="relative w-14 h-14 md:w-16 md:h-16 border border-[var(--color-border)] bg-[var(--color-bg)]/95 rounded-full flex items-center justify-center shadow-xl group backdrop-blur-md" 
             aria-label="Expand player"
           >
             {/* Glow effect */}
             <motion.div
-              className="absolute inset-0 rounded-full blur-xl"
+              className="absolute inset-0 rounded-full blur-lg"
               style={{
-                background: 'linear-gradient(to right, rgba(159, 18, 57, 0.2), rgba(194, 65, 12, 0.2))'
+                background: 'linear-gradient(to right, rgba(220, 38, 38, 0.25), rgba(234, 88, 12, 0.25))'
               }}
               animate={{ 
                 scale: isPlaying ? [1, 1.2, 1] : 1,
-                opacity: isPlaying ? [0.5, 0.8, 0.5] : 0.3
+                opacity: isPlaying ? [0.6, 0.9, 0.6] : 0.3
               }}
               transition={{ duration: 2, repeat: Infinity }}
             />
             
             {/* Visualizer */}
-            <div className="relative z-10 flex gap-1 items-end h-6">
+            <div className="relative z-10 flex gap-1 items-end h-5">
               <VisualizerBar delay={0} />
               <VisualizerBar delay={0.15} />
               <VisualizerBar delay={0.3} />
@@ -436,10 +373,9 @@ export default function MusicPlayer({ playlist }) {
             {/* Ripple when playing */}
             {isPlaying && (
               <motion.div
-                className="absolute inset-0 rounded-full border-2"
-                style={{ borderColor: 'var(--color-crimson)' }}
+                className="absolute inset-0 rounded-full border-2 border-[var(--color-crimson)]"
                 initial={{ scale: 1, opacity: 0.5 }}
-                animate={{ scale: 1.5, opacity: 0 }}
+                animate={{ scale: 1.4, opacity: 0 }}
                 transition={{ duration: 1.5, repeat: Infinity }}
               />
             )}

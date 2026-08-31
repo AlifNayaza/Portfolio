@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { toast } from "react-hot-toast";
 import axios from "axios";
+import ThemeToggle from "../components/ui/ThemeToggle";
 
 // Helper komponen untuk ikon
 const EyeIcon = () => (
@@ -100,9 +101,13 @@ export default function Login() {
 
   return (
     <div 
-      className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden"
-      style={{ backgroundColor: 'var(--color-bg)', color: 'var(--color-paper)' }}
+      className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-[var(--color-bg)] text-[var(--color-paper)]"
     >
+      {/* Theme toggle on top right */}
+      <div className="absolute top-6 right-6 z-20">
+        <ThemeToggle />
+      </div>
+
       {/* Noise overlay */}
       <div className="noise-overlay"></div>
       
@@ -110,7 +115,7 @@ export default function Login() {
       <div 
         className="fixed inset-0 pointer-events-none"
         style={{
-          background: 'radial-gradient(circle, transparent, rgba(0, 0, 0, 0.5), black)'
+          background: 'radial-gradient(circle, transparent, rgba(0, 0, 0, 0.4), black)'
         }}
       ></div>
 
@@ -140,11 +145,7 @@ export default function Login() {
         
         <form 
           onSubmit={handleLogin} 
-          className="w-full backdrop-blur-sm p-8 md:p-10 border flex flex-col items-center shadow-2xl"
-          style={{
-            backgroundColor: 'var(--color-bg)',
-            borderColor: 'var(--color-border)'
-          }}
+          className="w-full backdrop-blur-sm p-8 md:p-10 border border-[var(--color-border)] bg-[var(--color-bg)] flex flex-col items-center shadow-2xl rounded-2xl"
         >
           {/* Logo with pulse animation */}
           <motion.div 
@@ -157,35 +158,22 @@ export default function Login() {
           </motion.div>
           
           <h1 
-            className="text-xl font-display mb-2 text-center uppercase tracking-widest"
-            style={{ color: 'var(--color-paper)' }}
+            className="text-xl font-display font-bold mb-2 text-center uppercase tracking-widest text-[var(--color-paper)]"
           >
-            Archivist's Keyhole
+            Studio Portal
           </h1>
           <p 
-            className="font-mono text-[10px] tracking-widest mb-8"
-            style={{ color: 'var(--color-muted)' }}
+            className="font-mono text-[10px] tracking-widest mb-8 text-[var(--color-muted)]"
           >
-            AUTHORIZED ACCESS ONLY
+            ADMINISTRATOR ACCESS
           </p>
           
           {/* Password Input */}
           <div className="relative w-full mb-6">
             <input 
               type={isKeyVisible ? "text" : "password"} 
-              placeholder="SECRET KEY" 
-              className="w-full border-b p-3 pr-10 text-center font-mono tracking-[0.3em] text-sm focus:outline-none transition-colors placeholder:text-zinc-700"
-              style={{
-                backgroundColor: 'transparent',
-                borderColor: 'var(--color-border)',
-                color: 'var(--color-paper)'
-              }}
-              onFocus={(e) => {
-                e.target.style.borderColor = 'var(--color-crimson)';
-              }}
-              onBlur={(e) => {
-                e.target.style.borderColor = 'var(--color-border)';
-              }}
+              placeholder="SECRET PASSCODE" 
+              className="w-full border-b p-3 pr-10 text-center font-mono tracking-[0.3em] text-sm focus:outline-none transition-colors placeholder:text-[var(--color-muted)]/50 bg-transparent border-[var(--color-border)] focus:border-[var(--color-crimson)] text-[var(--color-paper)]"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               disabled={loading}
@@ -194,14 +182,7 @@ export default function Login() {
             <button 
               type="button" 
               onClick={toggleKeyVisibility} 
-              className="absolute inset-y-0 right-0 flex items-center px-3 transition-colors"
-              style={{ color: 'var(--color-muted)' }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.color = 'var(--color-paper)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.color = 'var(--color-muted)';
-              }}
+              className="absolute inset-y-0 right-0 flex items-center px-3 transition-colors text-[var(--color-muted)] hover:text-[var(--color-paper)]"
               aria-label="Toggle password visibility"
               disabled={loading}
             >
@@ -225,16 +206,9 @@ export default function Login() {
             />
             <label 
               htmlFor="rememberMe" 
-              className="font-mono text-[10px] tracking-wider cursor-pointer select-none transition-colors"
-              style={{ color: 'var(--color-muted)' }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.color = 'var(--color-paper)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.color = 'var(--color-muted)';
-              }}
+              className="font-mono text-[10px] tracking-wider cursor-pointer select-none transition-colors text-[var(--color-muted)] hover:text-[var(--color-paper)]"
             >
-              REMEMBER ME ON THIS DEVICE
+              KEEP SESSION ACTIVE
             </label>
           </div>
           
@@ -244,41 +218,23 @@ export default function Login() {
             disabled={loading || !input}
             whileHover={{ scale: loading ? 1 : 1.02 }}
             whileTap={{ scale: loading ? 1 : 0.98 }}
-            className="w-full font-mono text-xs tracking-widest py-3 border transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-            style={{
-              borderColor: 'var(--color-border)',
-              color: 'var(--color-muted)',
-              backgroundColor: 'transparent'
-            }}
-            onMouseEnter={(e) => {
-              if (!loading && input) {
-                e.currentTarget.style.borderColor = 'var(--color-crimson)';
-                e.currentTarget.style.color = 'var(--color-paper)';
-                e.currentTarget.style.backgroundColor = 'rgba(159, 18, 57, 0.1)';
-              }
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = 'var(--color-border)';
-              e.currentTarget.style.color = 'var(--color-muted)';
-              e.currentTarget.style.backgroundColor = 'transparent';
-            }}
+            className="w-full font-mono text-xs font-bold tracking-widest py-3 border border-[var(--color-border)] bg-[var(--color-crimson)] text-white hover:opacity-90 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl shadow-md"
           >
             {loading ? (
               <span className="flex items-center justify-center gap-2">
                 <svg 
-                  className="animate-spin h-4 w-4" 
+                  className="animate-spin h-4 w-4 text-white" 
                   xmlns="http://www.w3.org/2000/svg" 
                   fill="none" 
                   viewBox="0 0 24 24"
-                  style={{ color: 'var(--color-crimson)' }}
                 >
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                VERIFYING...
+                AUTHENTICATING...
               </span>
             ) : (
-              "[ UNSEAL THE ARCHIVE ]"
+              "ENTER CONSOLE →"
             )}
           </motion.button>
 

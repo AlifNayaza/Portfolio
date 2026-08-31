@@ -2,627 +2,635 @@
 import { useState, useEffect, useMemo } from "react";
 import { usePortfolio } from "../context/PortfolioContext";
 import PageTransition from "../components/layout/PageTransition"; 
-import { motion, useScroll, useTransform, AnimatePresence, useMotionValue, useSpring } from "framer-motion";
-import { Link } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import { Link, useOutletContext } from "react-router-dom";
 
-// --- ATMOSPHERIC ELEMENTS ---
-const AtmosphericBackground = () => {
-  const bubbles = useMemo(() => [
-    { width: 350, height: 280, top: 20, left: 15, duration: 25 },
-    { width: 220, height: 410, top: 60, left: 75, duration: 28 },
-    { width: 400, height: 320, top: 40, left: 45, duration: 22 },
-  ], []);
-
-  return (
-    <div className="fixed inset-0 w-full h-full pointer-events-none z-0 overflow-hidden">
-      {/* PERBAIKAN: Hapus gradient abu-abu, gunakan pure bg */}
-      <div 
-        className="absolute inset-0"
-        style={{ backgroundColor: 'var(--color-bg)' }}
-      />
-      {bubbles.map((bubble, i) => (
-        <motion.div
-          key={i}
-          className="absolute rounded-full blur-3xl"
-          style={{
-            backgroundColor: 'var(--color-crimson)',
-            opacity: 0.02,  /* PERBAIKAN: Lebih subtle */
-            width: `${bubble.width}px`,
-            height: `${bubble.height}px`,
-            top: `${bubble.top}%`,
-            left: `${bubble.left}%`,
-          }}
-          animate={{
-            x: [0, 30, -30, 0],
-            y: [0, -20, 20, 0],
-            scale: [1, 1.1, 0.95, 1],
-          }}
-          transition={{
-            duration: bubble.duration,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-        />
-      ))}
-    </div>
-  );
-};
-
-// --- CHAPTER MARKER ---
-const ChapterMarker = ({ number, title, subtitle }) => (
-  <motion.div 
-    initial={{ opacity: 0, y: 30 }}
-    whileInView={{ opacity: 1, y: 0 }}
-    viewport={{ once: true, margin: "-100px" }}
-    transition={{ duration: 0.8, ease: "easeOut" }}
-    className="flex flex-col items-center justify-center py-24 md:py-32 text-center px-4"
-  >
-    <span className="font-mono text-[var(--color-crimson)] text-xs tracking-[0.5em] mb-4 uppercase">
-      Part {number}
-    </span>
-    <h2 className="font-display text-4xl md:text-6xl text-[var(--color-paper)] mb-4 relative inline-block">
-      {title}
-      <motion.span 
-        className="absolute -bottom-4 left-1/2 w-12 h-[1px] bg-[var(--color-crimson)]"
-        initial={{ width: 0, x: "-50%" }}
-        whileInView={{ width: 60 }}
-        transition={{ delay: 0.5, duration: 0.8 }}
-      />
-    </h2>
-    {subtitle && (
-      <p className="font-serif italic text-[var(--color-muted)] mt-6 max-w-md text-sm md:text-base leading-relaxed">
-        "{subtitle}"
-      </p>
-    )}
-  </motion.div>
-);
-
-// --- HERO SECTION ---
-const NarrativeHero = ({ data }) => {
-  const { scrollY } = useScroll();
-  const y1 = useTransform(scrollY, [0, 500], [0, 200]);
-  const opacity = useTransform(scrollY, [0, 300], [1, 0]);
-
-  return (
-    <section className="relative min-h-[80vh] flex flex-col items-center justify-center px-6 overflow-hidden">
-      <motion.div 
-        style={{ y: y1, opacity }} 
-        className="relative z-10 text-center max-w-4xl mx-auto"
-      >
-        <motion.div 
-          initial={{ height: 0 }} 
-          animate={{ height: 60 }} 
-          transition={{ duration: 1, delay: 0.2 }}
-          className="w-[1px] mx-auto mb-8"
-          style={{
-            background: 'linear-gradient(to bottom, transparent, var(--color-crimson), transparent)'
-          }}
-        />
-
-        <motion.p 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-          className="font-mono text-xs md:text-sm tracking-[0.3em] uppercase mb-6"
-          style={{ color: 'var(--color-crimson)' }}
-        >
-          Portfolio & Resume
-        </motion.p>
-
-        <h1 
-          className="font-display text-5xl md:text-8xl lg:text-9xl leading-[0.9] tracking-tight mb-8"
-          style={{ color: 'var(--color-paper)' }}
-        >
-          <motion.span
-            initial={{ opacity: 0, y: 50, filter: "blur(10px)" }}
-            animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-            transition={{ duration: 1, ease: "easeOut" }}
-            className="block"
-          >
-            {data?.home?.headline?.split(" ")[0] || "CREATIVE"}
-          </motion.span>
-          <motion.span
-            initial={{ opacity: 0, y: 50, filter: "blur(10px)" }}
-            animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-            transition={{ duration: 1, delay: 0.2, ease: "easeOut" }}
-            className="block italic font-serif text-4xl md:text-7xl mt-2"
-            style={{ color: 'var(--color-muted)' }}
-          >
-            {data?.home?.headline?.split(" ").slice(1).join(" ") || "Developer"}
-          </motion.span>
-        </h1>
-
-        <motion.p 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.8, duration: 1 }}
-          className="font-serif text-lg md:text-xl leading-loose max-w-2xl mx-auto italic"
-          style={{ color: 'var(--color-muted)' }}
-        >
-          {data?.home?.subtitle || "Crafting robust digital solutions with a focus on code quality, performance, and intuitive user experiences."}
-        </motion.p>
-      </motion.div>
-    </section>
-  );
-};
-
-// --- INTERACTIVE PORTRAIT (3D TILT & CONTROLS) ---
-const AuthorPortrait = ({ images, name }) => {
-  const [currentImage, setCurrentImage] = useState(0);
-  const [isAutoPlay, setIsAutoPlay] = useState(true);
-
-  // Mouse Tilt Logic
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
-  const rotateX = useSpring(useTransform(y, [-0.5, 0.5], [10, -10]), { stiffness: 150, damping: 20 });
-  const rotateY = useSpring(useTransform(x, [-0.5, 0.5], [-10, 10]), { stiffness: 150, damping: 20 });
-
-  const handleMouseMove = (e) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const width = rect.width;
-    const height = rect.height;
-    const mouseX = e.clientX - rect.left;
-    const mouseY = e.clientY - rect.top;
-    const xPct = mouseX / width - 0.5;
-    const yPct = mouseY / height - 0.5;
-    x.set(xPct);
-    y.set(yPct);
-  };
-
-  const handleMouseLeave = () => {
-    x.set(0);
-    y.set(0);
-  };
+// === LIVE LOCAL TIME WIDGET ===
+const LocalTimeBadge = () => {
+  const [time, setTime] = useState("");
 
   useEffect(() => {
-    if (!images || images.length <= 1 || !isAutoPlay) return;
-    const interval = setInterval(() => {
-      setCurrentImage((prev) => (prev + 1) % images.length);
-    }, 5000);
+    const updateTime = () => {
+      const now = new Date();
+      const options = {
+        timeZone: "Asia/Jakarta",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false,
+      };
+      setTime(new Intl.DateTimeFormat("en-GB", options).format(now));
+    };
+
+    updateTime();
+    const interval = setInterval(updateTime, 1000);
     return () => clearInterval(interval);
-  }, [images, isAutoPlay]);
-
-  const profileImages = images?.length > 0 ? images : ['https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=1000&auto=format&fit=crop'];
-
-  const nextImage = () => {
-    setIsAutoPlay(false);
-    setCurrentImage((prev) => (prev + 1) % profileImages.length);
-  };
-
-  const prevImage = () => {
-    setIsAutoPlay(false);
-    setCurrentImage((prev) => (prev - 1 + profileImages.length) % profileImages.length);
-  };
+  }, []);
 
   return (
-    <section className="py-20 px-6 perspective-1000">
-      <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center gap-12 md:gap-20">
-        
-        {/* Interactive Frame */}
-        <motion.div 
-          className="w-full md:w-1/2 flex justify-center md:justify-end"
-          initial={{ opacity: 0, x: -50 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 1 }}
-        >
-          <div className="relative group">
-             {/* Controls overlay */}
-             <div className="absolute -bottom-12 left-0 right-0 flex justify-center gap-4 z-20">
-               <button onClick={prevImage} className="w-8 h-8 border border-[var(--color-border)] text-[var(--color-muted)] hover:text-[var(--color-paper)] hover:border-[var(--color-crimson)] transition-all rounded-full flex items-center justify-center">←</button>
-               <div className="flex gap-1 items-center">
-                 {profileImages.map((_, i) => (
-                   <div key={i} className={`w-1 h-1 rounded-full transition-all ${i === currentImage ? 'bg-[var(--color-crimson)] w-4' : 'bg-[var(--color-border)]'}`} />
-                 ))}
-               </div>
-               <button onClick={nextImage} className="w-8 h-8 border border-[var(--color-border)] text-[var(--color-muted)] hover:text-[var(--color-paper)] hover:border-[var(--color-crimson)] transition-all rounded-full flex items-center justify-center">→</button>
-             </div>
-
-            <motion.div 
-              style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
-              onMouseMove={handleMouseMove}
-              onMouseLeave={handleMouseLeave}
-              className="relative w-64 h-80 md:w-80 md:h-[30rem] p-4 border border-[var(--color-border)] bg-[var(--color-line)] shadow-2xl cursor-grab active:cursor-grabbing"
-            >
-              {/* Decorative Corners */}
-              <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-[var(--color-crimson)]" />
-              <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-[var(--color-crimson)]" />
-              <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-[var(--color-crimson)]" />
-              <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-[var(--color-crimson)]" />
-
-              <div className="w-full h-full overflow-hidden relative transition-all duration-700 ease-in-out">
-                <AnimatePresence mode="wait">
-                  <motion.img
-                    key={currentImage}
-                    src={profileImages[currentImage]}
-                    alt="The Developer"
-                    initial={{ opacity: 0, scale: 1.1 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.5 }}
-                    className="w-full h-full object-cover pointer-events-none"
-                  />
-                </AnimatePresence>
-                
-                {/* Scanner Effect on Hover */}
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[var(--color-crimson)]/10 to-transparent translate-y-[-100%] group-hover:animate-scan pointer-events-none" />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0c0c0c] via-transparent to-transparent opacity-40 pointer-events-none" />
-              </div>
-            </motion.div>
-          </div>
-        </motion.div>
-
-        {/* Introduction */}
-        <motion.div 
-          className="w-full md:w-1/2 text-center md:text-left"
-          initial={{ opacity: 0, x: 50 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 1, delay: 0.3 }}
-        >
-          <span className="font-mono text-[var(--color-crimson)] text-xs tracking-[0.3em] uppercase mb-4 block">
-            Introduction
-          </span>
-          <h2 className="font-display text-4xl text-[var(--color-paper)] mb-6">
-            {name || "About Me"}
-          </h2>
-          <p className="font-serif text-[var(--color-muted)] text-lg leading-relaxed mb-8 italic">
-            "I believe that great software is about more than just code—it's about solving real problems. I bridge the gap between technical complexity and intuitive design to build systems that simply work."
-          </p>
-          <div className="flex gap-4 justify-center md:justify-start font-mono text-xs text-[var(--color-muted)] tracking-widest uppercase">
-            <span className="border-b border-[var(--color-border)] pb-1">Development</span>
-            <span className="border-b border-[var(--color-border)] pb-1">Design</span>
-            <span className="border-b border-[var(--color-border)] pb-1">Strategy</span>
-          </div>
-        </motion.div>
-      </div>
-    </section>
+    <span className="font-mono text-xs text-[var(--color-muted)] flex items-center gap-1.5">
+      <span>🇮🇩 Jakarta</span>
+      <span className="text-[var(--color-border)]">•</span>
+      <span className="text-[var(--color-paper)] font-semibold">{time || "12:00:00"} WIB</span>
+    </span>
   );
 };
 
-// --- CHRONICLE CARDS ---
-const ChronicleCard = ({ project, index }) => {
-  const isEven = index % 2 === 0;
-  
+// === INTERACTIVE KINETIC TICKER ===
+const TechTicker = () => {
+  const items = [
+    "REACT",
+    "NODE.JS",
+    "JAVASCRIPT",
+    "TYPESCRIPT",
+    "TAILWIND CSS",
+    "NEXT.JS",
+    "MONGODB",
+    "EXPRESS",
+    "UI/UX DESIGN",
+    "REST APIS",
+  ];
+
   return (
-    <div className={`flex flex-col md:flex-row items-center gap-8 md:gap-16 mb-32 ${isEven ? 'md:flex-row' : 'md:flex-row-reverse'}`}>
-      <motion.div 
-        className="w-full md:w-1/2 relative group"
-        initial={{ opacity: 0, scale: 0.95 }}
-        whileInView={{ opacity: 1, scale: 1 }}
-        viewport={{ once: true, margin: "-50px" }}
-        transition={{ duration: 0.8 }}
-      >
-        <div className="relative aspect-[4/3] overflow-hidden rounded-sm border border-[var(--color-border)] transition-colors duration-500 group-hover:border-[var(--color-crimson)]/50">
-            {project.image ? (
-            <img 
-              src={project.image} 
-              alt={project.name}
-              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-            />
-          ) : (
-            <div className="w-full h-full bg-[var(--color-line)] flex items-center justify-center">
-              <span className="font-display text-4xl text-[var(--color-muted)]">PREVIEW N/A</span>
-            </div>
-          )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-60 transition-opacity duration-500 group-hover:opacity-30" />
-        </div>
-        
-        <div className={`absolute -top-6 ${isEven ? '-left-6' : '-right-6'} font-display text-8xl text-[var(--color-crimson)] opacity-10 select-none`}>
-          {String(index + 1).padStart(2, '0')}
-        </div>
-      </motion.div>
-
-      <motion.div 
-        className="w-full md:w-1/2 text-center md:text-left"
-        initial={{ opacity: 0, x: isEven ? 30 : -30 }}
-        whileInView={{ opacity: 1, x: 0 }}
-        viewport={{ once: true, margin: "-50px" }}
-        transition={{ duration: 0.8, delay: 0.2 }}
-      >
-        <div className="font-mono text-xs text-[var(--color-crimson)] mb-4 uppercase tracking-widest">
-          {project.technologies?.[0] || "Selected Project"}
-        </div>
-        
-        <h3 className="font-display text-3xl md:text-4xl text-[var(--color-paper)] mb-6 leading-tight group-hover:text-[var(--color-gold)] transition-colors duration-300">
-          <Link to={`/project/${index}`}>{project.name}</Link>
-        </h3>
-        
-        <p className="font-serif text-[var(--color-muted)] leading-relaxed mb-8 line-clamp-3">
-          {project.description || "A detailed overview of the project, highlighting the core features, challenges solved, and the technical stack used in development."}
-        </p>
-
-        <Link 
-          to={`/project/${index}`}
-          className="inline-flex items-center gap-3 font-mono text-xs uppercase tracking-widest text-[var(--color-paper)] hover:text-[var(--color-crimson)] transition-colors group/link"
-        >
-          <span className="border-b border-transparent group-hover/link:border-[var(--color-crimson)] transition-all pb-1">
-            View Project Details
-          </span>
-          <span className="group-hover/link:translate-x-1 transition-transform">→</span>
-        </Link>
-      </motion.div>
+    <div className="w-full overflow-hidden py-3.5 border-y border-[var(--color-border)] bg-[var(--color-line)]/30 my-16 select-none">
+      <div className="animate-marquee whitespace-nowrap flex items-center gap-8 font-mono text-xs tracking-widest text-[var(--color-muted)]">
+        {[...items, ...items, ...items].map((tech, i) => (
+          <div key={i} className="flex items-center gap-8">
+            <span className="hover:text-[var(--color-paper)] transition-colors font-medium">
+              {tech}
+            </span>
+            <span className="text-[var(--color-crimson)] text-[10px]">✦</span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
 
-// --- SKILL LEVEL VISUALIZER COMPONENT ---
-const ProficiencyBar = ({ level }) => {
-  // Convert string level to numeric rank (1-4)
-  const getRank = (lvl) => {
-    if (!lvl) return 2; // Default to intermediate
-    const lower = lvl.toLowerCase();
-    if (lower.includes('master') || lower.includes('expert')) return 4;
-    if (lower.includes('advanced')) return 3;
-    if (lower.includes('intermediate')) return 2;
-    if (lower.includes('beginner')) return 1;
-    return 2;
+// === INTERACTIVE AUTO-SWIPE PROFILE PHOTO CAROUSEL ===
+const ProfileCard = ({ images, name }) => {
+  const [activeIdx, setActiveIdx] = useState(0);
+  const [direction, setDirection] = useState(1);
+  const [isPaused, setIsPaused] = useState(false);
+  const validImages = images && images.length > 0 ? images : ["/img/default-profile.jpg"];
+
+  // Auto-slide every 4.5 seconds if multiple images exist
+  useEffect(() => {
+    if (validImages.length <= 1 || isPaused) return;
+
+    const timer = setInterval(() => {
+      setDirection(1);
+      setActiveIdx((prev) => (prev + 1) % validImages.length);
+    }, 4500);
+
+    return () => clearInterval(timer);
+  }, [validImages.length, isPaused]);
+
+  const handleNext = () => {
+    setDirection(1);
+    setActiveIdx((prev) => (prev + 1) % validImages.length);
   };
 
-  const rank = getRank(level);
-  const totalNodes = 4;
-
-  return (
-    <div className="flex gap-1 mt-3 items-center" title={`Proficiency: ${level}`}>
-      {[...Array(totalNodes)].map((_, i) => (
-        <div 
-          key={i}
-          className={`h-1 rounded-sm transition-all duration-500 ${
-            i < rank 
-              ? "bg-[var(--color-crimson)] w-4 shadow-[0_0_5px_rgba(159,18,57,0.5)]" 
-              : "bg-[var(--color-line)] w-2"
-          }`}
-        />
-      ))}
-    </div>
-  );
-};
-
-// --- INTERACTIVE SKILLS MANUSCRIPT ---
-const InteractiveSkillManuscript = ({ skills, projects }) => {
-  const [activeSkill, setActiveSkill] = useState(null);
-  const [relatedProjects, setRelatedProjects] = useState([]);
-
-  const handleSkillClick = (skillName) => {
-    if (activeSkill === skillName) {
-      setActiveSkill(null);
-      setRelatedProjects([]);
-      return;
-    }
-
-    const found = projects.filter(p => 
-      p.technologies?.some(tech => 
-        tech.toLowerCase().includes(skillName.toLowerCase()) || 
-        skillName.toLowerCase().includes(tech.toLowerCase())
-      )
-    );
-    
-    setActiveSkill(skillName);
-    setRelatedProjects(found);
+  const handlePrev = () => {
+    setDirection(-1);
+    setActiveIdx((prev) => (prev - 1 + validImages.length) % validImages.length);
   };
 
-  if (!skills || skills.length === 0) return null;
+  const slideVariants = {
+    enter: (dir) => ({
+      x: dir > 0 ? "100%" : "-100%",
+      opacity: 0,
+      scale: 1.05,
+    }),
+    center: {
+      x: 0,
+      opacity: 1,
+      scale: 1,
+      transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] },
+    },
+    exit: (dir) => ({
+      x: dir > 0 ? "-100%" : "100%",
+      opacity: 0,
+      scale: 0.95,
+      transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] },
+    }),
+  };
 
   return (
-    <div className="max-w-5xl mx-auto">
-      <div className="flex flex-wrap justify-center gap-8 leading-relaxed mb-12 px-4">
-        {skills.map((skill, idx) => {
-          const name = typeof skill === 'string' ? skill : skill.name;
-          const level = typeof skill === 'object' && skill.level ? skill.level : "Intermediate";
-          const isActive = activeSkill === name;
+    <motion.div
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+      whileHover={{ y: -4 }}
+      transition={{ duration: 0.3 }}
+      className="relative rounded-3xl overflow-hidden border border-[var(--color-border)] bg-[var(--card-bg)] shadow-2xl group flex flex-col justify-between select-none hover:border-[var(--color-crimson)]/50 transition-all"
+    >
+      {/* Holographic Border Glow on Hover */}
+      <div className="absolute inset-0 bg-gradient-to-tr from-[var(--color-crimson)]/20 via-transparent to-[var(--color-gold)]/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none z-20" />
 
-          return (
-            <motion.button
-              key={idx}
-              onClick={() => handleSkillClick(name)}
-              initial={{ opacity: 0, scale: 0.9 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ delay: idx * 0.05, duration: 0.5 }}
-              className={`relative group cursor-pointer flex flex-col items-center p-4 border rounded-lg transition-all duration-300 min-w-[140px] ${
-                isActive 
-                  ? "bg-[var(--color-line)] border-[var(--color-crimson)] shadow-lg shadow-[var(--color-crimson-shadow)]" 
-                  : "bg-transparent border-transparent hover:bg-[var(--color-line)] hover:border-[var(--color-border)]"
-              }`}
-            >
-              {/* Skill Name */}
-              <span className={`font-serif text-lg md:text-xl transition-colors duration-300 ${
-                isActive ? "text-[var(--color-paper)]" : "text-[var(--color-muted)] group-hover:text-[var(--color-paper)]"
-              }`}>
-                {name}
-              </span>
-
-              {/* Proficiency Visualizer */}
-              <ProficiencyBar level={level} />
-
-              {/* Text Label for Level (Only visible on hover or active) */}
-              <span className={`mt-2 font-mono text-[9px] uppercase tracking-widest transition-opacity duration-300 ${
-                isActive || "group-hover:opacity-100 opacity-0"
-              } ${isActive ? "text-[var(--color-gold)]" : "text-[var(--color-muted)]"}`}>
-                {level}
-              </span>
-
-              {/* Selection Indicator */}
-              {activeSkill !== name && (
-                 <span className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity text-[var(--color-crimson)] text-xs">
-                   +
-                 </span>
-              )}
-            </motion.button>
-          );
-        })}
+      {/* Floating Creative Sticker */}
+      <div className="absolute top-4 left-4 z-30 flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-white shadow-lg pointer-events-none">
+        <span className="w-2 h-2 rounded-full bg-[var(--color-crimson)] animate-pulse" />
+        <span className="font-mono text-[10px] font-bold tracking-wider">CREATIVE DEV</span>
       </div>
 
-      <AnimatePresence mode="wait">
-        {activeSkill && (
-          <motion.div
-            key={activeSkill}
-            initial={{ opacity: 0, height: 0, y: 20 }}
-            animate={{ opacity: 1, height: "auto", y: 0 }}
-            exit={{ opacity: 0, height: 0, y: 10 }}
-            transition={{ duration: 0.5, ease: "easeInOut" }}
-            className="border-t border-b border-[var(--color-border)] py-8 bg-[var(--color-line)]/30 overflow-hidden rounded-lg"
-          >
-            <div className="text-center mb-6">
-              <span className="font-mono text-[10px] text-[var(--color-muted)] uppercase tracking-widest">
-                Manifestation of
-              </span>
-              <h3 className="font-display text-2xl text-[var(--color-paper)] mt-2">
-                {activeSkill}
-              </h3>
-            </div>
+      {/* Image container with 4:5 ratio and swipe/drag gesture */}
+      <div className="relative aspect-[4/5] overflow-hidden bg-[var(--color-line)]">
+        <AnimatePresence initial={false} custom={direction} mode="popLayout">
+          <motion.img
+            key={activeIdx}
+            src={validImages[activeIdx]}
+            alt={name || "Profile photo"}
+            custom={direction}
+            variants={slideVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            drag="x"
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={0.2}
+            onDragEnd={(e, { offset, velocity }) => {
+              if (offset.x < -40 || velocity.x < -300) {
+                handleNext();
+              } else if (offset.x > 40 || velocity.x > 300) {
+                handlePrev();
+              }
+            }}
+            className="w-full h-full object-cover object-center cursor-grab active:cursor-grabbing"
+          />
+        </AnimatePresence>
 
-            {relatedProjects.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto px-4">
-                {relatedProjects.map((project, idx) => (
-                  <Link 
-                    key={idx} 
-                    to={`/project/${projects.indexOf(project)}`}
-                    className="flex items-center gap-4 p-4 border border-[var(--color-border)] hover:border-[var(--color-crimson)] hover:bg-[var(--color-line)] transition-all group rounded-md"
-                  >
-                    <div className="w-12 h-12 bg-[var(--color-line)] flex items-center justify-center border border-[var(--color-border)] group-hover:border-[var(--color-crimson)] transition-colors rounded">
-                      <span className="font-display text-lg text-[var(--color-paper)] group-hover:text-[var(--color-crimson)]">
-                        {String(idx + 1).padStart(2, '0')}
-                      </span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-serif text-[var(--color-paper)] truncate group-hover:text-[var(--color-gold)] transition-colors">
-                        {project.name}
-                      </h4>
-                      <div className="text-xs text-[var(--color-muted)] truncate">Click to view details</div>
-                    </div>
-                    <span className="text-[var(--color-muted)] group-hover:text-[var(--color-paper)] transition-colors">→</span>
-                  </Link>
-                ))}
-              </div>
-            ) : (
-              <p className="text-center font-serif text-[var(--color-muted)] italic px-6">
-                "This skill is part of my technical arsenal, though not explicitly linked to the highlighted projects above."
-              </p>
-            )}
-          </motion.div>
+        {/* Ambient Dark Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none z-10" />
+
+        {/* Side Horizontal Navigation Buttons (Appear on Hover / Touch) */}
+        {validImages.length > 1 && (
+          <>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handlePrev();
+              }}
+              className="absolute left-3 top-1/2 -translate-y-1/2 z-30 w-8 h-8 rounded-full bg-black/40 hover:bg-[var(--color-crimson)] text-white backdrop-blur-md border border-white/20 flex items-center justify-center text-xs opacity-70 sm:opacity-0 group-hover:opacity-100 transition-all shadow-md active:scale-90"
+              aria-label="Previous photo"
+            >
+              ←
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleNext();
+              }}
+              className="absolute right-3 top-1/2 -translate-y-1/2 z-30 w-8 h-8 rounded-full bg-black/40 hover:bg-[var(--color-crimson)] text-white backdrop-blur-md border border-white/20 flex items-center justify-center text-xs opacity-70 sm:opacity-0 group-hover:opacity-100 transition-all shadow-md active:scale-90"
+              aria-label="Next photo"
+            >
+              →
+            </button>
+          </>
         )}
-      </AnimatePresence>
-    </div>
-  );
-};
 
-// --- EPILOGUE (CTA) ---
-const Epilogue = () => {
-  return (
-    <section className="py-32 px-6 border-t border-[var(--color-border)] relative overflow-hidden">
-      <div className="max-w-4xl mx-auto text-center relative z-10">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 1 }}
-        >
-          <span className="font-mono text-[var(--color-crimson)] text-xs tracking-[0.5em] uppercase mb-6 block">
-            Contact
-          </span>
-          <h2 className="font-display text-4xl md:text-6xl text-[var(--color-paper)] mb-8">
-            Let's Work Together
-          </h2>
-          <p className="font-serif text-xl text-[var(--color-muted)] italic mb-12 max-w-2xl mx-auto">
-            "I am currently available for freelance projects and open to new opportunities. Let's discuss how we can build something great together."
-          </p>
-          
-          <div className="flex flex-col md:flex-row items-center justify-center gap-6">
-            <Link 
-              to="/contact"
-              className="px-8 py-4 bg-[var(--color-crimson)] text-white font-display tracking-wider hover:opacity-90 transition-all transform hover:-translate-y-1 shadow-lg shadow-red-950/20"
-            >
-              Get in Touch
-            </Link>
-            <Link 
-              to="/about"
-              className="px-8 py-4 border border-[var(--color-border)] text-[var(--color-muted)] font-display tracking-wider hover:border-[var(--color-paper)] hover:text-[var(--color-paper)] transition-all"
-            >
-              Full Biography
-            </Link>
+        {/* Bottom Tag */}
+        <div className="absolute bottom-5 left-5 right-5 z-20 text-white flex items-end justify-between pointer-events-none">
+          <div>
+            <span className="text-[11px] font-mono text-white/70 block tracking-wide">
+              Alif Haikal Nayaza
+            </span>
+            <span className="font-display text-xl font-bold text-white tracking-tight">
+              Software & Web Developer
+            </span>
           </div>
-        </motion.div>
+
+          {/* Mini Soundwave Indicator */}
+          <div className="flex items-center gap-0.5 h-4">
+            <span className="w-1 h-3 bg-[var(--color-crimson)] rounded-full animate-pulse" />
+            <span className="w-1 h-4 bg-white rounded-full animate-pulse delay-75" />
+            <span className="w-1 h-2 bg-[var(--color-gold)] rounded-full animate-pulse delay-150" />
+          </div>
+        </div>
+
+        {/* Photo Switcher Dots / Progress Bar */}
+        {validImages.length > 1 && (
+          <div className="absolute top-4 right-4 z-30 flex items-center gap-1.5 p-1.5 rounded-full bg-black/50 backdrop-blur-md border border-white/10">
+            {validImages.map((_, i) => (
+              <button
+                key={i}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setDirection(i > activeIdx ? 1 : -1);
+                  setActiveIdx(i);
+                }}
+                className={`h-1.5 rounded-full transition-all duration-300 ${
+                  i === activeIdx ? "bg-[var(--color-crimson)] w-5" : "bg-white/40 hover:bg-white/80 w-1.5"
+                }`}
+                aria-label={`Show photo ${i + 1}`}
+              />
+            ))}
+          </div>
+        )}
       </div>
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[var(--color-crimson)] opacity-[0.02] blur-[100px] rounded-full pointer-events-none" />
-    </section>
+    </motion.div>
   );
 };
 
-// --- MAIN PAGE COMPONENT ---
-export default function Home() {
-  const { data, loading } = usePortfolio();
+// === INTERACTIVE PROJECT CARD ===
+const InteractiveProjectCard = ({ project, index }) => {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.4, delay: index * 0.06 }}
+      whileHover={{ y: -6 }}
+      className="h-full"
+    >
+      <Link
+        to={`/project/${index}`}
+        className="group relative block rounded-2xl sm:rounded-3xl overflow-hidden border border-[var(--color-border)] bg-[var(--card-bg)] hover:border-[var(--color-crimson)]/80 transition-all duration-300 shadow-sm hover:shadow-2xl flex flex-col justify-between h-full p-3 sm:p-5 md:p-6"
+      >
+        {/* Subtle Number Watermark in Background */}
+        <span className="absolute -bottom-4 -right-2 font-display text-6xl sm:text-8xl md:text-9xl font-black text-[var(--color-border)]/20 pointer-events-none select-none z-0 group-hover:text-[var(--color-crimson)]/15 group-hover:translate-x-1 group-hover:-translate-y-1 transition-all duration-300">
+          0{index + 1}
+        </span>
 
-  if (loading) {
-    return (
-      <div className="h-screen flex items-center justify-center bg-[var(--color-bg)]">
-        <motion.div 
-          animate={{ opacity: [0.3, 1, 0.3] }}
-          transition={{ duration: 2, repeat: Infinity }}
-          className="font-display text-xl text-[var(--color-crimson)] tracking-[0.3em]"
-        >
-          LOADING EXPERIENCE...
-        </motion.div>
-      </div>
-    );
-  }
+        <div className="relative z-10">
+          {/* Top Floating Glass Badge Bar */}
+          <div className="flex items-center justify-between mb-2.5 sm:mb-4">
+            <span className="px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full font-mono text-[9px] sm:text-[11px] font-bold bg-[var(--color-line)] text-[var(--color-crimson)] border border-[var(--color-border)] shadow-sm">
+              PROJ // 0{index + 1}
+            </span>
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border border-[var(--color-border)] bg-[var(--color-line)] flex items-center justify-center text-[10px] sm:text-xs text-[var(--color-paper)] group-hover:bg-[var(--color-crimson)] group-hover:text-white group-hover:border-[var(--color-crimson)] group-hover:rotate-45 transition-all duration-300 shadow-sm">
+              ↗
+            </div>
+          </div>
+
+          {/* Image Stage with Rounded Mask & Zoom */}
+          <div className="aspect-[4/3] sm:aspect-[16/10] overflow-hidden rounded-xl sm:rounded-2xl bg-[var(--color-line)] relative mb-3 sm:mb-4">
+            {project.image ? (
+              <img
+                src={project.image}
+                alt={project.name}
+                className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-700 ease-out"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center font-display text-2xl sm:text-4xl text-[var(--color-muted)]">
+                ⚡
+              </div>
+            )}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            
+            {/* Quick Tag Overlay */}
+            <div className="absolute bottom-2.5 left-2.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 hidden sm:block">
+              <span className="px-2.5 py-1 rounded-full text-[9px] font-mono font-bold bg-black/60 backdrop-blur-md text-white border border-white/20">
+                VIEW CASE STUDY
+              </span>
+            </div>
+          </div>
+
+          {/* Title & Description */}
+          <div>
+            <h3 className="font-display text-sm sm:text-xl md:text-2xl font-bold text-[var(--color-paper)] group-hover:text-[var(--color-crimson)] transition-colors line-clamp-1 mb-1 sm:mb-2">
+              {project.name}
+            </h3>
+            <p className="text-[11px] sm:text-xs md:text-sm text-[var(--color-muted)] line-clamp-2 leading-relaxed font-normal mb-3 hidden sm:block">
+              {project.description || "Web application with clean interface and modern stack."}
+            </p>
+          </div>
+        </div>
+
+        {/* Tech Chips Footer */}
+        {project.technologies && project.technologies.length > 0 && (
+          <div className="relative z-10 flex flex-wrap gap-1 sm:gap-1.5 pt-2 sm:pt-3 border-t border-[var(--color-border)]/60">
+            {project.technologies.slice(0, 2).map((tech, i) => (
+              <span
+                key={i}
+                className="px-2 py-0.5 rounded-md text-[9px] sm:text-[10px] font-mono bg-[var(--color-line)] text-[var(--color-muted)] border border-[var(--color-border)] font-medium group-hover:border-[var(--color-crimson)]/30 transition-colors"
+              >
+                {tech}
+              </span>
+            ))}
+            {project.technologies.length > 2 && (
+              <span className="px-1.5 py-0.5 rounded-md text-[9px] sm:text-[10px] font-mono text-[var(--color-muted)]">
+                +{project.technologies.length - 2}
+              </span>
+            )}
+          </div>
+        )}
+      </Link>
+    </motion.div>
+  );
+};
+
+// === SECTION LABEL ===
+const SectionHeader = ({ index, title, description, linkTo, linkText }) => (
+  <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-10 gap-3 border-b border-[var(--color-border)] pb-5">
+    <div>
+      <span className="font-mono text-xs font-bold text-[var(--color-crimson)] tracking-widest uppercase block mb-1">
+        {index}
+      </span>
+      <h2 className="font-display text-2xl sm:text-4xl font-extrabold text-[var(--color-paper)] tracking-tight">
+        {title}
+      </h2>
+      {description && (
+        <p className="text-xs sm:text-sm text-[var(--color-muted)] mt-1 max-w-xl">
+          {description}
+        </p>
+      )}
+    </div>
+    {linkTo && (
+      <Link
+        to={linkTo}
+        className="group inline-flex items-center gap-1.5 font-mono text-xs font-semibold text-[var(--color-paper)] hover:text-[var(--color-crimson)] transition-colors self-start sm:self-end"
+      >
+        <span>{linkText || "View All"}</span>
+        <span className="group-hover:translate-x-1 transition-transform">→</span>
+      </Link>
+    )}
+  </div>
+);
+
+// === MAIN HOME COMPONENT ===
+export default function Home() {
+  const { data } = usePortfolio();
+  const { onOpenPitch, onOpenCmd } = useOutletContext() || {};
+
+  const homeData = data?.home || {};
+  const aboutPageData = data?.aboutPage || {};
+  const projects = data?.projects || [];
+  const featuredProjects = projects.slice(0, 4);
+
+  const images = useMemo(() => {
+    if (data?.profile?.images && data.profile.images.length > 0) {
+      return data.profile.images;
+    }
+    if (data?.profile?.image) {
+      return [data.profile.image];
+    }
+    return ["/img/default-profile.jpg"];
+  }, [data]);
+
+  const allSkills = useMemo(() => {
+    const skillSet = new Set();
+    if (data?.projects) {
+      data.projects.forEach((p) => {
+        p.technologies?.forEach((t) => skillSet.add(t));
+      });
+    }
+    return Array.from(skillSet).slice(0, 16);
+  }, [data]);
 
   return (
     <PageTransition>
-      <div className="relative min-h-screen bg-[var(--color-bg)] text-[var(--color-paper)] selection:bg-[var(--color-crimson)] selection:text-[var(--color-paper)]">
-        <AtmosphericBackground />
+      <div className="relative pb-2">
         
-        <div className="relative z-10">
-          
-          {/* Prologue: Headline */}
-          <NarrativeHero data={data} />
+        {/* Ambient Top Glow with Breathing Animation */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[350px] ambient-glow pointer-events-none -z-10 blur-3xl opacity-60 animate-aura" />
 
-          {/* Character Introduction (Improved) */}
-          <AuthorPortrait 
-            images={data?.profile?.images} 
-            name={data?.home?.logoName} 
-          />
+        {/* === HERO SECTION === */}
+        <section className="pt-6 pb-12 sm:pb-16 md:pt-10 md:pb-20">
           
-          {/* Chapter I: Chosen Chronicles (Projects) */}
-          <div className="max-w-6xl mx-auto px-6 mt-20">
-            <ChapterMarker 
-              number="I" 
-              title="Featured Projects" 
-              subtitle="A selection of recent work demonstrating my technical capabilities and problem-solving skills."
-            />
+          {/* Top Status Bar Pill */}
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            className="flex flex-wrap items-center gap-3 mb-8"
+          >
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-[var(--color-border)] bg-[var(--card-bg)] backdrop-blur-md shadow-sm">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-radar" />
+              <span className="font-mono text-xs text-[var(--color-paper)] font-medium">
+                {aboutPageData.availability || "Available for projects"}
+              </span>
+            </div>
+
+            {onOpenPitch && (
+              <button
+                onClick={onOpenPitch}
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-[var(--color-crimson)]/50 bg-[var(--color-crimson)]/10 hover:bg-[var(--color-crimson)] hover:text-white text-[var(--color-crimson)] font-mono text-xs font-bold transition-all shadow-sm active:scale-95"
+              >
+                <span>⚡</span>
+                <span>60s Fast Pitch</span>
+              </button>
+            )}
+
+            <div className="inline-flex items-center px-3.5 py-1.5 rounded-full border border-[var(--color-border)] bg-[var(--card-bg)] backdrop-blur-md shadow-sm">
+              <LocalTimeBadge />
+            </div>
+          </motion.div>
+
+          {/* Hero Name / Statement */}
+          <div className="w-full">
+            <motion.div
+              initial={{ opacity: 0, x: -15 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="font-mono text-xs sm:text-sm font-semibold tracking-wider text-[var(--color-crimson)] uppercase mb-3 flex items-center gap-2"
+            >
+              <span>👋</span>
+              <span>Hello, I'm</span>
+            </motion.div>
+
+            <motion.h1
+              initial={{ opacity: 0, y: 25 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
+              className="font-display text-4xl sm:text-6xl md:text-7xl lg:text-8xl 2xl:text-9xl font-extrabold tracking-tight text-[var(--color-paper)] leading-[1.05]"
+            >
+              {homeData.headline || "Alif Haikal Nayaza"}
+            </motion.h1>
+
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.25, ease: [0.16, 1, 0.3, 1] }}
+              className="mt-6 text-base sm:text-lg md:text-xl 2xl:text-2xl text-[var(--color-muted)] max-w-4xl leading-relaxed font-normal"
+            >
+              {homeData.subtitle ||
+                "I build web applications, interactive interfaces, and digital products. Focused on clean code, fast performance, and practical user experience."}
+            </motion.p>
+
+            {/* Quick Action Buttons with Spring Dynamics */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.35 }}
+              className="mt-8 flex flex-wrap items-center gap-3.5"
+            >
+              <motion.div whileHover={{ scale: 1.05, y: -2 }} whileTap={{ scale: 0.95 }}>
+                <Link
+                  to="/projects"
+                  className="px-6 py-3 rounded-full bg-[var(--color-crimson)] text-white font-mono text-xs font-bold tracking-wider hover:opacity-90 transition-all shadow-lg shadow-[var(--color-crimson-shadow)] flex items-center gap-2"
+                >
+                  <span>Check Projects</span>
+                  <span>↓</span>
+                </Link>
+              </motion.div>
+              <motion.div whileHover={{ scale: 1.05, y: -2 }} whileTap={{ scale: 0.95 }}>
+                <Link
+                  to="/contact"
+                  className="px-6 py-3 rounded-full border border-[var(--color-border)] bg-[var(--card-bg)] text-[var(--color-paper)] font-mono text-xs font-semibold tracking-wider hover:border-[var(--color-crimson)] hover:bg-[var(--color-line)] transition-all"
+                >
+                  Get In Touch →
+                </Link>
+              </motion.div>
+            </motion.div>
+          </div>
+        </section>
+
+        {/* === KINETIC TICKER === */}
+        <TechTicker />
+
+        {/* === CREATIVE BENTO GRID === */}
+        <section className="my-16">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-stretch">
             
-            <div className="space-y-12">
-              {data?.projects?.slice(0, 4).map((project, index) => (
-                <ChronicleCard key={index} project={project} index={index} />
-              ))}
+            {/* Left: 3D Tilt Profile Photo Card (5 cols) */}
+            <div className="md:col-span-5">
+              <ProfileCard images={images} name={homeData.logoName || "Alraf"} />
             </div>
 
-            <div className="text-center py-12">
-              <Link to="/projects" className="group inline-flex flex-col items-center gap-2">
-                <span className="font-mono text-xs text-[var(--color-muted)] tracking-widest group-hover:text-[var(--color-crimson)] transition-colors">
-                  VIEW FULL ARCHIVE
-                </span>
-                <span className="h-[1px] w-12 bg-[var(--color-border)] group-hover:w-24 group-hover:bg-[var(--color-crimson)] transition-all duration-300" />
-              </Link>
+            {/* Right: Quick Bento Info (7 cols) */}
+            <div className="md:col-span-7 flex flex-col justify-between gap-6">
+              
+              {/* Bio Card */}
+              <div className="p-7 sm:p-8 rounded-3xl border border-[var(--color-border)] bg-[var(--card-bg)] shadow-sm flex-1 flex flex-col justify-between hover:border-[var(--color-crimson)]/50 transition-all duration-300">
+                <div>
+                  <span className="font-mono text-xs font-bold text-[var(--color-crimson)] uppercase tracking-wider block mb-2">
+                    ABOUT ME
+                  </span>
+                  <h3 className="font-display text-xl sm:text-2xl font-bold text-[var(--color-paper)] mb-3">
+                    Developer who enjoys building practical tools and smooth interfaces.
+                  </h3>
+                  <p className="text-sm text-[var(--color-muted)] leading-relaxed line-clamp-4 font-normal">
+                    {data?.profile?.about ||
+                      "I work across the full stack, from responsive frontend layouts with React and Tailwind to backend APIs and databases with Node.js and MongoDB. Always curious to explore new frameworks and improve my craft."}
+                  </p>
+                </div>
+
+                <div className="pt-5 mt-5 border-t border-[var(--color-border)] flex items-center justify-between">
+                  <span className="font-mono text-xs text-[var(--color-muted)]">
+                    📍 {aboutPageData.location || "Indonesia • Remote"}
+                  </span>
+                  <Link
+                    to="/about"
+                    className="font-mono text-xs font-semibold text-[var(--color-crimson)] hover:underline flex items-center gap-1"
+                  >
+                    <span>Read Story</span>
+                    <span>→</span>
+                  </Link>
+                </div>
+              </div>
+
+              {/* Quick Metrics & Highlights */}
+              <div className="grid grid-cols-3 gap-2.5 sm:gap-3.5">
+                <div className="p-3 sm:p-5 rounded-2xl border border-[var(--color-border)] bg-[var(--card-bg)] text-center hover:border-[var(--color-crimson)]/50 transition-all duration-300">
+                  <div className="font-display text-xl sm:text-3xl font-extrabold text-[var(--color-paper)]">
+                    {projects.length}+
+                  </div>
+                  <div className="font-mono text-[9px] sm:text-[10px] text-[var(--color-muted)] uppercase tracking-wider mt-0.5">
+                    Projects
+                  </div>
+                </div>
+
+                <div className="p-3 sm:p-5 rounded-2xl border border-[var(--color-border)] bg-[var(--card-bg)] text-center hover:border-[var(--color-crimson)]/50 transition-all duration-300">
+                  <div className="font-display text-xl sm:text-3xl font-extrabold text-[var(--color-crimson)]">
+                    100%
+                  </div>
+                  <div className="font-mono text-[9px] sm:text-[10px] text-[var(--color-muted)] uppercase tracking-wider mt-0.5">
+                    Full-Stack
+                  </div>
+                </div>
+
+                <div className="p-3 sm:p-5 rounded-2xl border border-[var(--color-border)] bg-[var(--card-bg)] text-center hover:border-[var(--color-crimson)]/50 transition-all duration-300">
+                  <div className="font-display text-xl sm:text-3xl font-extrabold text-[var(--color-paper)]">
+                    {allSkills.length}+
+                  </div>
+                  <div className="font-mono text-[9px] sm:text-[10px] text-[var(--color-muted)] uppercase tracking-wider mt-0.5">
+                    Tools
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+        </section>
+
+        {/* === FEATURED PROJECTS === */}
+        <section className="my-20">
+          <SectionHeader
+            index="01 / WORK"
+            title="Selected Projects"
+            description="A few web applications and tools I've built recently."
+            linkTo="/projects"
+            linkText="All Projects"
+          />
+
+          {/* Responsive Grid: 2-col on mobile, 4-col on desktop */}
+          <div className="grid grid-cols-2 gap-3.5 sm:gap-5 md:grid-cols-2 lg:grid-cols-4 md:gap-6">
+            {featuredProjects.map((project, index) => (
+              <InteractiveProjectCard key={index} project={project} index={index} />
+            ))}
+          </div>
+        </section>
+
+        {/* === SKILLS / TOOLBOX === */}
+        {allSkills.length > 0 && (
+          <section className="my-20">
+            <SectionHeader
+              index="02 / TOOLBOX"
+              title="Technologies & Stacks"
+              description="Tools and languages I frequently work with."
+            />
+
+            <div className="p-7 sm:p-10 rounded-3xl border border-[var(--color-border)] bg-[var(--card-bg)] shadow-sm">
+              <div className="flex flex-wrap gap-2.5">
+                {allSkills.map((skill, idx) => (
+                  <span
+                    key={idx}
+                    className="px-4 py-2 rounded-full border border-[var(--color-border)] bg-[var(--color-line)] text-xs font-mono font-medium text-[var(--color-paper)] hover:border-[var(--color-crimson)] hover:text-[var(--color-crimson)] transition-all cursor-default"
+                  >
+                    {skill}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* === CASUAL CONTACT BANNER === */}
+        <motion.section 
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+          className="mt-12 sm:mt-16 mb-2"
+        >
+          <div className="p-7 sm:p-12 md:p-14 rounded-3xl border border-[var(--color-border)] bg-[var(--card-bg)] shadow-xl relative overflow-hidden text-center group hover:border-[var(--color-crimson)]/50 transition-all duration-500">
+            {/* Ambient Background Aura */}
+            <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-64 h-64 bg-[var(--color-crimson)]/10 rounded-full blur-3xl pointer-events-none group-hover:scale-125 transition-transform duration-700" />
+
+            <span className="font-mono text-xs font-bold text-[var(--color-crimson)] uppercase tracking-widest block mb-2 relative z-10">
+              03 / CONTACT
+            </span>
+            <h2 className="font-display text-2xl sm:text-4xl md:text-5xl font-black text-[var(--color-paper)] tracking-tight max-w-xl mx-auto relative z-10">
+              Got an idea or want to work together?
+            </h2>
+            <p className="text-xs sm:text-sm md:text-base text-[var(--color-muted)] mt-2.5 max-w-md mx-auto leading-relaxed relative z-10 font-normal">
+              My inbox is always open. Let's talk about projects, opportunities, or tech.
+            </p>
+            <div className="mt-6 flex flex-wrap justify-center gap-3 relative z-10">
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Link
+                  to="/contact"
+                  className="px-7 py-3 rounded-full bg-[var(--color-crimson)] text-white font-mono text-xs font-bold tracking-wider hover:opacity-90 transition-all shadow-lg shadow-[var(--color-crimson-shadow)] flex items-center gap-2"
+                >
+                  <span>Send a Message</span>
+                  <span>→</span>
+                </Link>
+              </motion.div>
             </div>
           </div>
+        </motion.section>
 
-          {/* Chapter II: Mantras of Knowledge (Skills - Improved) */}
-          <div className="max-w-6xl mx-auto px-6 pb-20 border-t border-[var(--color-border)]/50 mt-20">
-            <ChapterMarker 
-              number="II" 
-              title="Technical Expertise" 
-              subtitle="Hover over a skill to see proficiency level details."
-            />
-            <InteractiveSkillManuscript 
-              skills={data?.skills} 
-              projects={data?.projects} 
-            />
-          </div>
-
-          {/* Epilogue */}
-          <Epilogue />
-
-        </div>
       </div>
     </PageTransition>
   );

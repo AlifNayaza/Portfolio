@@ -1,21 +1,21 @@
 {
 	"geolocation": {
 		"data": {
-			"city": "Pontianak",
+			"city": "Bandung",
 			"country": {
 				"code": "ID",
 				"name": "Indonesia"
 			},
 			"subdivision": {
-				"code": "KB",
-				"name": "West Kalimantan"
+				"code": "JB",
+				"name": "West Java"
 			},
-			"timezone": "Asia/Pontianak",
-			"latitude": -0.031,
-			"longitude": 109.3257,
-			"postalCode": "78111"
+			"timezone": "Asia/Jakarta",
+			"latitude": -6.9172,
+			"longitude": 107.6296,
+			"postalCode": "40257"
 		},
-		"timestamp": 1784700535297
+		"timestamp": 1788157702487
 	},
-	"dbConnectionString": "postgres://localhost:60572/postgres"
+	"dbConnectionString": "postgres://localhost:65345/postgres"
 }
