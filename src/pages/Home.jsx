@@ -4,6 +4,7 @@ import { usePortfolio } from "../context/PortfolioContext";
 import PageTransition from "../components/layout/PageTransition"; 
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useOutletContext } from "react-router-dom";
+import ProjectCardImageStage from "../components/ui/ProjectCardImageStage";
 
 // === LIVE LOCAL TIME WIDGET ===
 const LocalTimeBadge = () => {
@@ -267,37 +268,12 @@ const InteractiveProjectCard = ({ project, index }) => {
             </div>
           </div>
 
-          {/* Image Stage with Rounded Mask & Zoom */}
-          <div className="aspect-[4/3] sm:aspect-[16/10] overflow-hidden rounded-xl sm:rounded-2xl bg-[var(--color-line)] relative mb-3 sm:mb-4">
-            {coverImage ? (
-              <img
-                src={coverImage}
-                alt={project.name}
-                className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-700 ease-out"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center font-display text-2xl sm:text-4xl text-[var(--color-muted)]">
-                ⚡
-              </div>
-            )}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            
-            {/* Multi-Image Counter Pill */}
-            {projectImages.length > 1 && (
-              <div className="absolute top-2 right-2 z-10">
-                <span className="px-2 py-0.5 rounded-full text-[9px] font-mono font-bold bg-black/70 backdrop-blur-md text-white border border-white/20 shadow-sm">
-                  📷 {projectImages.length}
-                </span>
-              </div>
-            )}
-
-            {/* Quick Tag Overlay */}
-            <div className="absolute bottom-2.5 left-2.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 hidden sm:block">
-              <span className="px-2.5 py-1 rounded-full text-[9px] font-mono font-bold bg-black/60 backdrop-blur-md text-white border border-white/20">
-                VIEW CASE STUDY
-              </span>
-            </div>
-          </div>
+          {/* Image Stage with Interactive Multi-Image Browsing */}
+          <ProjectCardImageStage
+            images={projectImages}
+            fallbackImage={project.image}
+            title={project.name}
+          />
 
           {/* Title & Description */}
           <div>

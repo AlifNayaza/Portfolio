@@ -28,6 +28,17 @@ function ScrollToTop() {
   const { pathname } = useLocation();
   useEffect(() => { 
     window.scrollTo({ top: 0, behavior: 'instant' }); 
+    if (pathname === '/') {
+      document.title = "Alif Haikal Nayaza — Portfolio";
+    } else if (pathname === '/projects') {
+      document.title = "Works — Alif Haikal Nayaza";
+    } else if (pathname === '/about') {
+      document.title = "About — Alif Haikal Nayaza";
+    } else if (pathname === '/contact') {
+      document.title = "Contact — Alif Haikal Nayaza";
+    } else if (pathname.startsWith('/admin') || pathname.startsWith(ADMIN_PATH)) {
+      document.title = "Studio Dashboard";
+    }
   }, [pathname]);
   return null;
 }

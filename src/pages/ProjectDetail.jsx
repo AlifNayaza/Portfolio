@@ -161,13 +161,16 @@ export default function ProjectDetail() {
   const [galleryMode, setGalleryMode] = useState("slider"); // "slider" | "grid"
   const [direction, setDirection] = useState(0);
 
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [id]);
-
   const projectIndex = parseInt(id);
   const projects = data?.projects || [];
   const project = projects[projectIndex];
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    if (project?.name) {
+      document.title = `${project.name} — Alif Haikal Nayaza`;
+    }
+  }, [id, project?.name]);
 
   // Normalize project images
   const projectImages = useMemo(() => {
