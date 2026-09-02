@@ -101,53 +101,68 @@ const ImageModal = ({ isOpen, onClose, images = [], activeIndex = 0, onNavigate,
   );
 };
 
-// === EXTRACTOR: SHORT PUNCHY HIGHLIGHTS ===
-const extractHighlights = (text) => {
-  if (!text) return [];
-  const rawParagraphs = text.split(/\n+/).map((p) => p.trim()).filter(Boolean);
-  
-  const highlights = [];
-  rawParagraphs.forEach((p, idx) => {
-    const lower = p.toLowerCase();
-    let title = "Feature";
-    let icon = "✦";
+// === SMART CONTENT PARSER FOR CASE STUDY DESCRIPTIONS ===
+const parseProjectStory = (text = "") => {
+  if (!text) {
+    return {
+      lead: "A modern web application built with clean architecture and responsive user experience.",
+      contextParagraphs: [],
+      features: [],
+      extraParagraphs: [],
+    };
+  }
 
-    if (lower.includes("admin") || lower.includes("dashboard") || lower.includes("role")) {
-      icon = "🔒";
-      title = "Role-Protected Management";
-    } else if (lower.includes("chat") || lower.includes("socket") || lower.includes("real-time") || lower.includes("realtime")) {
-      icon = "💬";
-      title = "Real-Time Communication";
-    } else if (lower.includes("frontend") || lower.includes("interface") || lower.includes("ui") || lower.includes("react")) {
-      icon = "🎨";
-      title = "Modern Responsive UI";
-    } else if (lower.includes("performance") || lower.includes("lazy") || lower.includes("optimized") || lower.includes("fast")) {
-      icon = "⚡";
-      title = "Optimized Performance";
-    } else if (lower.includes("database") || lower.includes("api") || lower.includes("backend")) {
-      icon = "⚙️";
-      title = "Structured Backend & APIs";
-    } else if (lower.includes("queue") || lower.includes("appointment") || lower.includes("schedule")) {
-      icon = "📊";
-      title = "Smart Workflow & Queues";
-    } else if (lower.includes("library") || lower.includes("read") || lower.includes("comic") || lower.includes("book")) {
-      icon = "📚";
-      title = "Interactive Library System";
-    } else {
-      icon = "🚀";
-      title = `Key Capability #${idx + 1}`;
-    }
+  const normalized = text.replace(/\r\n/g, "\n").trim();
 
-    const firstSentence = p.split(/(?<=[.?!])\s+/)[0] || p;
-    highlights.push({
-      icon,
-      title,
-      summary: firstSentence.length > 150 ? firstSentence.slice(0, 147) + "..." : firstSentence,
-      fullText: p,
+  // Match structured numbered items like "1. Title\nDescription..." or "1. Title: Description..."
+  const numberedPattern = /(?:^|\n)\s*(\d+)[.)]\s+([^\n]+)\n+([\s\S]*?)(?=(?:\n\s*\d+[.)]\s+)|$)/g;
+  const matches = [...normalized.matchAll(numberedPattern)];
+
+  if (matches.length > 0) {
+    // Locate where the first feature starts
+    const firstFeatureIndex = normalized.search(/(?:^|\n)\s*1[.)]\s+/);
+    const beforeFeatures = firstFeatureIndex > 0 ? normalized.slice(0, firstFeatureIndex).trim() : "";
+
+    // Clean section headers like "Key Features & System Capabilities:"
+    const cleanBefore = beforeFeatures
+      .replace(/(?:Key Features(?:\s*&.*)?|Fitur Utama.*|Features.*|Capabilities.*):?\s*$/i, "")
+      .trim();
+
+    const introParagraphs = cleanBefore
+      .split(/\n\s*\n/)
+      .map((p) => p.trim())
+      .filter(Boolean);
+
+    const lead = introParagraphs[0] || "";
+    const contextParagraphs = introParagraphs.slice(1);
+
+    const features = matches.map((m, idx) => {
+      const num = m[1] || String(idx + 1);
+      const title = m[2].trim().replace(/^[-–—:]\s*/, "");
+      const description = m[3].trim();
+      return {
+        number: num.padStart(2, "0"),
+        title,
+        description,
+      };
     });
-  });
 
-  return highlights;
+    return {
+      lead,
+      contextParagraphs,
+      features,
+      extraParagraphs: [],
+    };
+  }
+
+  // Fallback if no numbered features: split by normal paragraphs
+  const allParagraphs = normalized.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
+  return {
+    lead: allParagraphs[0] || "",
+    contextParagraphs: allParagraphs.slice(1, 3),
+    features: [],
+    extraParagraphs: allParagraphs.slice(3),
+  };
 };
 
 export default function ProjectDetail() {
@@ -157,7 +172,6 @@ export default function ProjectDetail() {
   
   const [activeImageIdx, setActiveImageIdx] = useState(0);
   const [isZoomed, setIsZoomed] = useState(false);
-  const [showFullStory, setShowFullStory] = useState(false);
   const [galleryMode, setGalleryMode] = useState("slider"); // "slider" | "grid"
   const [direction, setDirection] = useState(0);
 
@@ -183,6 +197,11 @@ export default function ProjectDetail() {
     }
     return [];
   }, [project]);
+
+  // Smartly parsed story content
+  const parsedStory = useMemo(() => {
+    return parseProjectStory(project?.description || "");
+  }, [project?.description]);
 
   if (loading) {
     return (
@@ -217,10 +236,6 @@ export default function ProjectDetail() {
 
   const prevIndex = projectIndex > 0 ? projectIndex - 1 : null;
   const nextIndex = projectIndex < projects.length - 1 ? projectIndex + 1 : null;
-  
-  const rawParagraphs = (project.description || "").split(/\n+/).map((p) => p.trim()).filter(Boolean);
-  const leadSummary = rawParagraphs[0] || "A modern web application built with clean architecture and responsive user experience.";
-  const highlights = extractHighlights(project.description);
 
   const handlePrevImage = () => {
     if (projectImages.length <= 1) return;
@@ -254,7 +269,7 @@ export default function ProjectDetail() {
 
   return (
     <PageTransition>
-      <div className="relative pb-4 sm:pb-8 w-full">
+      <div key={id} className="relative pb-6 sm:pb-12 w-full">
         
         {/* Lightbox Multi-Image Modal */}
         <AnimatePresence>
@@ -313,10 +328,12 @@ export default function ProjectDetail() {
             {project.name}
           </h1>
 
-          {/* Punchy 1-sentence Lead Summary */}
-          <p className="text-base sm:text-lg text-[var(--color-muted)] leading-relaxed max-w-4xl font-normal">
-            {leadSummary}
-          </p>
+          {/* Lead Summary */}
+          {parsedStory.lead && (
+            <p className="text-base sm:text-lg text-[var(--color-muted)] leading-relaxed max-w-4xl font-normal">
+              {parsedStory.lead}
+            </p>
+          )}
 
           {/* Action Link Bar */}
           <div className="mt-6 flex flex-wrap items-center gap-3">
@@ -512,30 +529,46 @@ export default function ProjectDetail() {
           </section>
         )}
 
-        {/* === PUNCHY SCANNABLE HIGHLIGHTS BENTO === */}
-        {highlights.length > 0 && (
+        {/* === PROBLEM & BACKGROUND CONTEXT === */}
+        {parsedStory.contextParagraphs.length > 0 && (
           <section className="my-10 space-y-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="font-mono text-xs font-bold text-[var(--color-crimson)] uppercase tracking-wider">
-                KEY HIGHLIGHTS & ARCHITECTURE
-              </span>
+            <span className="font-mono text-xs font-bold text-[var(--color-crimson)] uppercase tracking-wider block">
+              💡 BACKGROUND & PROBLEM STATEMENT
+            </span>
+            <div className="p-6 sm:p-8 rounded-2xl sm:rounded-3xl border border-[var(--color-border)] bg-[var(--card-bg)] shadow-sm space-y-4">
+              {parsedStory.contextParagraphs.map((para, i) => (
+                <p key={i} className="text-sm sm:text-base text-[var(--color-muted)] leading-relaxed font-normal">
+                  {para}
+                </p>
+              ))}
             </div>
+          </section>
+        )}
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
-              {highlights.map((item, idx) => (
+        {/* === STRUCTURED KEY FEATURES & CAPABILITIES === */}
+        {parsedStory.features.length > 0 && (
+          <section className="my-10 space-y-4">
+            <span className="font-mono text-xs font-bold text-[var(--color-crimson)] uppercase tracking-wider block">
+              ⚡ KEY FEATURES & SYSTEM CAPABILITIES
+            </span>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {parsedStory.features.map((feat, idx) => (
                 <div
                   key={idx}
-                  className="p-5 sm:p-6 rounded-2xl border border-[var(--color-border)] bg-[var(--card-bg)] shadow-sm hover:border-[var(--color-crimson)] transition-all flex flex-col justify-between"
+                  className="p-6 sm:p-7 rounded-2xl sm:rounded-3xl border border-[var(--color-border)] bg-[var(--card-bg)] shadow-sm hover:border-[var(--color-crimson)] transition-all flex flex-col justify-between"
                 >
                   <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-lg">{item.icon}</span>
-                      <h3 className="font-display font-bold text-sm sm:text-base text-[var(--color-paper)]">
-                        {item.title}
+                    <div className="flex items-center gap-3 mb-3">
+                      <span className="px-2.5 py-1 rounded-lg font-mono text-xs font-extrabold bg-[var(--color-line)] text-[var(--color-crimson)] border border-[var(--color-border)]">
+                        {feat.number}
+                      </span>
+                      <h3 className="font-display font-bold text-base sm:text-lg text-[var(--color-paper)]">
+                        {feat.title}
                       </h3>
                     </div>
                     <p className="text-xs sm:text-sm text-[var(--color-muted)] leading-relaxed font-normal">
-                      {item.summary}
+                      {feat.description}
                     </p>
                   </div>
                 </div>
@@ -544,34 +577,19 @@ export default function ProjectDetail() {
           </section>
         )}
 
-        {/* === EXPANDABLE IN-DEPTH STORY (OPTIONAL TOGGLE) === */}
-        {rawParagraphs.length > 1 && (
-          <section className="my-8">
-            <button
-              onClick={() => setShowFullStory(!showFullStory)}
-              className="w-full p-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-line)]/50 hover:bg-[var(--color-line)] font-mono text-xs font-semibold text-[var(--color-paper)] flex items-center justify-between transition-all"
-            >
-              <span>{showFullStory ? "Hide Full Narrative Details" : "Read Full In-Depth Breakdown"}</span>
-              <span className="text-[var(--color-crimson)]">{showFullStory ? "▲" : "▼"}</span>
-            </button>
-
-            <AnimatePresence>
-              {showFullStory && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.3 }}
-                  className="overflow-hidden mt-4 p-6 sm:p-8 rounded-2xl border border-[var(--color-border)] bg-[var(--card-bg)] space-y-4"
-                >
-                  {rawParagraphs.map((para, i) => (
-                    <p key={i} className="text-xs sm:text-sm text-[var(--color-muted)] leading-relaxed font-normal">
-                      {para}
-                    </p>
-                  ))}
-                </motion.div>
-              )}
-            </AnimatePresence>
+        {/* === EXTRA STORY PARAGRAPHS (IF ANY) === */}
+        {parsedStory.extraParagraphs.length > 0 && (
+          <section className="my-10 space-y-4">
+            <span className="font-mono text-xs font-bold text-[var(--color-crimson)] uppercase tracking-wider block">
+              📖 SYSTEM OVERVIEW
+            </span>
+            <div className="p-6 sm:p-8 rounded-2xl sm:rounded-3xl border border-[var(--color-border)] bg-[var(--card-bg)] shadow-sm space-y-4">
+              {parsedStory.extraParagraphs.map((para, i) => (
+                <p key={i} className="text-xs sm:text-sm text-[var(--color-muted)] leading-relaxed font-normal">
+                  {para}
+                </p>
+              ))}
+            </div>
           </section>
         )}
 
