@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import ImageUploader from "../components/admin/ImageUploader";
 import AudioUploader from "../components/admin/AudioUploader";
+import ProjectImagesManager from "../components/admin/ProjectImagesManager";
 import ThemeToggle from "../components/ui/ThemeToggle";
 import { usePortfolio } from "../context/PortfolioContext";
 
@@ -85,7 +86,16 @@ const mergeWithDefaults = (fetchedData) => {
         merged.soundtrack = fetchedData.soundtrack || [];
         merged.skills = fetchedData.skills || [];
         merged.experience = fetchedData.experience || [];
-        merged.projects = fetchedData.projects || [];
+        merged.projects = (fetchedData.projects || []).map(p => {
+            const images = Array.isArray(p.images) && p.images.length > 0 
+                ? p.images 
+                : (p.image ? [p.image] : []);
+            return {
+                ...p,
+                image: images[0] || p.image || "",
+                images: images
+            };
+        });
 
         if (fetchedData.music && merged.soundtrack.length === 0) {
             merged.soundtrack = Array.isArray(fetchedData.music) 
@@ -1096,37 +1106,58 @@ export default function Admin() {
                                 <div>
                                     <SectionHeader 
                                         title="Projects Portfolio" 
-                                        onAddItem={()=>addItem('projects', {name:"",description:"",image:"",link:"",technologies:[]})} 
+                                        onAddItem={()=>addItem('projects', {name:"",description:"",image:"",images:[],link:"",technologies:[]})} 
                                         buttonLabel="[ + NEW PROJECT ]" 
-                                        description="Highlight your crafted projects, technology tags, preview images, and links."
+                                        description="Highlight your crafted projects, technology tags, preview screenshots gallery, and links."
                                     />
                                     <div className="space-y-6">
                                         <AnimatePresence>
-                                            {formData.projects?.map((p, i) => (
-                                                <motion.div key={i} variants={listItemVariants} initial="hidden" animate="visible" exit="exit" layout className="bg-[var(--color-line)] border border-[var(--color-border)] rounded-lg p-4 shadow-sm">
-                                                    <div className="flex justify-between items-start">
-                                                        <p className="font-mono text-xs text-[var(--color-muted)] mb-4">PROJECT #{i+1}</p>
-                                                        <button onClick={()=>delItem('projects',i)} className="text-[var(--color-muted)] hover:text-red-500 text-xl font-bold -mt-2">&times;</button>
-                                                    </div>
-                                                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                                                        <div className="lg:col-span-2 space-y-4">
-                                                            <AdminInput label="Project Name" value={p.name || ""} onChange={e=>setArrObj('projects',i,'name',e.target.value)} />
-                                                            <AdminInput label="Project Link / URL" value={p.link || ""} onChange={e=>setArrObj('projects',i,'link',e.target.value)} />
-                                                            <AdminInput textarea rows={4} label="Description" value={p.description || ""} onChange={e=>setArrObj('projects',i,'description',e.target.value)} />
-                                                            
-                                                            <TechStackInput 
-                                                                technologies={p.technologies || []} 
-                                                                onChange={(newTechs) => setArrObj('projects', i, 'technologies', newTechs)}
-                                                                projectIndex={i}
-                                                            />
+                                            {formData.projects?.map((p, i) => {
+                                                const projectImages = Array.isArray(p.images) && p.images.length > 0 
+                                                    ? p.images 
+                                                    : (p.image ? [p.image] : []);
+
+                                                return (
+                                                    <motion.div key={i} variants={listItemVariants} initial="hidden" animate="visible" exit="exit" layout className="bg-[var(--color-line)] border border-[var(--color-border)] rounded-lg p-5 shadow-sm">
+                                                        <div className="flex justify-between items-start">
+                                                            <div className="flex items-center gap-2 mb-4">
+                                                                <span className="px-2.5 py-0.5 rounded font-mono text-xs font-bold bg-[var(--color-bg)] text-[var(--color-crimson)] border border-[var(--color-border)]">
+                                                                    PROJECT #{i+1}
+                                                                </span>
+                                                                {p.name && (
+                                                                    <span className="font-display font-bold text-sm text-[var(--color-paper)]">
+                                                                        {p.name}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            <button onClick={()=>delItem('projects',i)} className="text-[var(--color-muted)] hover:text-red-500 text-xl font-bold -mt-2">&times;</button>
                                                         </div>
-                                                        <div className="space-y-2">
-                                                            <label className="block font-mono text-[10px] text-[var(--color-muted)] uppercase tracking-widest border-l-2 border-[var(--color-crimson)] pl-2">Project Image</label>
-                                                            <ImageUploader currentImage={p.image || ""} onUpload={url=>setArrObj('projects',i,'image',url)} onDelete={()=>setArrObj('projects',i,'image',"")} />
+                                                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                                                            <div className="lg:col-span-7 space-y-4">
+                                                                <AdminInput label="Project Name" value={p.name || ""} onChange={e=>setArrObj('projects',i,'name',e.target.value)} />
+                                                                <AdminInput label="Project Link / URL" value={p.link || ""} onChange={e=>setArrObj('projects',i,'link',e.target.value)} />
+                                                                <AdminInput textarea rows={4} label="Description" value={p.description || ""} onChange={e=>setArrObj('projects',i,'description',e.target.value)} />
+                                                                
+                                                                <TechStackInput 
+                                                                    technologies={p.technologies || []} 
+                                                                    onChange={(newTechs) => setArrObj('projects', i, 'technologies', newTechs)}
+                                                                    projectIndex={i}
+                                                                />
+                                                            </div>
+                                                            <div className="lg:col-span-5 bg-[var(--color-bg)] border border-[var(--color-border)] rounded-xl p-4">
+                                                                <ProjectImagesManager
+                                                                    images={projectImages}
+                                                                    onChange={(newImages) => {
+                                                                        setArrObj('projects', i, 'images', newImages);
+                                                                        setArrObj('projects', i, 'image', newImages[0] || "");
+                                                                    }}
+                                                                    projectIndex={i}
+                                                                />
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                </motion.div>
-                                            ))}
+                                                    </motion.div>
+                                                );
+                                            })}
                                         </AnimatePresence>
                                     </div>
                                     {formData.projects?.length === 0 && <p className="text-center text-[var(--color-muted)] font-mono text-xs py-10">NO PROJECTS FOUND</p>}

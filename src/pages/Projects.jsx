@@ -171,6 +171,11 @@ export default function Projects() {
           <div className="grid grid-cols-2 gap-3.5 sm:gap-5 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-4 md:gap-6 lg:gap-8">
             {filteredProjects.map((project) => {
               const originalIndex = projects.indexOf(project);
+              const projectImages = Array.isArray(project.images) && project.images.length > 0 
+                ? project.images 
+                : (project.image ? [project.image] : []);
+              const coverImage = projectImages[0] || project.image || "";
+
               return (
                 <motion.div
                   key={originalIndex}
@@ -203,9 +208,9 @@ export default function Projects() {
 
                       {/* Image Stage */}
                       <div className="aspect-[4/3] sm:aspect-[16/10] overflow-hidden rounded-xl sm:rounded-2xl bg-[var(--color-line)] relative mb-3 sm:mb-4">
-                        {project.image ? (
+                        {coverImage ? (
                           <img
-                            src={project.image}
+                            src={coverImage}
                             alt={project.name}
                             className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-700 ease-out"
                           />
@@ -216,6 +221,15 @@ export default function Projects() {
                         )}
                         <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                         
+                        {/* Multi-Image Counter Badge */}
+                        {projectImages.length > 1 && (
+                          <div className="absolute top-2 right-2 z-10">
+                            <span className="px-2 py-0.5 rounded-full text-[9px] font-mono font-bold bg-black/70 backdrop-blur-md text-white border border-white/20 shadow-sm">
+                              📷 {projectImages.length}
+                            </span>
+                          </div>
+                        )}
+
                         <div className="absolute bottom-2.5 left-2.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 hidden sm:block">
                           <span className="px-2.5 py-1 rounded-full text-[9px] font-mono font-bold bg-black/60 backdrop-blur-md text-white border border-white/20">
                             VIEW CASE STUDY

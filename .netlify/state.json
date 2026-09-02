@@ -15,7 +15,7 @@
 			"longitude": 107.6296,
 			"postalCode": "40257"
 		},
-		"timestamp": 1788157702487
+		"timestamp": 1788337519361
 	},
-	"dbConnectionString": "postgres://localhost:65345/postgres"
+	"dbConnectionString": "postgres://localhost:60988/postgres"
 }

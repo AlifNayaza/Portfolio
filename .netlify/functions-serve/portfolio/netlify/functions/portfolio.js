@@ -64330,13 +64330,22 @@ var normalizeData = (data) => {
     strengths: Array.isArray(normalized.aboutPage.strengths) ? normalized.aboutPage.strengths : []
   };
   if (normalized.projects && Array.isArray(normalized.projects)) {
-    normalized.projects = normalized.projects.map((project) => ({
-      name: project.name || "",
-      description: project.description || "",
-      image: project.image || "",
-      link: project.link || "",
-      technologies: Array.isArray(project.technologies) ? project.technologies : []
-    }));
+    normalized.projects = normalized.projects.map((project) => {
+      let images = [];
+      if (Array.isArray(project.images) && project.images.length > 0) {
+        images = project.images.filter((img) => typeof img === "string" && img.trim() !== "");
+      } else if (project.image && typeof project.image === "string" && project.image.trim() !== "") {
+        images = [project.image];
+      }
+      return {
+        name: project.name || "",
+        description: project.description || "",
+        image: images[0] || project.image || "",
+        images,
+        link: project.link || "",
+        technologies: Array.isArray(project.technologies) ? project.technologies : []
+      };
+    });
   }
   return normalized;
 };
