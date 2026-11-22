@@ -4,34 +4,46 @@ import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePortfolio } from "../context/PortfolioContext";
 import PageTransition from "../components/layout/PageTransition";
+import { createPortal } from "react-dom";
+import { ArrowRight, MapPin, Maximize2, X } from "lucide-react";
+import { useDialog } from "../lib/useDialog";
+import { optimizeImage } from "../lib/utils";
 
 // === IMAGE LIGHTBOX MODAL ===
 const ImageModal = ({ isOpen, onClose, imageUrl }) => {
+  const dialogRef = useDialog(isOpen, onClose);
   if (!isOpen) return null;
 
-  return (
+  // Portal to <body> so the lightbox sits above the fixed navbar
+  return createPortal(
     <motion.div
+      ref={dialogRef}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Profile photo"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md cursor-zoom-out"
+      className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md cursor-zoom-out"
       onClick={onClose}
     >
       <button
         onClick={onClose}
-        className="absolute top-6 right-6 text-white hover:text-[var(--color-crimson)] text-3xl font-mono transition-colors"
+        aria-label="Close photo"
+        className="absolute top-5 right-5 w-11 h-11 rounded-full bg-black/60 border border-white/15 text-white hover:bg-[var(--color-accent-fill)] flex items-center justify-center transition-colors"
       >
-        ✕
+        <X size={18} aria-hidden="true" />
       </button>
       <motion.img
         initial={{ scale: 0.9 }}
         animate={{ scale: 1 }}
-        src={imageUrl}
-        alt="Profile photo enlarged"
+        src={optimizeImage(imageUrl, 1600)}
+        alt="Profile photo, enlarged"
         className="max-w-full max-h-[85vh] object-contain rounded-2xl shadow-2xl cursor-default"
         onClick={(e) => e.stopPropagation()}
       />
-    </motion.div>
+    </motion.div>,
+    document.body
   );
 };
 
@@ -153,7 +165,7 @@ export default function About() {
         {/* === HEADER SECTION === */}
         <section className="pt-6 pb-10">
           <div className="flex items-center gap-2 font-mono text-xs font-semibold text-[var(--color-crimson)] tracking-widest uppercase mb-3">
-            <span className="w-2 h-2 rounded-full bg-[var(--color-crimson)]" />
+            <span className="w-2 h-2 rounded-full bg-[var(--color-accent-fill)]" />
             <span>ABOUT & BACKGROUND</span>
           </div>
 
@@ -163,13 +175,14 @@ export default function About() {
 
           <div className="mt-5 flex flex-wrap items-center gap-3 text-xs font-mono text-[var(--color-muted)]">
             <span className="px-3.5 py-1.5 rounded-full border border-[var(--color-border)] bg-[var(--card-bg)]">
-              📍 {aboutPage.location || "Indonesia • Remote"}
+              <MapPin size={12} aria-hidden="true" className="inline -mt-0.5 mr-1" />
+              {aboutPage.location || "Indonesia • Remote"}
             </span>
             <span className="px-3.5 py-1.5 rounded-full border border-[var(--color-border)] bg-[var(--card-bg)] text-[var(--color-crimson)] font-semibold">
-              ✦ {aboutPage.specialization || "Software Developer"}
+              {aboutPage.specialization || "Software Developer"}
             </span>
-            <span className="px-3.5 py-1.5 rounded-full border border-[var(--color-border)] bg-[var(--card-bg)] text-emerald-500 font-semibold">
-              ● {aboutPage.availability || "Open to opportunities"}
+            <span className="px-3.5 py-1.5 rounded-full border border-[var(--color-border)] bg-[var(--card-bg)] text-[var(--color-success)] font-semibold">
+              <span aria-hidden="true">● </span>{aboutPage.availability || "Open to opportunities"}
             </span>
           </div>
         </section>
@@ -189,8 +202,11 @@ export default function About() {
                   <AnimatePresence initial={false} custom={photoDirection} mode="popLayout">
                     <motion.img
                       key={activePhotoIdx}
-                      src={images[activePhotoIdx]}
-                      alt="Profile"
+                      src={optimizeImage(images[activePhotoIdx], 900)}
+                      alt={`Profile photo ${activePhotoIdx + 1} of ${images.length}`}
+                      width={800}
+                      height={1000}
+                      decoding="async"
                       custom={photoDirection}
                       variants={photoSlideVariants}
                       initial="enter"
@@ -218,7 +234,7 @@ export default function About() {
                           e.stopPropagation();
                           handlePrevPhoto();
                         }}
-                        className="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-black/40 hover:bg-[var(--color-crimson)] text-white backdrop-blur-md border border-white/20 flex items-center justify-center text-xs opacity-70 sm:opacity-0 group-hover:opacity-100 transition-all shadow-md active:scale-90"
+                        className="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/50 hover:bg-[var(--color-accent-fill)] text-white backdrop-blur-md border border-white/20 flex items-center justify-center text-sm opacity-80 sm:opacity-0 group-hover:opacity-100 sm:group-focus-within:opacity-100 transition-all shadow-md active:scale-90"
                         aria-label="Previous photo"
                       >
                         ←
@@ -228,7 +244,7 @@ export default function About() {
                           e.stopPropagation();
                           handleNextPhoto();
                         }}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-black/40 hover:bg-[var(--color-crimson)] text-white backdrop-blur-md border border-white/20 flex items-center justify-center text-xs opacity-70 sm:opacity-0 group-hover:opacity-100 transition-all shadow-md active:scale-90"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/50 hover:bg-[var(--color-accent-fill)] text-white backdrop-blur-md border border-white/20 flex items-center justify-center text-sm opacity-80 sm:opacity-0 group-hover:opacity-100 sm:group-focus-within:opacity-100 transition-all shadow-md active:scale-90"
                         aria-label="Next photo"
                       >
                         →
@@ -241,13 +257,14 @@ export default function About() {
                 <div className="p-4 border-t border-[var(--color-border)] flex items-center justify-between font-mono text-xs text-[var(--color-muted)] bg-[var(--card-bg)]">
                   <button
                     onClick={() => setSelectedImage(images[activePhotoIdx])}
-                    className="hover:text-[var(--color-crimson)] transition-colors flex items-center gap-1.5"
+                    className="hover:text-[var(--color-crimson)] transition-colors flex items-center gap-1.5 py-2"
                   >
-                    <span>🔍 Fullscreen</span>
+                    <Maximize2 size={13} aria-hidden="true" />
+                    <span>Fullscreen</span>
                   </button>
 
                   {images.length > 1 && (
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center">
                       {images.map((_, i) => (
                         <button
                           key={i}
@@ -255,11 +272,16 @@ export default function About() {
                             setPhotoDirection(i > activePhotoIdx ? 1 : -1);
                             setActivePhotoIdx(i);
                           }}
-                          className={`h-1.5 rounded-full transition-all duration-300 ${
-                            i === activePhotoIdx ? "bg-[var(--color-crimson)] w-4" : "bg-[var(--color-border)] w-1.5"
-                          }`}
-                          aria-label={`Photo ${i + 1}`}
-                        />
+                          className="p-[9px] flex items-center"
+                          aria-label={`Show photo ${i + 1}`}
+                          aria-current={i === activePhotoIdx ? "true" : undefined}
+                        >
+                          <span
+                            className={`block h-1.5 rounded-full transition-all duration-300 ${
+                              i === activePhotoIdx ? "bg-[var(--color-crimson)] w-4" : "bg-[var(--color-muted)]/50 w-1.5"
+                            }`}
+                          />
+                        </button>
                       ))}
                     </div>
                   )}
@@ -272,6 +294,8 @@ export default function About() {
                   {images.map((img, i) => (
                     <button
                       key={i}
+                      aria-label={`Show photo ${i + 1}`}
+                      aria-current={i === activePhotoIdx ? "true" : undefined}
                       onClick={() => {
                         setPhotoDirection(i > activePhotoIdx ? 1 : -1);
                         setActivePhotoIdx(i);
@@ -282,7 +306,7 @@ export default function About() {
                           : "border-[var(--color-border)] opacity-60 hover:opacity-100"
                       }`}
                     >
-                      <img src={img} alt={`Gallery thumbnail ${i + 1}`} className="w-full h-full object-cover" />
+                      <img src={optimizeImage(img, 200)} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
                     </button>
                   ))}
                 </div>
@@ -294,9 +318,9 @@ export default function About() {
               
               {/* Bio Narrative */}
               <div className="p-7 sm:p-9 rounded-3xl border border-[var(--color-border)] bg-[var(--card-bg)] shadow-sm space-y-5">
-                <span className="font-mono text-xs font-bold text-[var(--color-crimson)] uppercase tracking-wider block">
-                  BACKGROUND & CRAFT
-                </span>
+                <h2 className="font-mono text-xs font-bold text-[var(--color-crimson)] uppercase tracking-wider block">
+                  Background & craft
+                </h2>
 
                 <div className="text-sm sm:text-base text-[var(--color-paper)] leading-relaxed space-y-4 font-normal">
                   {profile.about ? (
@@ -315,24 +339,24 @@ export default function About() {
                 <div className="pt-5 border-t border-[var(--color-border)] flex flex-wrap gap-3.5">
                   <Link
                     to="/contact"
-                    className="px-6 py-3 rounded-full bg-[var(--color-crimson)] text-white font-mono text-xs font-bold tracking-wider hover:opacity-90 transition-all shadow-md"
+                    className="px-6 py-3 rounded-full bg-[var(--color-accent-fill)] text-white font-mono text-xs font-bold tracking-wider hover:opacity-90 transition-all shadow-md"
                   >
-                    Contact Me →
+                    <span className="inline-flex items-center gap-2">Contact me <ArrowRight size={14} aria-hidden="true" /></span>
                   </Link>
                   <Link
                     to="/projects"
                     className="px-6 py-3 rounded-full border border-[var(--color-border)] text-[var(--color-paper)] font-mono text-xs font-semibold tracking-wider hover:border-[var(--color-crimson)] transition-all"
                   >
-                    View Projects
+                    View projects
                   </Link>
                 </div>
               </div>
 
               {/* Core Approach Bento */}
               <div>
-                <h3 className="font-display text-xl sm:text-2xl font-bold text-[var(--color-paper)] mb-5">
-                  How I Approach Building Software
-                </h3>
+                <h2 className="font-display text-xl sm:text-2xl font-bold text-[var(--color-paper)] mb-5">
+                  How I approach building software
+                </h2>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {coreValues.map((val, idx) => (
@@ -340,10 +364,12 @@ export default function About() {
                       key={idx}
                       className="p-5 sm:p-6 rounded-2xl border border-[var(--color-border)] bg-[var(--card-bg)] hover:border-[var(--color-crimson)] transition-all shadow-sm"
                     >
-                      <span className="text-2xl mb-2.5 block">{val.icon || "✦"}</span>
-                      <h4 className="font-display text-base sm:text-lg font-bold text-[var(--color-paper)] mb-1.5">
+                      <span aria-hidden="true" className="font-mono text-xs font-bold text-[var(--color-crimson)] mb-3 block">
+                        {String(idx + 1).padStart(2, "0")}
+                      </span>
+                      <h3 className="font-display text-base sm:text-lg font-bold text-[var(--color-paper)] mb-1.5">
                         {val.title}
-                      </h4>
+                      </h3>
                       <p className="text-xs sm:text-sm text-[var(--color-muted)] leading-relaxed font-normal">
                         {val.desc}
                       </p>
@@ -378,7 +404,7 @@ export default function About() {
                   <span className="font-mono text-xs font-semibold text-[var(--color-paper)]">
                     {skill.name}
                   </span>
-                  <span className="font-mono text-[10px] px-2 py-0.5 rounded-full bg-[var(--color-bg)] text-[var(--color-crimson)] border border-[var(--color-border)] font-bold">
+                  <span className="font-mono text-[11px] px-2 py-0.5 rounded-full bg-[var(--color-bg)] text-[var(--color-crimson)] border border-[var(--color-border)] font-bold">
                     {skill.count}
                   </span>
                 </div>

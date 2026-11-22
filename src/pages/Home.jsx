@@ -5,6 +5,8 @@ import PageTransition from "../components/layout/PageTransition";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useOutletContext } from "react-router-dom";
 import ProjectCardImageStage from "../components/ui/ProjectCardImageStage";
+import { ArrowRight, ArrowUpRight, MapPin } from "lucide-react";
+import { optimizeImage, indexLabel } from "../lib/utils";
 
 // === LIVE LOCAL TIME WIDGET ===
 const LocalTimeBadge = () => {
@@ -30,16 +32,16 @@ const LocalTimeBadge = () => {
 
   return (
     <span className="font-mono text-xs text-[var(--color-muted)] flex items-center gap-1.5">
-      <span>🇮🇩 Jakarta</span>
-      <span className="text-[var(--color-border)]">•</span>
-      <span className="text-[var(--color-paper)] font-semibold">{time || "12:00:00"} WIB</span>
+      <span>Local time</span>
+      <span aria-hidden="true" className="text-[var(--color-border)]">•</span>
+      <time className="text-[var(--color-paper)] font-semibold tabular-nums">{time || "--:--:--"} WIB</time>
     </span>
   );
 };
 
 // === INTERACTIVE KINETIC TICKER ===
-const TechTicker = () => {
-  const items = [
+const TechTicker = ({ skills = [] }) => {
+  const defaults = [
     "REACT",
     "NODE.JS",
     "JAVASCRIPT",
@@ -51,16 +53,18 @@ const TechTicker = () => {
     "UI/UX DESIGN",
     "REST APIS",
   ];
+  // Prefer the real stack pulled from projects once there is enough of it
+  const items = skills.length >= 6 ? skills.map((s) => s.toUpperCase()) : defaults;
 
   return (
-    <div className="w-full overflow-hidden py-3.5 border-y border-[var(--color-border)] bg-[var(--color-line)]/30 my-16 select-none">
+    <div aria-hidden="true" className="w-full overflow-hidden py-3.5 border-y border-[var(--color-border)] bg-[var(--color-line)]/30 my-12 sm:my-16 select-none">
       <div className="animate-marquee whitespace-nowrap flex items-center gap-8 font-mono text-xs tracking-widest text-[var(--color-muted)]">
         {[...items, ...items, ...items].map((tech, i) => (
           <div key={i} className="flex items-center gap-8">
             <span className="hover:text-[var(--color-paper)] transition-colors font-medium">
               {tech}
             </span>
-            <span className="text-[var(--color-crimson)] text-[10px]">✦</span>
+            <span className="text-[var(--color-crimson)] text-[11px]">/</span>
           </div>
         ))}
       </div>
@@ -128,19 +132,16 @@ const ProfileCard = ({ images, name }) => {
       {/* Holographic Border Glow on Hover */}
       <div className="absolute inset-0 bg-gradient-to-tr from-[var(--color-crimson)]/20 via-transparent to-[var(--color-gold)]/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none z-20" />
 
-      {/* Floating Creative Sticker */}
-      <div className="absolute top-4 left-4 z-30 flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/20 text-white shadow-lg pointer-events-none">
-        <span className="w-2 h-2 rounded-full bg-[var(--color-crimson)] animate-pulse" />
-        <span className="font-mono text-[10px] font-bold tracking-wider">CREATIVE DEV</span>
-      </div>
-
       {/* Image container with 4:5 ratio and swipe/drag gesture */}
       <div className="relative aspect-[4/5] overflow-hidden bg-[var(--color-line)]">
         <AnimatePresence initial={false} custom={direction} mode="popLayout">
           <motion.img
             key={activeIdx}
-            src={validImages[activeIdx]}
-            alt={name || "Profile photo"}
+            src={optimizeImage(validImages[activeIdx], 900)}
+            alt={`Portrait of ${name || "the developer"}`}
+            width={800}
+            height={1000}
+            decoding="async"
             custom={direction}
             variants={slideVariants}
             initial="enter"
@@ -171,7 +172,7 @@ const ProfileCard = ({ images, name }) => {
                 e.stopPropagation();
                 handlePrev();
               }}
-              className="absolute left-3 top-1/2 -translate-y-1/2 z-30 w-8 h-8 rounded-full bg-black/40 hover:bg-[var(--color-crimson)] text-white backdrop-blur-md border border-white/20 flex items-center justify-center text-xs opacity-70 sm:opacity-0 group-hover:opacity-100 transition-all shadow-md active:scale-90"
+              className="absolute left-3 top-1/2 -translate-y-1/2 z-30 w-10 h-10 rounded-full bg-black/50 hover:bg-[var(--color-accent-fill)] text-white backdrop-blur-md border border-white/20 flex items-center justify-center text-sm opacity-80 sm:opacity-0 sm:group-focus-within:opacity-100 group-hover:opacity-100 transition-all shadow-md active:scale-90"
               aria-label="Previous photo"
             >
               ←
@@ -181,7 +182,7 @@ const ProfileCard = ({ images, name }) => {
                 e.stopPropagation();
                 handleNext();
               }}
-              className="absolute right-3 top-1/2 -translate-y-1/2 z-30 w-8 h-8 rounded-full bg-black/40 hover:bg-[var(--color-crimson)] text-white backdrop-blur-md border border-white/20 flex items-center justify-center text-xs opacity-70 sm:opacity-0 group-hover:opacity-100 transition-all shadow-md active:scale-90"
+              className="absolute right-3 top-1/2 -translate-y-1/2 z-30 w-10 h-10 rounded-full bg-black/50 hover:bg-[var(--color-accent-fill)] text-white backdrop-blur-md border border-white/20 flex items-center justify-center text-sm opacity-80 sm:opacity-0 sm:group-focus-within:opacity-100 group-hover:opacity-100 transition-all shadow-md active:scale-90"
               aria-label="Next photo"
             >
               →
@@ -200,17 +201,11 @@ const ProfileCard = ({ images, name }) => {
             </span>
           </div>
 
-          {/* Mini Soundwave Indicator */}
-          <div className="flex items-center gap-0.5 h-4">
-            <span className="w-1 h-3 bg-[var(--color-crimson)] rounded-full animate-pulse" />
-            <span className="w-1 h-4 bg-white rounded-full animate-pulse delay-75" />
-            <span className="w-1 h-2 bg-[var(--color-gold)] rounded-full animate-pulse delay-150" />
-          </div>
         </div>
 
         {/* Photo Switcher Dots / Progress Bar */}
         {validImages.length > 1 && (
-          <div className="absolute top-4 right-4 z-30 flex items-center gap-1.5 p-1.5 rounded-full bg-black/50 backdrop-blur-md border border-white/10">
+          <div className="absolute top-4 right-4 z-30 flex items-center px-1 rounded-full bg-black/50 backdrop-blur-md border border-white/10">
             {validImages.map((_, i) => (
               <button
                 key={i}
@@ -219,11 +214,16 @@ const ProfileCard = ({ images, name }) => {
                   setDirection(i > activeIdx ? 1 : -1);
                   setActiveIdx(i);
                 }}
-                className={`h-1.5 rounded-full transition-all duration-300 ${
-                  i === activeIdx ? "bg-[var(--color-crimson)] w-5" : "bg-white/40 hover:bg-white/80 w-1.5"
-                }`}
+                className="p-[9px] flex items-center"
                 aria-label={`Show photo ${i + 1}`}
-              />
+                aria-current={i === activeIdx ? "true" : undefined}
+              >
+                <span
+                  className={`block h-1.5 rounded-full transition-all duration-300 ${
+                    i === activeIdx ? "bg-[var(--color-crimson)] w-5" : "bg-white/50 hover:bg-white/80 w-1.5"
+                  }`}
+                />
+              </button>
             ))}
           </div>
         )}
@@ -253,18 +253,18 @@ const InteractiveProjectCard = ({ project, index }) => {
         className="group relative block rounded-2xl sm:rounded-3xl overflow-hidden border border-[var(--color-border)] bg-[var(--card-bg)] hover:border-[var(--color-crimson)]/80 transition-all duration-300 shadow-sm hover:shadow-2xl flex flex-col justify-between h-full p-3 sm:p-5 md:p-6"
       >
         {/* Subtle Number Watermark in Background */}
-        <span className="absolute -bottom-4 -right-2 font-display text-6xl sm:text-8xl md:text-9xl font-black text-[var(--color-border)]/20 pointer-events-none select-none z-0 group-hover:text-[var(--color-crimson)]/15 group-hover:translate-x-1 group-hover:-translate-y-1 transition-all duration-300">
-          0{index + 1}
+        <span aria-hidden="true" className="absolute -bottom-4 -right-2 font-display text-6xl sm:text-8xl md:text-9xl font-black text-[var(--color-border)]/20 pointer-events-none select-none z-0 group-hover:text-[var(--color-crimson)]/15 group-hover:translate-x-1 group-hover:-translate-y-1 transition-all duration-300">
+          {indexLabel(index)}
         </span>
 
         <div className="relative z-10">
           {/* Top Floating Glass Badge Bar */}
           <div className="flex items-center justify-between mb-2.5 sm:mb-4">
-            <span className="px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full font-mono text-[9px] sm:text-[11px] font-bold bg-[var(--color-line)] text-[var(--color-crimson)] border border-[var(--color-border)] shadow-sm">
-              PROJ // 0{index + 1}
+            <span className="px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full font-mono text-[11px] sm:text-[11px] font-bold bg-[var(--color-line)] text-[var(--color-crimson)] border border-[var(--color-border)] shadow-sm">
+              No. {indexLabel(index)}
             </span>
-            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border border-[var(--color-border)] bg-[var(--color-line)] flex items-center justify-center text-[10px] sm:text-xs text-[var(--color-paper)] group-hover:bg-[var(--color-crimson)] group-hover:text-white group-hover:border-[var(--color-crimson)] group-hover:rotate-45 transition-all duration-300 shadow-sm">
-              ↗
+            <div aria-hidden="true" className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border border-[var(--color-border)] bg-[var(--color-line)] flex items-center justify-center text-[11px] sm:text-xs text-[var(--color-paper)] group-hover:bg-[var(--color-accent-fill)] group-hover:text-white group-hover:border-[var(--color-crimson)] group-hover:rotate-45 transition-all duration-300 shadow-sm">
+              <ArrowUpRight size={14} />
             </div>
           </div>
 
@@ -273,6 +273,7 @@ const InteractiveProjectCard = ({ project, index }) => {
             images={projectImages}
             fallbackImage={project.image}
             title={project.name}
+            priority={index < 2}
           />
 
           {/* Title & Description */}
@@ -292,13 +293,13 @@ const InteractiveProjectCard = ({ project, index }) => {
             {project.technologies.slice(0, 2).map((tech, i) => (
               <span
                 key={i}
-                className="px-2 py-0.5 rounded-md text-[9px] sm:text-[10px] font-mono bg-[var(--color-line)] text-[var(--color-muted)] border border-[var(--color-border)] font-medium group-hover:border-[var(--color-crimson)]/30 transition-colors"
+                className="px-2 py-0.5 rounded-md text-[11px] sm:text-[11px] font-mono bg-[var(--color-line)] text-[var(--color-muted)] border border-[var(--color-border)] font-medium group-hover:border-[var(--color-crimson)]/30 transition-colors"
               >
                 {tech}
               </span>
             ))}
             {project.technologies.length > 2 && (
-              <span className="px-1.5 py-0.5 rounded-md text-[9px] sm:text-[10px] font-mono text-[var(--color-muted)]">
+              <span className="px-1.5 py-0.5 rounded-md text-[11px] sm:text-[11px] font-mono text-[var(--color-muted)]">
                 +{project.technologies.length - 2}
               </span>
             )}
@@ -328,10 +329,10 @@ const SectionHeader = ({ index, title, description, linkTo, linkText }) => (
     {linkTo && (
       <Link
         to={linkTo}
-        className="group inline-flex items-center gap-1.5 font-mono text-xs font-semibold text-[var(--color-paper)] hover:text-[var(--color-crimson)] transition-colors self-start sm:self-end"
+        className="group inline-flex items-center gap-1.5 py-2 font-mono text-xs font-semibold text-[var(--color-paper)] hover:text-[var(--color-crimson)] transition-colors self-start sm:self-end"
       >
         <span>{linkText || "View All"}</span>
-        <span className="group-hover:translate-x-1 transition-transform">→</span>
+        <ArrowRight size={13} aria-hidden="true" className="group-hover:translate-x-1 transition-transform" />
       </Link>
     )}
   </div>
@@ -346,6 +347,7 @@ export default function Home() {
   const aboutPageData = data?.aboutPage || {};
   const projects = data?.projects || [];
   const featuredProjects = projects.slice(0, 4);
+  const liveCount = projects.filter((p) => p.link).length;
 
   const images = useMemo(() => {
     if (data?.profile?.images && data.profile.images.length > 0) {
@@ -394,9 +396,8 @@ export default function Home() {
             {onOpenPitch && (
               <button
                 onClick={onOpenPitch}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-[var(--color-crimson)]/50 bg-[var(--color-crimson)]/10 hover:bg-[var(--color-crimson)] hover:text-white text-[var(--color-crimson)] font-mono text-xs font-bold transition-all shadow-sm active:scale-95"
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-[var(--color-crimson)]/50 bg-[var(--color-crimson)]/10 hover:bg-[var(--color-accent-fill)] hover:text-white text-[var(--color-crimson)] font-mono text-xs font-bold transition-all shadow-sm active:scale-95"
               >
-                <span>⚡</span>
                 <span>60s Fast Pitch</span>
               </button>
             )}
@@ -414,12 +415,13 @@ export default function Home() {
               transition={{ duration: 0.5, delay: 0.1 }}
               className="font-mono text-xs sm:text-sm font-semibold tracking-wider text-[var(--color-crimson)] uppercase mb-3 flex items-center gap-2"
             >
-              <span>👋</span>
-              <span>Hello, I'm</span>
+              <span>{aboutPageData.specialization || "Software & Web Developer"}</span>
+              <span aria-hidden="true" className="text-[var(--color-border)]">/</span>
+              <span className="text-[var(--color-muted)]">{aboutPageData.location || "Indonesia"}</span>
             </motion.div>
 
             <motion.h1
-              initial={{ opacity: 0, y: 25 }}
+              initial={{ y: 18 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
               className="font-display text-4xl sm:text-6xl md:text-7xl lg:text-8xl 2xl:text-9xl font-extrabold tracking-tight text-[var(--color-paper)] leading-[1.05]"
@@ -447,10 +449,10 @@ export default function Home() {
               <motion.div whileHover={{ scale: 1.05, y: -2 }} whileTap={{ scale: 0.95 }}>
                 <Link
                   to="/projects"
-                  className="px-6 py-3 rounded-full bg-[var(--color-crimson)] text-white font-mono text-xs font-bold tracking-wider hover:opacity-90 transition-all shadow-lg shadow-[var(--color-crimson-shadow)] flex items-center gap-2"
+                  className="px-6 py-3 rounded-full bg-[var(--color-accent-fill)] text-white font-mono text-xs font-bold tracking-wider hover:opacity-90 transition-all shadow-lg shadow-[var(--color-crimson-shadow)] flex items-center gap-2"
                 >
-                  <span>Check Projects</span>
-                  <span>↓</span>
+                  <span>View projects</span>
+                  <ArrowRight size={14} aria-hidden="true" />
                 </Link>
               </motion.div>
               <motion.div whileHover={{ scale: 1.05, y: -2 }} whileTap={{ scale: 0.95 }}>
@@ -458,7 +460,7 @@ export default function Home() {
                   to="/contact"
                   className="px-6 py-3 rounded-full border border-[var(--color-border)] bg-[var(--card-bg)] text-[var(--color-paper)] font-mono text-xs font-semibold tracking-wider hover:border-[var(--color-crimson)] hover:bg-[var(--color-line)] transition-all"
                 >
-                  Get In Touch →
+                  Get in touch
                 </Link>
               </motion.div>
             </motion.div>
@@ -466,7 +468,7 @@ export default function Home() {
         </section>
 
         {/* === KINETIC TICKER === */}
-        <TechTicker />
+        <TechTicker skills={allSkills} />
 
         {/* === CREATIVE BENTO GRID === */}
         <section className="my-16">
@@ -486,9 +488,9 @@ export default function Home() {
                   <span className="font-mono text-xs font-bold text-[var(--color-crimson)] uppercase tracking-wider block mb-2">
                     ABOUT ME
                   </span>
-                  <h3 className="font-display text-xl sm:text-2xl font-bold text-[var(--color-paper)] mb-3">
+                  <h2 className="font-display text-xl sm:text-2xl font-bold text-[var(--color-paper)] mb-3">
                     Developer who enjoys building practical tools and smooth interfaces.
-                  </h3>
+                  </h2>
                   <p className="text-sm text-[var(--color-muted)] leading-relaxed line-clamp-4 font-normal">
                     {data?.profile?.about ||
                       "I work across the full stack, from responsive frontend layouts with React and Tailwind to backend APIs and databases with Node.js and MongoDB. Always curious to explore new frameworks and improve my craft."}
@@ -497,14 +499,15 @@ export default function Home() {
 
                 <div className="pt-5 mt-5 border-t border-[var(--color-border)] flex items-center justify-between">
                   <span className="font-mono text-xs text-[var(--color-muted)]">
-                    📍 {aboutPageData.location || "Indonesia • Remote"}
+                    <MapPin size={13} aria-hidden="true" className="inline -mt-0.5 mr-1" />
+                    {aboutPageData.location || "Indonesia • Remote"}
                   </span>
                   <Link
                     to="/about"
-                    className="font-mono text-xs font-semibold text-[var(--color-crimson)] hover:underline flex items-center gap-1"
+                    className="font-mono text-xs font-semibold text-[var(--color-crimson)] hover:underline flex items-center gap-1 py-2"
                   >
-                    <span>Read Story</span>
-                    <span>→</span>
+                    <span>Read story</span>
+                    <ArrowRight size={13} aria-hidden="true" />
                   </Link>
                 </div>
               </div>
@@ -515,17 +518,17 @@ export default function Home() {
                   <div className="font-display text-xl sm:text-3xl font-extrabold text-[var(--color-paper)]">
                     {projects.length}+
                   </div>
-                  <div className="font-mono text-[9px] sm:text-[10px] text-[var(--color-muted)] uppercase tracking-wider mt-0.5">
+                  <div className="font-mono text-[11px] sm:text-[11px] text-[var(--color-muted)] uppercase tracking-wider mt-0.5">
                     Projects
                   </div>
                 </div>
 
                 <div className="p-3 sm:p-5 rounded-2xl border border-[var(--color-border)] bg-[var(--card-bg)] text-center hover:border-[var(--color-crimson)]/50 transition-all duration-300">
                   <div className="font-display text-xl sm:text-3xl font-extrabold text-[var(--color-crimson)]">
-                    100%
+                    {liveCount}
                   </div>
-                  <div className="font-mono text-[9px] sm:text-[10px] text-[var(--color-muted)] uppercase tracking-wider mt-0.5">
-                    Full-Stack
+                  <div className="font-mono text-[11px] sm:text-[11px] text-[var(--color-muted)] uppercase tracking-wider mt-0.5">
+                    Live demos
                   </div>
                 </div>
 
@@ -533,7 +536,7 @@ export default function Home() {
                   <div className="font-display text-xl sm:text-3xl font-extrabold text-[var(--color-paper)]">
                     {allSkills.length}+
                   </div>
-                  <div className="font-mono text-[9px] sm:text-[10px] text-[var(--color-muted)] uppercase tracking-wider mt-0.5">
+                  <div className="font-mono text-[11px] sm:text-[11px] text-[var(--color-muted)] uppercase tracking-wider mt-0.5">
                     Tools
                   </div>
                 </div>
@@ -611,10 +614,10 @@ export default function Home() {
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 <Link
                   to="/contact"
-                  className="px-7 py-3 rounded-full bg-[var(--color-crimson)] text-white font-mono text-xs font-bold tracking-wider hover:opacity-90 transition-all shadow-lg shadow-[var(--color-crimson-shadow)] flex items-center gap-2"
+                  className="px-7 py-3 rounded-full bg-[var(--color-accent-fill)] text-white font-mono text-xs font-bold tracking-wider hover:opacity-90 transition-all shadow-lg shadow-[var(--color-crimson-shadow)] flex items-center gap-2"
                 >
-                  <span>Send a Message</span>
-                  <span>→</span>
+                  <span>Send a message</span>
+                  <ArrowRight size={14} aria-hidden="true" />
                 </Link>
               </motion.div>
             </div>

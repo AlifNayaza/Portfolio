@@ -218,7 +218,7 @@ export default function Login() {
             disabled={loading || !input}
             whileHover={{ scale: loading ? 1 : 1.02 }}
             whileTap={{ scale: loading ? 1 : 0.98 }}
-            className="w-full font-mono text-xs font-bold tracking-widest py-3 border border-[var(--color-border)] bg-[var(--color-crimson)] text-white hover:opacity-90 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl shadow-md"
+            className="w-full font-mono text-xs font-bold tracking-widest py-3 border border-[var(--color-border)] bg-[var(--color-accent-fill)] text-white hover:opacity-90 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl shadow-md"
           >
             {loading ? (
               <span className="flex items-center justify-center gap-2">

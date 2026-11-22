@@ -5,6 +5,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { usePortfolio } from "../context/PortfolioContext";
 import PageTransition from "../components/layout/PageTransition";
 import ProjectCardImageStage from "../components/ui/ProjectCardImageStage";
+import { ArrowRight, ArrowUpRight, Search, X } from "lucide-react";
+import { indexLabel } from "../lib/utils";
 
 export default function Projects() {
   const { data, loading } = usePortfolio();
@@ -52,7 +54,7 @@ export default function Projects() {
         {/* === HEADER SECTION === */}
         <section className="pt-6 pb-10">
           <div className="flex items-center gap-2 font-mono text-xs font-semibold text-[var(--color-crimson)] tracking-widest uppercase mb-3">
-            <span className="w-2 h-2 rounded-full bg-[var(--color-crimson)]" />
+            <span className="w-2 h-2 rounded-full bg-[var(--color-accent-fill)]" />
             <span>PROJECTS</span>
           </div>
 
@@ -72,30 +74,34 @@ export default function Projects() {
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
             {/* Search Input */}
             <div className="relative flex-1 max-w-md">
+              <Search size={15} aria-hidden="true" className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-muted)] pointer-events-none" />
               <input
-                type="text"
+                type="search"
+                aria-label="Search projects"
                 placeholder="Search projects or technologies..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full px-5 py-3 rounded-full border border-[var(--color-border)] bg-[var(--card-bg)] text-xs font-mono text-[var(--color-paper)] placeholder:text-[var(--color-muted)] focus:outline-none focus:border-[var(--color-crimson)] transition-all shadow-sm"
+                className="w-full pl-10 pr-10 py-3 rounded-full border border-[var(--color-border)] bg-[var(--card-bg)] text-xs font-mono text-[var(--color-paper)] placeholder:text-[var(--color-muted)] focus:outline-none focus:border-[var(--color-crimson)] focus:ring-2 focus:ring-[var(--color-crimson)]/25 transition-all shadow-sm [&::-webkit-search-cancel-button]:hidden"
               />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery("")}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-mono text-[var(--color-muted)] hover:text-[var(--color-paper)]"
+                  aria-label="Clear search"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-full text-[var(--color-muted)] hover:text-[var(--color-paper)]"
                 >
-                  ✕
+                  <X size={14} aria-hidden="true" />
                 </button>
               )}
             </div>
 
             {/* View Mode Toggle */}
-            <div className="flex items-center gap-1 p-1 rounded-full border border-[var(--color-border)] bg-[var(--card-bg)] self-start sm:self-auto">
+            <div role="group" aria-label="Layout" className="flex items-center gap-1 p-1 rounded-full border border-[var(--color-border)] bg-[var(--card-bg)] self-start sm:self-auto">
               <button
                 onClick={() => setViewMode("grid")}
+                aria-pressed={viewMode === "grid"}
                 className={`px-3 py-1.5 rounded-full font-mono text-xs transition-all ${
                   viewMode === "grid"
-                    ? "bg-[var(--color-crimson)] text-white font-bold"
+                    ? "bg-[var(--color-accent-fill)] text-white font-bold"
                     : "text-[var(--color-muted)] hover:text-[var(--color-paper)]"
                 }`}
               >
@@ -103,9 +109,10 @@ export default function Projects() {
               </button>
               <button
                 onClick={() => setViewMode("list")}
+                aria-pressed={viewMode === "list"}
                 className={`px-3 py-1.5 rounded-full font-mono text-xs transition-all ${
                   viewMode === "list"
-                    ? "bg-[var(--color-crimson)] text-white font-bold"
+                    ? "bg-[var(--color-accent-fill)] text-white font-bold"
                     : "text-[var(--color-muted)] hover:text-[var(--color-paper)]"
                 }`}
               >
@@ -115,12 +122,13 @@ export default function Projects() {
           </div>
 
           {/* Filter Pills */}
-          <div className="flex flex-wrap gap-2 pt-2">
+          <div role="group" aria-label="Filter by technology" className="flex flex-wrap gap-2 pt-2">
             <button
               onClick={() => setSelectedTech("all")}
+              aria-pressed={selectedTech === "all"}
               className={`px-4 py-2 rounded-full font-mono text-xs transition-all ${
                 selectedTech === "all"
-                  ? "bg-[var(--color-crimson)] text-white font-bold shadow-md"
+                  ? "bg-[var(--color-accent-fill)] text-white font-bold shadow-md"
                   : "border border-[var(--color-border)] bg-[var(--card-bg)] text-[var(--color-muted)] hover:border-[var(--color-crimson)] hover:text-[var(--color-paper)]"
               }`}
             >
@@ -135,23 +143,28 @@ export default function Projects() {
                 <button
                   key={tech}
                   onClick={() => setSelectedTech(tech)}
+                  aria-pressed={selectedTech === tech}
                   className={`px-3.5 py-1.5 rounded-full font-mono text-xs transition-all ${
                     selectedTech === tech
-                      ? "bg-[var(--color-crimson)] text-white font-bold shadow-md"
+                      ? "bg-[var(--color-accent-fill)] text-white font-bold shadow-md"
                       : "border border-[var(--color-border)] bg-[var(--card-bg)] text-[var(--color-muted)] hover:border-[var(--color-crimson)] hover:text-[var(--color-paper)]"
                   }`}
                 >
-                  {tech} <span className="opacity-60 text-[10px]">({count})</span>
+                  {tech} <span className="opacity-80 text-[11px]">({count})</span>
                 </button>
               );
             })}
           </div>
+          <p role="status" aria-live="polite" className="sr-only">
+            {filteredProjects.length} {filteredProjects.length === 1 ? "project" : "projects"} shown
+          </p>
         </section>
 
         {/* === PROJECTS SHOWCASE === */}
+        <h2 className="sr-only">Project list</h2>
         {filteredProjects.length === 0 ? (
           <div className="text-center py-20 p-8 rounded-3xl border border-[var(--color-border)] bg-[var(--card-bg)]">
-            <div className="text-4xl mb-3">🔍</div>
+            <Search size={32} aria-hidden="true" className="mx-auto mb-3 text-[var(--color-muted)]" />
             <h3 className="font-display text-xl font-bold text-[var(--color-paper)] mb-2">
               No matching projects found
             </h3>
@@ -163,7 +176,7 @@ export default function Projects() {
                 setSelectedTech("all");
                 setSearchQuery("");
               }}
-              className="px-5 py-2.5 rounded-full bg-[var(--color-crimson)] text-white font-mono text-xs font-bold"
+              className="px-5 py-2.5 rounded-full bg-[var(--color-accent-fill)] text-white font-mono text-xs font-bold"
             >
               Reset Filters
             </button>
@@ -192,18 +205,18 @@ export default function Projects() {
                     className="group relative block rounded-2xl sm:rounded-3xl overflow-hidden border border-[var(--color-border)] bg-[var(--card-bg)] hover:border-[var(--color-crimson)]/80 transition-all duration-500 shadow-sm hover:shadow-2xl flex flex-col justify-between h-full p-3 sm:p-5 md:p-6"
                   >
                     {/* Number Watermark */}
-                    <span className="absolute -bottom-3 -right-2 font-display text-5xl sm:text-7xl md:text-8xl font-black text-[var(--color-border)]/20 pointer-events-none select-none z-0 group-hover:text-[var(--color-crimson)]/15 group-hover:translate-x-1 group-hover:-translate-y-1 transition-all duration-500">
-                      0{originalIndex + 1}
+                    <span aria-hidden="true" className="absolute -bottom-3 -right-2 font-display text-5xl sm:text-7xl md:text-8xl font-black text-[var(--color-border)]/20 pointer-events-none select-none z-0 group-hover:text-[var(--color-crimson)]/15 group-hover:translate-x-1 group-hover:-translate-y-1 transition-all duration-500">
+                      {indexLabel(originalIndex)}
                     </span>
 
                     <div className="relative z-10">
                       {/* Top Header Pill Bar */}
                       <div className="flex items-center justify-between mb-2.5 sm:mb-4">
-                        <span className="px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full font-mono text-[9px] sm:text-[11px] font-bold bg-[var(--color-line)] text-[var(--color-crimson)] border border-[var(--color-border)] shadow-sm">
-                          PROJ // 0{originalIndex + 1}
+                        <span className="px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full font-mono text-[11px] sm:text-[11px] font-bold bg-[var(--color-line)] text-[var(--color-crimson)] border border-[var(--color-border)] shadow-sm">
+                          No. {indexLabel(originalIndex)}
                         </span>
-                        <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border border-[var(--color-border)] bg-[var(--color-line)] flex items-center justify-center text-[10px] sm:text-xs text-[var(--color-paper)] group-hover:bg-[var(--color-crimson)] group-hover:text-white group-hover:border-[var(--color-crimson)] group-hover:rotate-45 transition-all duration-300 shadow-sm">
-                          ↗
+                        <div aria-hidden="true" className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border border-[var(--color-border)] bg-[var(--color-line)] flex items-center justify-center text-[11px] sm:text-xs text-[var(--color-paper)] group-hover:bg-[var(--color-accent-fill)] group-hover:text-white group-hover:border-[var(--color-crimson)] group-hover:rotate-45 transition-all duration-300 shadow-sm">
+                          <ArrowUpRight size={14} />
                         </div>
                       </div>
 
@@ -231,13 +244,13 @@ export default function Projects() {
                         {project.technologies.slice(0, 2).map((tech, i) => (
                           <span
                             key={i}
-                            className="px-2 py-0.5 rounded-md text-[9px] sm:text-[10px] font-mono bg-[var(--color-line)] text-[var(--color-muted)] border border-[var(--color-border)] font-medium group-hover:border-[var(--color-crimson)]/30 transition-colors"
+                            className="px-2 py-0.5 rounded-md text-[11px] sm:text-[11px] font-mono bg-[var(--color-line)] text-[var(--color-muted)] border border-[var(--color-border)] font-medium group-hover:border-[var(--color-crimson)]/30 transition-colors"
                           >
                             {tech}
                           </span>
                         ))}
                         {project.technologies.length > 2 && (
-                          <span className="px-1.5 py-0.5 rounded-md text-[9px] sm:text-[10px] font-mono text-[var(--color-muted)]">
+                          <span className="px-1.5 py-0.5 rounded-md text-[11px] sm:text-[11px] font-mono text-[var(--color-muted)]">
                             +{project.technologies.length - 2}
                           </span>
                         )}
@@ -277,14 +290,14 @@ export default function Projects() {
                       {project.technologies?.slice(0, 3).map((tech, i) => (
                         <span
                           key={i}
-                          className="px-2 py-0.5 rounded-full text-[10px] font-mono bg-[var(--color-line)] text-[var(--color-muted)] border border-[var(--color-border)]"
+                          className="px-2 py-0.5 rounded-full text-[11px] font-mono bg-[var(--color-line)] text-[var(--color-muted)] border border-[var(--color-border)]"
                         >
                           {tech}
                         </span>
                       ))}
                     </div>
-                    <span className="font-mono text-sm text-[var(--color-crimson)] group-hover:translate-x-1 transition-transform">
-                      View Case Study →
+                    <span className="font-mono text-sm text-[var(--color-crimson)] group-hover:translate-x-1 transition-transform inline-flex items-center gap-1.5">
+                      Case study <ArrowRight size={14} aria-hidden="true" />
                     </span>
                   </div>
                 </Link>

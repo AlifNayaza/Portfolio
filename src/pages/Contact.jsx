@@ -3,8 +3,12 @@ import { useState } from "react";
 import { usePortfolio } from "../context/PortfolioContext";
 import PageTransition from "../components/layout/PageTransition";
 import { motion } from "framer-motion";
-import axios from "axios";
 import { toast } from "react-hot-toast";
+import { ArrowRight, ArrowUpRight, Github, Instagram, Linkedin, MessageCircle, Send } from "lucide-react";
+import { copyText } from "../lib/utils";
+
+const LIMITS = { name: 80, email: 120, subject: 140, message: 4000 };
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 export default function Contact() {
   const { data } = usePortfolio();
@@ -20,32 +24,40 @@ export default function Contact() {
   const contact = data?.contact || {};
   const aboutPage = data?.aboutPage || {};
 
-  const handleCopyEmail = () => {
-    if (contact.email) {
-      if (navigator.vibrate) navigator.vibrate(30);
-      navigator.clipboard.writeText(contact.email);
+  const handleCopyEmail = async () => {
+    if (contact.email && (await copyText(contact.email, "Email copied to clipboard!", "contact-email"))) {
       setCopiedEmail(true);
-      toast.success("Email copied to clipboard!", { id: "contact-email" });
       setTimeout(() => setCopiedEmail(false), 2500);
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.name || !formData.email || !formData.message) {
-      toast.error("Please fill in all required fields.");
+    if (isSubmitting) return;
+    const payload = {
+      name: formData.name.trim(),
+      email: formData.email.trim(),
+      subject: formData.subject.trim(),
+      message: formData.message.trim(),
+    };
+    if (!payload.name || !payload.email || !payload.message) {
+      toast.error("Please fill in your name, email and message.");
+      return;
+    }
+    if (!EMAIL_RE.test(payload.email)) {
+      toast.error("That email address doesn't look right.");
       return;
     }
 
     setIsSubmitting(true);
     try {
       // Send to contact serverless endpoint
-      await axios.post("/.netlify/functions/contact", {
-        name: formData.name,
-        email: formData.email,
-        subject: formData.subject || "Portfolio Inquiry",
-        message: formData.message,
+      const res = await fetch("/.netlify/functions/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...payload, subject: payload.subject || "Portfolio Inquiry" }),
       });
+      if (!res.ok) throw new Error(`Contact API responded ${res.status}`);
 
       toast.success("Message sent successfully! I'll get back to you soon.");
       setFormData({ name: "", email: "", subject: "", message: "" });
@@ -58,11 +70,11 @@ export default function Contact() {
   };
 
   const socialLinks = [
-    { name: "GitHub", url: contact.github, icon: "🐙" },
-    { name: "LinkedIn", url: contact.linkedin, icon: "💼" },
-    { name: "Instagram", url: contact.instagram, icon: "📸" },
-    { name: "WhatsApp", url: contact.whatsapp ? `https://wa.me/${contact.whatsapp.replace(/[^0-9]/g, '')}` : null, icon: "💬" },
-    { name: "Telegram", url: contact.telegram ? `https://t.me/${contact.telegram.replace('@', '')}` : null, icon: "✈️" },
+    { name: "GitHub", url: contact.github, Icon: Github },
+    { name: "LinkedIn", url: contact.linkedin, Icon: Linkedin },
+    { name: "Instagram", url: contact.instagram, Icon: Instagram },
+    { name: "WhatsApp", url: contact.whatsapp ? `https://wa.me/${contact.whatsapp.replace(/[^0-9]/g, '')}` : null, Icon: MessageCircle },
+    { name: "Telegram", url: contact.telegram ? `https://t.me/${contact.telegram.replace('@', '')}` : null, Icon: Send },
   ].filter((item) => item.url);
 
   return (
@@ -72,7 +84,7 @@ export default function Contact() {
         {/* === HEADER SECTION === */}
         <section className="pt-6 pb-10">
           <div className="flex items-center gap-2 font-mono text-xs font-semibold text-[var(--color-crimson)] tracking-widest uppercase mb-3">
-            <span className="w-2 h-2 rounded-full bg-[var(--color-crimson)]" />
+            <span className="w-2 h-2 rounded-full bg-[var(--color-accent-fill)]" />
             <span>CONTACT</span>
           </div>
 
@@ -96,9 +108,9 @@ export default function Contact() {
               <span className="font-mono text-xs font-bold text-[var(--color-crimson)] uppercase tracking-wider block mb-2">
                 EMAIL
               </span>
-              <h3 className="font-display text-xl font-bold text-[var(--color-paper)] mb-1">
+              <h2 className="font-display text-xl font-bold text-[var(--color-paper)] mb-1">
                 Drop an email
-              </h3>
+              </h2>
               <p className="text-xs text-[var(--color-muted)] mb-5">
                 I usually respond within 24 hours.
               </p>
@@ -109,7 +121,8 @@ export default function Contact() {
                 </span>
                 <button
                   onClick={handleCopyEmail}
-                  className="px-3 py-1.5 rounded-xl bg-[var(--color-crimson)] text-white font-mono text-[10px] font-bold tracking-wider hover:opacity-90 transition-all flex-shrink-0"
+                  aria-label={copiedEmail ? "Email copied" : "Copy email address"}
+                  className="px-3.5 py-2 rounded-xl bg-[var(--color-accent-fill)] text-white font-mono text-[11px] font-bold tracking-wider hover:opacity-90 transition-all flex-shrink-0"
                 >
                   {copiedEmail ? "COPIED ✓" : "COPY"}
                 </button>
@@ -122,9 +135,9 @@ export default function Contact() {
                 <span className="font-mono text-xs font-bold text-[var(--color-crimson)] uppercase tracking-wider block mb-2">
                   ONLINE
                 </span>
-                <h3 className="font-display text-xl font-bold text-[var(--color-paper)] mb-4">
+                <h2 className="font-display text-xl font-bold text-[var(--color-paper)] mb-4">
                   Find me on
-                </h3>
+                </h2>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {socialLinks.map((item, idx) => (
@@ -136,14 +149,13 @@ export default function Contact() {
                       className="p-3.5 rounded-2xl border border-[var(--color-border)] bg-[var(--color-line)] hover:border-[var(--color-crimson)] transition-all flex items-center justify-between group"
                     >
                       <div className="flex items-center gap-2.5">
-                        <span className="text-base">{item.icon}</span>
+                        <item.Icon size={16} aria-hidden="true" className="text-[var(--color-muted)]" />
                         <span className="font-mono text-xs font-semibold text-[var(--color-paper)]">
                           {item.name}
                         </span>
                       </div>
-                      <span className="font-mono text-xs text-[var(--color-crimson)] group-hover:translate-x-1 transition-transform">
-                        ↗
-                      </span>
+                      <ArrowUpRight size={14} aria-hidden="true" className="text-[var(--color-crimson)] group-hover:translate-x-0.5 transition-transform" />
+                      <span className="sr-only">(opens in a new tab)</span>
                     </a>
                   ))}
                 </div>
@@ -152,11 +164,11 @@ export default function Contact() {
 
             {/* Status Card */}
             <div className="p-6 rounded-3xl border border-[var(--color-border)] bg-[var(--card-bg)] shadow-sm flex items-center gap-3.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse flex-shrink-0" />
+              <span aria-hidden="true" className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse flex-shrink-0" />
               <div>
-                <h4 className="font-mono text-xs font-bold text-[var(--color-paper)]">
+                <h2 className="font-mono text-xs font-bold text-[var(--color-paper)]">
                   AVAILABILITY
-                </h4>
+                </h2>
                 <p className="text-xs text-[var(--color-muted)] mt-0.5">
                   {aboutPage.availability || "Open to freelance projects & full-time roles"}
                 </p>
@@ -171,63 +183,73 @@ export default function Contact() {
               <span className="font-mono text-xs font-bold text-[var(--color-crimson)] uppercase tracking-wider block mb-2">
                 MESSAGE
               </span>
-              <h3 className="font-display text-2xl font-bold text-[var(--color-paper)] mb-5">
+              <h2 id="form-title" className="font-display text-2xl font-bold text-[var(--color-paper)] mb-5">
                 Send a message
-              </h3>
+              </h2>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleSubmit} aria-labelledby="form-title" className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block font-mono text-[11px] font-semibold text-[var(--color-muted)] uppercase tracking-wider mb-2">
-                      Your Name *
+                    <label htmlFor="cf-name" className="block font-mono text-[11px] font-semibold text-[var(--color-muted)] uppercase tracking-wider mb-2">
+                      Your Name <span aria-hidden="true">*</span>
                     </label>
                     <input
+                      id="cf-name"
+                      name="name"
                       type="text"
+                      autoComplete="name"
+                      maxLength={LIMITS.name}
                       required
                       placeholder="e.g. Alex"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="w-full px-4 py-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-line)] text-xs font-mono text-[var(--color-paper)] placeholder:text-[var(--color-muted)]/60 focus:outline-none focus:border-[var(--color-crimson)] transition-all"
+                      className="w-full px-4 py-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-line)] text-xs font-mono text-[var(--color-paper)] placeholder:text-[var(--color-muted)]/70 focus:outline-none focus:border-[var(--color-crimson)] focus:ring-2 focus:ring-[var(--color-crimson)]/25 transition-all"
                     />
                   </div>
 
                   <div>
-                    <label className="block font-mono text-[11px] font-semibold text-[var(--color-muted)] uppercase tracking-wider mb-2">
-                      Your Email *
+                    <label htmlFor="cf-email" className="block font-mono text-[11px] font-semibold text-[var(--color-muted)] uppercase tracking-wider mb-2">
+                      Your Email <span aria-hidden="true">*</span>
                     </label>
                     <input
+                      id="cf-email"
+                      name="email"
                       type="email"
+                      autoComplete="email"
+                      inputMode="email"
+                      maxLength={LIMITS.email}
                       required
                       placeholder="e.g. alex@gmail.com"
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="w-full px-4 py-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-line)] text-xs font-mono text-[var(--color-paper)] placeholder:text-[var(--color-muted)]/60 focus:outline-none focus:border-[var(--color-crimson)] transition-all"
+                      className="w-full px-4 py-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-line)] text-xs font-mono text-[var(--color-paper)] placeholder:text-[var(--color-muted)]/70 focus:outline-none focus:border-[var(--color-crimson)] focus:ring-2 focus:ring-[var(--color-crimson)]/25 transition-all"
                     />
                   </div>
                 </div>
 
                 {/* Quick Topic Chips */}
                 <div>
-                  <label className="block font-mono text-[11px] font-semibold text-[var(--color-muted)] uppercase tracking-wider mb-2">
-                    Quick Topic (Tap to auto-fill)
-                  </label>
-                  <div className="flex flex-wrap gap-2">
+                  <span id="cf-topics" className="block font-mono text-[11px] font-semibold text-[var(--color-muted)] uppercase tracking-wider mb-2">
+                    Quick topic
+                  </span>
+                  <div role="group" aria-labelledby="cf-topics" className="flex flex-wrap gap-2">
                     {[
-                      { label: "💼 Freelance Project", text: "New Freelance Project Inquiry" },
-                      { label: "🏢 Full-Time Role", text: "Full-Time Job Opportunity" },
-                      { label: "🤝 Collaboration", text: "Project Collaboration" },
-                      { label: "☕ Quick Tech Chat", text: "General Tech Chat & Inquiry" },
+                      { label: "Freelance project", text: "New Freelance Project Inquiry" },
+                      { label: "Full-time role", text: "Full-Time Job Opportunity" },
+                      { label: "Collaboration", text: "Project Collaboration" },
+                      { label: "Quick tech chat", text: "General Tech Chat & Inquiry" },
                     ].map((topic, i) => (
                       <button
                         key={i}
                         type="button"
+                        aria-pressed={formData.subject === topic.text}
                         onClick={() => {
                           if (navigator.vibrate) navigator.vibrate(20);
                           setFormData({ ...formData, subject: topic.text });
                         }}
-                        className={`px-3 py-1.5 rounded-full font-mono text-[10px] sm:text-xs transition-all ${
+                        className={`px-3.5 py-2 rounded-full font-mono text-[11px] sm:text-xs transition-all ${
                           formData.subject === topic.text
-                            ? "bg-[var(--color-crimson)] text-white font-bold shadow-sm"
+                            ? "bg-[var(--color-accent-fill)] text-white font-bold shadow-sm"
                             : "border border-[var(--color-border)] bg-[var(--color-line)] text-[var(--color-muted)] hover:text-[var(--color-paper)] hover:border-[var(--color-crimson)]"
                         }`}
                       >
@@ -238,48 +260,56 @@ export default function Contact() {
                 </div>
 
                 <div>
-                  <label className="block font-mono text-[11px] font-semibold text-[var(--color-muted)] uppercase tracking-wider mb-2">
+                  <label htmlFor="cf-subject" className="block font-mono text-[11px] font-semibold text-[var(--color-muted)] uppercase tracking-wider mb-2">
                     Subject
                   </label>
                   <input
+                    id="cf-subject"
+                    name="subject"
                     type="text"
+                    maxLength={LIMITS.subject}
                     placeholder="e.g. Project inquiry / Hello"
                     value={formData.subject}
                     onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-line)] text-xs font-mono text-[var(--color-paper)] placeholder:text-[var(--color-muted)]/60 focus:outline-none focus:border-[var(--color-crimson)] transition-all"
+                    className="w-full px-4 py-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-line)] text-xs font-mono text-[var(--color-paper)] placeholder:text-[var(--color-muted)]/70 focus:outline-none focus:border-[var(--color-crimson)] focus:ring-2 focus:ring-[var(--color-crimson)]/25 transition-all"
                   />
                 </div>
 
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <label className="block font-mono text-[11px] font-semibold text-[var(--color-muted)] uppercase tracking-wider">
-                      Message *
+                    <label htmlFor="cf-message" className="block font-mono text-[11px] font-semibold text-[var(--color-muted)] uppercase tracking-wider">
+                      Message <span aria-hidden="true">*</span>
                     </label>
-                    <span className="font-mono text-[10px] text-[var(--color-muted)]">
-                      {formData.message.length} chars
+                    <span id="cf-count" className="font-mono text-[11px] text-[var(--color-muted)] tabular-nums">
+                      {formData.message.length} / {LIMITS.message}
                     </span>
                   </div>
                   <textarea
+                    id="cf-message"
+                    name="message"
                     rows={5}
+                    maxLength={LIMITS.message}
+                    aria-describedby="cf-count"
                     required
                     placeholder="What's on your mind? Tell me about your project or idea..."
                     value={formData.message}
                     onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-line)] text-xs font-mono text-[var(--color-paper)] placeholder:text-[var(--color-muted)]/60 focus:outline-none focus:border-[var(--color-crimson)] transition-all resize-none"
+                    className="w-full px-4 py-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-line)] text-xs font-mono text-[var(--color-paper)] placeholder:text-[var(--color-muted)]/70 focus:outline-none focus:border-[var(--color-crimson)] focus:ring-2 focus:ring-[var(--color-crimson)]/25 transition-all resize-none"
                   />
                 </div>
 
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full py-3.5 rounded-full bg-[var(--color-crimson)] text-white font-mono text-xs font-bold tracking-wider hover:opacity-90 transition-all shadow-md disabled:opacity-50 flex items-center justify-center gap-2"
+                  aria-busy={isSubmitting}
+                  className="w-full py-3.5 rounded-full bg-[var(--color-accent-fill)] text-white font-mono text-xs font-bold tracking-wider hover:opacity-90 transition-all shadow-md disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {isSubmitting ? (
                     <span>Sending message...</span>
                   ) : (
                     <>
-                      <span>Send Message</span>
-                      <span>→</span>
+                      <span>Send message</span>
+                      <ArrowRight size={14} aria-hidden="true" />
                     </>
                   )}
                 </button>

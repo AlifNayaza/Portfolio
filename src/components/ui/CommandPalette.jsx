@@ -4,11 +4,16 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "../../context/ThemeContext";
 import toast from "react-hot-toast";
+import { useDialog } from "../../lib/useDialog";
+import { copyText } from "../../lib/utils";
+import { ClipboardCopy, FolderOpen, Home, Mail, Moon, Sun, User, Zap, FileCode2 } from "lucide-react";
 
 export default function CommandPalette({ isOpen, onClose, onOpenPitch, data }) {
   const [query, setQuery] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef(null);
+  const listRef = useRef(null);
+  const dialogRef = useDialog(isOpen, onClose, { initialFocusRef: inputRef });
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
 
@@ -19,7 +24,7 @@ export default function CommandPalette({ isOpen, onClose, onOpenPitch, data }) {
   const defaultActions = [
     {
       id: "pitch",
-      icon: "⚡",
+      icon: Zap,
       title: "60-Second Recruiter Pitch",
       subtitle: "Quick executive summary & core highlights",
       category: "Highlights",
@@ -30,7 +35,7 @@ export default function CommandPalette({ isOpen, onClose, onOpenPitch, data }) {
     },
     {
       id: "nav-home",
-      icon: "🏠",
+      icon: Home,
       title: "Go to Home / Overview",
       subtitle: "Return to the main hero & selected work",
       category: "Navigation",
@@ -41,7 +46,7 @@ export default function CommandPalette({ isOpen, onClose, onOpenPitch, data }) {
     },
     {
       id: "nav-about",
-      icon: "👤",
+      icon: User,
       title: "Go to About / Story",
       subtitle: "Read background, principles & bio",
       category: "Navigation",
@@ -52,7 +57,7 @@ export default function CommandPalette({ isOpen, onClose, onOpenPitch, data }) {
     },
     {
       id: "nav-projects",
-      icon: "📁",
+      icon: FolderOpen,
       title: "Explore All Projects",
       subtitle: "Browse full catalog of web applications",
       category: "Navigation",
@@ -63,7 +68,7 @@ export default function CommandPalette({ isOpen, onClose, onOpenPitch, data }) {
     },
     {
       id: "nav-contact",
-      icon: "💬",
+      icon: Mail,
       title: "Get In Touch / Contact",
       subtitle: "Send a message or find social links",
       category: "Navigation",
@@ -74,7 +79,7 @@ export default function CommandPalette({ isOpen, onClose, onOpenPitch, data }) {
     },
     {
       id: "toggle-theme",
-      icon: theme === "dark" ? "☀️" : "🌙",
+      icon: theme === "dark" ? Sun : Moon,
       title: `Switch to ${theme === "dark" ? "Light" : "Dark"} Mode`,
       subtitle: "Toggle studio lighting theme",
       category: "Actions",
@@ -86,13 +91,12 @@ export default function CommandPalette({ isOpen, onClose, onOpenPitch, data }) {
     },
     {
       id: "copy-email",
-      icon: "📋",
+      icon: ClipboardCopy,
       title: "Copy Email Address",
       subtitle: email,
       category: "Actions",
       action: () => {
-        navigator.clipboard.writeText(email);
-        toast.success("Email copied to clipboard!", { id: "email-cmd" });
+        copyText(email, "Email copied to clipboard!", "email-cmd");
         onClose();
       },
     },
@@ -101,7 +105,7 @@ export default function CommandPalette({ isOpen, onClose, onOpenPitch, data }) {
   // Dynamic project items
   const projectActions = projects.map((p, idx) => ({
     id: `proj-${idx}`,
-    icon: "⚡",
+    icon: FileCode2,
     title: p.name,
     subtitle: p.technologies?.slice(0, 3).join(", ") || "Web Application",
     category: "Projects",
@@ -126,12 +130,12 @@ export default function CommandPalette({ isOpen, onClose, onOpenPitch, data }) {
     setSelectedIndex(0);
   };
 
+  // Keep the highlighted option visible while arrowing through a long list
   useEffect(() => {
-    if (isOpen) {
-      const timer = setTimeout(() => inputRef.current?.focus(), 50);
-      return () => clearTimeout(timer);
-    }
-  }, [isOpen]);
+    listRef.current
+      ?.querySelector(`[data-index="${selectedIndex}"]`)
+      ?.scrollIntoView({ block: "nearest" });
+  }, [selectedIndex]);
 
   // Keyboard navigation
   useEffect(() => {
@@ -149,9 +153,6 @@ export default function CommandPalette({ isOpen, onClose, onOpenPitch, data }) {
         if (filteredItems[selectedIndex]) {
           filteredItems[selectedIndex].action();
         }
-      } else if (e.key === "Escape") {
-        e.preventDefault();
-        onClose();
       }
     };
 
@@ -163,7 +164,7 @@ export default function CommandPalette({ isOpen, onClose, onOpenPitch, data }) {
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[200] flex items-start justify-center pt-[12vh] sm:pt-[15vh] p-3 sm:p-4 select-none">
+      <div className="fixed inset-0 z-[200] flex items-start justify-center pt-[12vh] sm:pt-[15vh] p-3 sm:p-4">
         {/* Backdrop */}
         <motion.div
           initial={{ opacity: 0 }}
@@ -179,18 +180,28 @@ export default function CommandPalette({ isOpen, onClose, onOpenPitch, data }) {
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.96, y: -10 }}
           transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-          className="relative w-full max-w-xl bg-[var(--card-bg)] border border-[var(--color-border)] rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden z-10 flex flex-col max-h-[75vh]"
+          ref={dialogRef}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Command palette"
+          className="relative w-full max-w-xl bg-[var(--color-bg)] border border-[var(--color-border)] rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden z-10 flex flex-col max-h-[75vh]"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Search Header */}
           <div className="p-3 sm:p-4 border-b border-[var(--color-border)] flex items-center gap-3 bg-[var(--color-line)]/50">
-            <span className="text-base text-[var(--color-muted)] font-mono pl-1">⌘</span>
+            <span aria-hidden="true" className="text-base text-[var(--color-muted)] font-mono pl-1">⌘</span>
             <input
               ref={inputRef}
               type="text"
               value={query}
               onChange={handleQueryChange}
-              placeholder="Type a command or search project (e.g. projects, pitch, theme)..."
+              placeholder="Search projects or type a command…"
+              role="combobox"
+              aria-expanded="true"
+              aria-controls="cmd-listbox"
+              aria-autocomplete="list"
+              aria-activedescendant={filteredItems[selectedIndex] ? `cmd-opt-${filteredItems[selectedIndex].id}` : undefined}
+              aria-label="Search commands and projects"
               className="flex-1 bg-transparent border-none outline-none font-mono text-xs sm:text-sm text-[var(--color-paper)] placeholder:text-[var(--color-muted)]"
             />
             {query && (
@@ -201,13 +212,13 @@ export default function CommandPalette({ isOpen, onClose, onOpenPitch, data }) {
                 Clear
               </button>
             )}
-            <kbd className="hidden sm:inline-block px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-[var(--card-bg)] text-[var(--color-muted)] border border-[var(--color-border)]">
+            <kbd className="hidden sm:inline-block px-2 py-0.5 rounded text-[11px] font-mono font-semibold bg-[var(--card-bg)] text-[var(--color-muted)] border border-[var(--color-border)]">
               ESC
             </kbd>
           </div>
 
           {/* Results List */}
-          <div className="p-2 sm:p-3 overflow-y-auto space-y-1">
+          <div ref={listRef} id="cmd-listbox" role="listbox" aria-label="Results" className="p-2 sm:p-3 overflow-y-auto space-y-1">
             {filteredItems.length === 0 ? (
               <div className="py-8 text-center font-mono text-xs text-[var(--color-muted)]">
                 No matching commands or projects found for "{query}".
@@ -216,22 +227,27 @@ export default function CommandPalette({ isOpen, onClose, onOpenPitch, data }) {
               filteredItems.map((item, idx) => (
                 <button
                   key={item.id}
+                  id={`cmd-opt-${item.id}`}
+                  role="option"
+                  aria-selected={idx === selectedIndex}
+                  data-index={idx}
+                  tabIndex={-1}
                   onClick={item.action}
                   onMouseEnter={() => setSelectedIndex(idx)}
                   className={`w-full text-left p-3 rounded-xl flex items-center justify-between gap-3 transition-all ${
                     idx === selectedIndex
-                      ? "bg-[var(--color-crimson)] text-white shadow-md"
+                      ? "bg-[var(--color-accent-fill)] text-white shadow-md"
                       : "hover:bg-[var(--color-line)] text-[var(--color-paper)]"
                   }`}
                 >
                   <div className="flex items-center gap-3 min-w-0">
-                    <span className="text-base flex-shrink-0">{item.icon}</span>
+                    <item.icon size={16} aria-hidden="true" className="flex-shrink-0 opacity-80" />
                     <div className="min-w-0">
                       <div className="font-display font-bold text-xs sm:text-sm truncate">
                         {item.title}
                       </div>
                       <div
-                        className={`font-mono text-[10px] sm:text-[11px] truncate ${
+                        className={`font-mono text-[11px] sm:text-[11px] truncate ${
                           idx === selectedIndex ? "text-white/80" : "text-[var(--color-muted)]"
                         }`}
                       >
@@ -241,7 +257,7 @@ export default function CommandPalette({ isOpen, onClose, onOpenPitch, data }) {
                   </div>
 
                   <span
-                    className={`font-mono text-[9px] px-2 py-0.5 rounded uppercase tracking-wider flex-shrink-0 ${
+                    className={`font-mono text-[11px] px-2 py-0.5 rounded uppercase tracking-wider flex-shrink-0 ${
                       idx === selectedIndex
                         ? "bg-black/30 text-white"
                         : "bg-[var(--color-line)] text-[var(--color-muted)] border border-[var(--color-border)]"
@@ -255,7 +271,7 @@ export default function CommandPalette({ isOpen, onClose, onOpenPitch, data }) {
           </div>
 
           {/* Footer Shortcuts */}
-          <div className="p-2.5 sm:p-3 border-t border-[var(--color-border)] bg-[var(--color-line)]/40 flex items-center justify-between text-[10px] font-mono text-[var(--color-muted)]">
+          <div className="p-2.5 sm:p-3 border-t border-[var(--color-border)] bg-[var(--color-line)]/40 flex items-center justify-between text-[11px] font-mono text-[var(--color-muted)]">
             <div className="flex items-center gap-3">
               <span>↑↓ Navigate</span>
               <span>↵ Select</span>

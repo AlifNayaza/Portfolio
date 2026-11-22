@@ -68,7 +68,7 @@ export default function ScrollToTopButton() {
           </button>
 
           {/* Quick Tooltip on Desktop */}
-          <div className="absolute right-full mr-2.5 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-lg bg-[var(--card-bg)] border border-[var(--color-border)] text-[10px] font-mono font-medium text-[var(--color-muted)] whitespace-nowrap shadow-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none hidden sm:block">
+          <div className="absolute right-full mr-2.5 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-lg bg-[var(--card-bg)] border border-[var(--color-border)] text-[11px] font-mono font-medium text-[var(--color-muted)] whitespace-nowrap shadow-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none hidden sm:block">
             {scrollPercent}% • Top
           </div>
         </motion.div>

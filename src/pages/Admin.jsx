@@ -130,7 +130,7 @@ const SectionHeader = ({ title, onAddItem, buttonLabel, description }) => (
             {onAddItem && (
                 <button 
                     onClick={onAddItem} 
-                    className="inline-flex items-center gap-2 bg-[var(--color-crimson)] text-white hover:bg-[#b91c1c] font-mono text-xs font-medium px-4 py-2 rounded-lg transition-all shadow-md active:scale-95"
+                    className="inline-flex items-center gap-2 bg-[var(--color-accent-fill)] text-white hover:bg-[#b91c1c] font-mono text-xs font-medium px-4 py-2 rounded-lg transition-all shadow-md active:scale-95"
                 >
                     <span className="text-sm font-bold">+</span>
                     <span>{buttonLabel ? buttonLabel.replace(/^\[|\s*\+\s*|\]$/g, '').trim() : 'Add Item'}</span>
@@ -320,7 +320,7 @@ const ProfileImagesManager = ({ images = [], onChange }) => {
                     className="bg-[var(--color-crimson)]/10 border border-[var(--color-crimson)]/30 rounded-lg p-4"
                 >
                     <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-[var(--color-crimson)] rounded-full flex items-center justify-center">
+                        <div className="w-8 h-8 bg-[var(--color-accent-fill)] rounded-full flex items-center justify-center">
                             <span className="text-white text-sm">✓</span>
                         </div>
                         <div>
@@ -375,7 +375,7 @@ const TechStackInput = ({ technologies = [], onChange, projectIndex }) => {
                 <button
                     type="button"
                     onClick={addTech}
-                    className="px-4 py-2 bg-[var(--color-crimson)] text-white font-mono text-xs hover:bg-[#7f0e2a] transition-colors rounded-md shadow-sm"
+                    className="px-4 py-2 bg-[var(--color-accent-fill)] text-white font-mono text-xs hover:bg-[#7f0e2a] transition-colors rounded-md shadow-sm"
                 >
                     ADD
                 </button>
@@ -650,7 +650,7 @@ export default function Admin() {
                 <button 
                     onClick={handleSave}
                     disabled={isSaving}
-                    className="font-mono text-xs bg-[var(--color-crimson)] text-white px-3 py-1.5 rounded shadow-sm disabled:opacity-50 font-bold"
+                    className="font-mono text-xs bg-[var(--color-accent-fill)] text-white px-3 py-1.5 rounded shadow-sm disabled:opacity-50 font-bold"
                 >
                     {isSaving ? "SAVING..." : "[ SAVE ]"}
                 </button>
@@ -696,7 +696,7 @@ export default function Admin() {
                                 }}
                                 className={`w-full text-left px-4 py-3 font-mono text-xs transition-all flex items-center justify-between rounded-lg ${
                                     activeTab === tab.id 
-                                        ? 'bg-[var(--color-crimson)] text-white shadow-md font-bold' 
+                                        ? 'bg-[var(--color-accent-fill)] text-white shadow-md font-bold' 
                                         : 'text-[var(--color-muted)] hover:text-[var(--color-paper)] hover:bg-[var(--color-line)]'
                                 }`}
                             >
@@ -721,7 +721,7 @@ export default function Admin() {
                         <button 
                             onClick={handleSave} 
                             disabled={isSaving}
-                            className="w-full bg-[var(--color-crimson)] hover:bg-[#7f0e2a] text-white py-3 font-mono text-xs tracking-widest transition-colors rounded-lg shadow-md disabled:opacity-50 disabled:cursor-not-allowed font-bold"
+                            className="w-full bg-[var(--color-accent-fill)] hover:bg-[#7f0e2a] text-white py-3 font-mono text-xs tracking-widest transition-colors rounded-lg shadow-md disabled:opacity-50 disabled:cursor-not-allowed font-bold"
                         >
                             {isSaving ? 'SAVING...' : '[ SAVE (Ctrl+S) ]'}
                         </button>

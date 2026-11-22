@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { NavLink, useLocation, Link } from "react-router-dom";
 import { motion, AnimatePresence, useScroll } from "framer-motion";
 import ThemeToggle from "../ui/ThemeToggle";
+import { ArrowRight, Command, Zap } from "lucide-react";
 
 export default function Navbar({ home, onOpenPitch, onOpenCmd }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -42,6 +43,14 @@ export default function Navbar({ home, onOpenPitch, onOpenCmd }) {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // Close the mobile drawer on Escape
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e) => e.key === "Escape" && setIsOpen(false);
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [isOpen]);
+
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
@@ -72,16 +81,16 @@ export default function Navbar({ home, onOpenPitch, onOpenCmd }) {
           {/* Brand Logo */}
           <Link 
             to="/" 
-            className="group flex items-center gap-2 pr-2"
+            className="group flex items-center gap-2 pr-2 py-2"
           >
-            <span className="w-2.5 h-2.5 rounded-full bg-[var(--color-crimson)] animate-pulse" />
+            <span className="w-2.5 h-2.5 rounded-full bg-[var(--color-accent-fill)] animate-pulse" />
             <span className="font-display font-extrabold text-sm sm:text-base tracking-tight text-[var(--color-paper)] group-hover:text-[var(--color-crimson)] transition-colors">
               {brandName.toUpperCase()}
             </span>
           </Link>
 
           {/* Desktop Navigation Links */}
-          <nav className="hidden md:flex items-center gap-1">
+          <nav aria-label="Main" className="hidden md:flex items-center gap-1">
             {navigationItems.map((item) => (
               <NavLink
                 key={item.path}
@@ -99,7 +108,7 @@ export default function Navbar({ home, onOpenPitch, onOpenCmd }) {
                     {isActive && (
                       <motion.div
                         layoutId="active-pill"
-                        className="absolute inset-0 rounded-full bg-[var(--color-crimson)] -z-10 shadow-sm"
+                        className="absolute inset-0 rounded-full bg-[var(--color-accent-fill)] -z-10 shadow-sm"
                         transition={{ type: "spring", stiffness: 350, damping: 30 }}
                       />
                     )}
@@ -117,10 +126,10 @@ export default function Navbar({ home, onOpenPitch, onOpenCmd }) {
             {onOpenPitch && (
               <button
                 onClick={onOpenPitch}
-                className="px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full bg-[var(--color-crimson)] text-white font-mono text-[10px] sm:text-xs font-bold tracking-tight hover:opacity-90 transition-all shadow-sm flex items-center gap-1"
+                className="px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full bg-[var(--color-accent-fill)] text-white font-mono text-[11px] sm:text-xs font-bold tracking-tight hover:opacity-90 transition-all shadow-sm flex items-center gap-1"
                 aria-label="Open 60 second pitch"
               >
-                <span>⚡</span>
+                <Zap size={12} aria-hidden="true" />
                 <span className="hidden sm:inline">60s Pitch</span>
                 <span className="sm:hidden">Pitch</span>
               </button>
@@ -143,8 +152,10 @@ export default function Navbar({ home, onOpenPitch, onOpenCmd }) {
             {/* Mobile Hamburger Button */}
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="md:hidden w-8 h-8 rounded-full border border-[var(--color-border)] bg-[var(--color-line)] flex flex-col items-center justify-center gap-1 text-[var(--color-paper)] focus:outline-none"
-              aria-label="Toggle navigation menu"
+              className="md:hidden w-10 h-10 rounded-full border border-[var(--color-border)] bg-[var(--color-line)] flex flex-col items-center justify-center gap-1 text-[var(--color-paper)]"
+              aria-label={isOpen ? "Close navigation menu" : "Open navigation menu"}
+              aria-expanded={isOpen}
+              aria-controls="mobile-nav"
             >
               <motion.span
                 animate={isOpen ? { rotate: 45, y: 4 } : { rotate: 0, y: 0 }}
@@ -167,7 +178,7 @@ export default function Navbar({ home, onOpenPitch, onOpenCmd }) {
       {/* Mobile Drawer Menu */}
       <AnimatePresence>
         {isOpen && (
-          <div className="fixed inset-0 z-40 md:hidden">
+          <div id="mobile-nav" className="fixed inset-0 z-40 md:hidden">
             {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
@@ -185,8 +196,8 @@ export default function Navbar({ home, onOpenPitch, onOpenCmd }) {
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
               className="absolute top-0 left-0 right-0 pt-24 pb-8 px-6 bg-[var(--color-bg)] border-b border-[var(--color-border)] shadow-2xl rounded-b-3xl"
             >
-              <div className="flex flex-col gap-3">
-                <span className="font-mono text-[10px] uppercase tracking-widest text-[var(--color-muted)] mb-1">
+              <nav aria-label="Mobile" className="flex flex-col gap-3">
+                <span className="font-mono text-[11px] uppercase tracking-widest text-[var(--color-muted)] mb-1">
                   NAVIGATION INDEX
                 </span>
                 {navigationItems.map((item, idx) => (
@@ -197,7 +208,7 @@ export default function Navbar({ home, onOpenPitch, onOpenCmd }) {
                     className={({ isActive }) =>
                       `flex items-center justify-between p-3.5 sm:p-4 rounded-2xl border transition-all ${
                         isActive
-                          ? "bg-[var(--color-crimson)] text-white border-[var(--color-crimson)] shadow-md"
+                          ? "bg-[var(--color-accent-fill)] text-white border-[var(--color-crimson)] shadow-md"
                           : "bg-[var(--color-line)]/50 border-[var(--color-border)] text-[var(--color-paper)] hover:border-[var(--color-crimson)]"
                       }`
                     }
@@ -206,7 +217,7 @@ export default function Navbar({ home, onOpenPitch, onOpenCmd }) {
                       <div className="font-display text-lg sm:text-xl font-bold">{item.label}</div>
                       <div className="font-mono text-xs opacity-70">{item.subtitle}</div>
                     </div>
-                    <span className="font-mono text-lg">→</span>
+                    <ArrowRight size={18} aria-hidden="true" />
                   </NavLink>
                 ))}
 
@@ -217,10 +228,10 @@ export default function Navbar({ home, onOpenPitch, onOpenCmd }) {
                       setIsOpen(false);
                       onOpenPitch();
                     }}
-                    className="flex items-center justify-between p-3.5 rounded-2xl border border-[var(--color-crimson)] bg-[var(--color-crimson)]/10 text-[var(--color-crimson)] font-mono text-xs font-bold hover:bg-[var(--color-crimson)] hover:text-white transition-all mt-1"
+                    className="flex items-center justify-between p-3.5 rounded-2xl border border-[var(--color-crimson)] bg-[var(--color-crimson)]/10 text-[var(--color-crimson)] font-mono text-xs font-bold hover:bg-[var(--color-accent-fill)] hover:text-white transition-all mt-1"
                   >
                     <span className="flex items-center gap-2">
-                      <span>⚡</span>
+                      <Zap size={14} aria-hidden="true" />
                       <span>60-Second Recruiter Pitch</span>
                     </span>
                     <span>→</span>
@@ -237,13 +248,13 @@ export default function Navbar({ home, onOpenPitch, onOpenCmd }) {
                     className="flex items-center justify-between p-3.5 rounded-2xl border border-[var(--color-border)] bg-[var(--color-line)] text-[var(--color-paper)] font-mono text-xs font-bold hover:border-[var(--color-crimson)] transition-all"
                   >
                     <span className="flex items-center gap-2">
-                      <span>⌘</span>
+                      <Command size={14} aria-hidden="true" />
                       <span>Quick Command Palette</span>
                     </span>
                     <span className="text-[var(--color-muted)]">Ctrl+K</span>
                   </button>
                 )}
-              </div>
+              </nav>
 
               <div className="mt-5 pt-4 border-t border-[var(--color-border)] flex items-center justify-between text-xs font-mono text-[var(--color-muted)]">
                 <span>© {new Date().getFullYear()} STUDIO</span>

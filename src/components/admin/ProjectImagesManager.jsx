@@ -197,7 +197,7 @@ export default function ProjectImagesManager({ images = [], onChange, projectInd
                 {/* Cover Badge on #1 */}
                 <div className="absolute top-1.5 left-1.5 z-10">
                   {idx === 0 ? (
-                    <span className="px-2 py-0.5 rounded text-[9px] font-mono font-bold bg-[var(--color-crimson)] text-white shadow">
+                    <span className="px-2 py-0.5 rounded text-[9px] font-mono font-bold bg-[var(--color-accent-fill)] text-white shadow">
                       ★ COVER
                     </span>
                   ) : (
@@ -288,7 +288,7 @@ export default function ProjectImagesManager({ images = [], onChange, projectInd
             />
             <button
               type="submit"
-              className="px-3.5 py-2 rounded-xl bg-[var(--color-crimson)] text-white text-xs font-mono font-bold hover:opacity-90 transition-all"
+              className="px-3.5 py-2 rounded-xl bg-[var(--color-accent-fill)] text-white text-xs font-mono font-bold hover:opacity-90 transition-all"
             >
               Add
             </button>

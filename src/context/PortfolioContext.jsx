@@ -1,6 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useEffect, useState } from "react";
-import axios from "axios";
 import { toast } from "react-hot-toast";
 
 const PortfolioContext = createContext();
@@ -21,17 +20,20 @@ export const PortfolioProvider = ({ children }) => {
   const fetchData = async (silent = false) => {
     if (!silent && !data) setLoading(true);
     try {
-      const res = await axios.get("/.netlify/functions/portfolio");
-      setData(res.data);
+      // Plain fetch keeps axios out of the public bundle and can reuse the <link rel="preload"> in index.html
+      const res = await fetch("/.netlify/functions/portfolio", { credentials: "same-origin" });
+      if (!res.ok) throw new Error(`Portfolio API responded ${res.status}`);
+      const json = await res.json();
+      setData(json);
       try {
-        localStorage.setItem("portfolio_data_cache", JSON.stringify(res.data));
+        localStorage.setItem("portfolio_data_cache", JSON.stringify(json));
       } catch (e) {
         console.warn("Failed to cache portfolio data", e);
       }
     } catch (error) {
       console.error(error);
       if (!data) {
-        toast.error("Gagal memuat data portofolio.");
+        toast.error("Couldn't load the latest portfolio content. Please refresh.");
       }
     } finally {
       setLoading(false);

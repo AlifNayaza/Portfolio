@@ -39,7 +39,7 @@ export default function AudioUploader({ currentAudio, onUpload, onDelete }) {
     <div className="w-full">
       {currentAudio ? (
         <div className="flex flex-wrap items-center gap-4 border border-[var(--color-border)] bg-[var(--color-line)] p-4 rounded-lg shadow-sm">
-            <div className="w-10 h-10 bg-[var(--color-crimson)] rounded-lg flex items-center justify-center text-white font-mono text-xs font-bold shadow-md">
+            <div className="w-10 h-10 bg-[var(--color-accent-fill)] rounded-lg flex items-center justify-center text-white font-mono text-xs font-bold shadow-md">
                 MP3
             </div>
             <div className="flex-1 min-w-[200px]">

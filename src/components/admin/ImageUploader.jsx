@@ -181,7 +181,7 @@ export default function ImageUploader({ currentImage, onUpload, onDelete, compac
             <div className="text-white mb-2 font-bold">UPLOADING...</div>
             <div className="w-48 h-2 bg-black/40 rounded-full overflow-hidden mx-auto">
               <div 
-                className="h-full bg-[var(--color-crimson)] transition-all duration-300"
+                className="h-full bg-[var(--color-accent-fill)] transition-all duration-300"
                 style={{ width: `${progress}%` }}
               ></div>
             </div>

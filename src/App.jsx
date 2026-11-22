@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation } from "react-router-dom";
-import { Suspense, lazy, useEffect } from "react";
+import { Suspense, lazy, useEffect, useMemo, useRef } from "react";
 import { Toaster } from "react-hot-toast";
+import { MotionConfig } from "framer-motion";
 import { PortfolioProvider, usePortfolio } from "./context/PortfolioContext";
 import { ThemeProvider } from "./context/ThemeContext";
 
@@ -12,13 +13,17 @@ const Contact = lazy(() => import("./pages/Contact"));
 const ProjectDetail = lazy(() => import("./pages/ProjectDetail"));
 const Admin = lazy(() => import("./pages/Admin"));
 const Login = lazy(() => import("./pages/Login"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+// Admin-only guard (pulls in axios) stays out of the public bundle
+const ProtectedRoute = lazy(() => import("./components/ProtectedRoute"));
+
+// Overlays are only fetched the first time someone opens them
+const RecruiterPitchModal = lazy(() => import("./components/ui/RecruiterPitchModal"));
+const CommandPalette = lazy(() => import("./components/ui/CommandPalette"));
 
 // Components
 import Navbar from "./components/layout/Navbar";
 import MusicPlayer from "./components/ui/MusicPlayer";
-import ProtectedRoute from "./components/ProtectedRoute";
-import RecruiterPitchModal from "./components/ui/RecruiterPitchModal";
-import CommandPalette from "./components/ui/CommandPalette";
 import ScrollToTopButton from "./components/ui/ScrollToTopButton";
 import { useState } from "react";
 
@@ -26,8 +31,15 @@ const ADMIN_PATH = import.meta.env.VITE_ADMIN_PATH || "/admin";
 
 function ScrollToTop() {
   const { pathname } = useLocation();
-  useEffect(() => { 
-    window.scrollTo({ top: 0, behavior: 'instant' }); 
+  const isFirstRender = useRef(true);
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    // Move keyboard / screen-reader focus to the new page content on client-side navigation
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+    } else {
+      document.getElementById("main-content")?.focus({ preventScroll: true });
+    }
     if (pathname === '/') {
       document.title = "Alif Haikal Nayaza — Portfolio";
     } else if (pathname === '/projects') {
@@ -45,6 +57,8 @@ function ScrollToTop() {
 
 const LoadingFallback = () => (
   <div 
+    role="status"
+    aria-live="polite"
     className="min-h-screen flex flex-col items-center justify-center bg-[var(--color-bg)]"
   >
     <div className="w-12 h-12 border-2 border-[var(--color-crimson)] border-t-transparent rounded-full animate-spin mb-4" />
@@ -73,15 +87,12 @@ function Layout() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  let playlist = [];
-  if (data) {
-    if (data.soundtrack && Array.isArray(data.soundtrack) && data.soundtrack.length > 0) {
-      playlist = data.soundtrack;
-    } 
-    else if (data.music && typeof data.music === 'object' && data.music.url) {
-      playlist = [data.music];
-    }
-  }
+  // Stable reference: a new array on every render would make the player reload the track
+  const playlist = useMemo(() => {
+    if (Array.isArray(data?.soundtrack) && data.soundtrack.length > 0) return data.soundtrack;
+    if (data?.music && typeof data.music === 'object' && data.music.url) return [data.music];
+    return [];
+  }, [data]);
 
   if (loading) return <LoadingFallback />;
 
@@ -89,20 +100,28 @@ function Layout() {
     <div 
       className="min-h-screen font-sans flex flex-col relative overflow-hidden bg-[var(--color-bg)] text-[var(--color-paper)]"
     >
-      {/* 60-Second Recruiter Pitch Modal */}
-      <RecruiterPitchModal
-        isOpen={isPitchOpen}
-        onClose={() => setIsPitchOpen(false)}
-        data={data}
-      />
+      <a href="#main-content" className="skip-link">Skip to content</a>
 
-      {/* Interactive Dev Command Palette */}
-      <CommandPalette
-        isOpen={isCmdOpen}
-        onClose={() => setIsCmdOpen(false)}
-        onOpenPitch={() => setIsPitchOpen(true)}
-        data={data}
-      />
+      <Suspense fallback={null}>
+        {/* 60-Second Recruiter Pitch Modal */}
+        {isPitchOpen && (
+          <RecruiterPitchModal
+            isOpen={isPitchOpen}
+            onClose={() => setIsPitchOpen(false)}
+            data={data}
+          />
+        )}
+
+        {/* Interactive Dev Command Palette (mounted fresh on every open) */}
+        {isCmdOpen && (
+          <CommandPalette
+            isOpen={isCmdOpen}
+            onClose={() => setIsCmdOpen(false)}
+            onOpenPitch={() => setIsPitchOpen(true)}
+            data={data}
+          />
+        )}
+      </Suspense>
 
       <Navbar
         home={data?.home}
@@ -113,7 +132,9 @@ function Layout() {
       <ScrollToTopButton />
       
       <main 
-        className="flex-grow pt-20 sm:pt-24 px-4 sm:px-6 md:px-10 lg:px-14 xl:px-16 2xl:px-20 max-w-[1920px] mx-auto w-full relative z-10"
+        id="main-content"
+        tabIndex={-1}
+        className="outline-none flex-grow pt-20 sm:pt-24 px-4 sm:px-6 md:px-10 lg:px-14 xl:px-16 2xl:px-20 max-w-[1920px] mx-auto w-full relative z-10"
       >
         <Suspense fallback={<LoadingFallback />}>
           <Outlet context={{ onOpenPitch: () => setIsPitchOpen(true), onOpenCmd: () => setIsCmdOpen(true) }} />
@@ -143,6 +164,7 @@ function Layout() {
 export default function App() {
   return (
     <ThemeProvider>
+      <MotionConfig reducedMotion="user">
       <PortfolioProvider>
         <BrowserRouter>
           <ScrollToTop />
@@ -166,7 +188,11 @@ export default function App() {
               </Suspense>
             } />
             
-            <Route element={<ProtectedRoute />}>
+            <Route element={
+              <Suspense fallback={<LoadingFallback />}>
+                <ProtectedRoute />
+              </Suspense>
+            }>
               <Route path={ADMIN_PATH} element={
                 <Suspense fallback={<LoadingFallback />}>
                   <Admin />
@@ -182,12 +208,12 @@ export default function App() {
               <Route path="projects" element={<Projects />} />
               <Route path="contact" element={<Contact />} />
               <Route path="project/:id" element={<ProjectDetail />} />
+              <Route path="*" element={<NotFound />} />
             </Route>
-            
-            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </BrowserRouter>
       </PortfolioProvider>
+      </MotionConfig>
     </ThemeProvider>
   );
 }

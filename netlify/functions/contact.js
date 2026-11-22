@@ -66,7 +66,18 @@ export const handler = async (event) => {
 
     // POST METHOD (Public submits message)
     if (event.httpMethod === 'POST') {
-      const { name, email, subject, message } = JSON.parse(event.body);
+      let parsed;
+      try {
+        parsed = JSON.parse(event.body || '{}');
+      } catch {
+        return { statusCode: 400, headers, body: JSON.stringify({ message: "Invalid request body." }) };
+      }
+
+      const clean = (value, max) => (typeof value === 'string' ? value.trim().slice(0, max) : '');
+      const name = clean(parsed.name, 80);
+      const email = clean(parsed.email, 120);
+      const subject = clean(parsed.subject, 140);
+      const message = clean(parsed.message, 4000);
 
       if (!name || !email || !message) {
         return {
@@ -76,17 +87,16 @@ export const handler = async (event) => {
         };
       }
 
-      const newMessage = await ContactMessageModel.create({
-        name,
-        email,
-        subject: subject || "",
-        message
-      });
+      if (!/^[^s@]+@[^s@]+.[^s@]{2,}$/.test(email)) {
+        return { statusCode: 400, headers, body: JSON.stringify({ message: "Please provide a valid email address." }) };
+      }
+
+      await ContactMessageModel.create({ name, email, subject, message });
 
       return {
         statusCode: 201,
         headers,
-        body: JSON.stringify({ message: "Message sent successfully!", data: newMessage })
+        body: JSON.stringify({ message: "Message sent successfully!" })
       };
     }
 
@@ -129,10 +139,11 @@ export const handler = async (event) => {
 
   } catch (error) {
     console.error('❌ Server error:', error);
+    // Don't leak internals (connection strings, stack details) to the public
     return { 
       statusCode: 500, 
       headers, 
-      body: JSON.stringify({ error: error.message }) 
+      body: JSON.stringify({ error: "Internal server error" }) 
     };
   }
 };

@@ -1,11 +1,13 @@
 /* eslint-disable no-unused-vars */
 import { useState } from "react";
+import { useDialog } from "../../lib/useDialog";
+import { copyText } from "../../lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
-import toast from "react-hot-toast";
 
 export default function RecruiterPitchModal({ isOpen, onClose, data }) {
   const [copied, setCopied] = useState(false);
+  const dialogRef = useDialog(isOpen, onClose);
 
   if (!isOpen) return null;
 
@@ -14,19 +16,24 @@ export default function RecruiterPitchModal({ isOpen, onClose, data }) {
   const profileData = data?.profile || {};
   const projects = data?.projects || [];
   const topProjects = projects.slice(0, 3);
+  // Prefer the stack actually used in shipped projects; fall back to a sensible default list
+  const projectTech = [...new Set(projects.flatMap((p) => p.technologies || []))];
+  const toolkit = projectTech.length >= 4
+    ? projectTech.slice(0, 10)
+    : ["React", "Node.js", "JavaScript", "TypeScript", "Tailwind CSS", "Express", "MongoDB", "REST APIs", "Git"];
   const email = data?.contact?.email || data?.aboutPage?.email || "alifhaikal26@gmail.com";
 
-  const handleCopyEmail = (e) => {
+  const handleCopyEmail = async (e) => {
     e.stopPropagation();
-    navigator.clipboard.writeText(email);
-    setCopied(true);
-    toast.success("Email copied to clipboard!", { id: "email-copy" });
-    setTimeout(() => setCopied(false), 2000);
+    if (await copyText(email, "Email copied to clipboard!", "email-copy")) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
   };
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[200] flex items-center justify-center p-3 sm:p-4 md:p-6 select-none">
+      <div className="fixed inset-0 z-[200] flex items-center justify-center p-3 sm:p-4 md:p-6">
         {/* Backdrop */}
         <motion.div
           initial={{ opacity: 0 }}
@@ -42,21 +49,25 @@ export default function RecruiterPitchModal({ isOpen, onClose, data }) {
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 15 }}
           transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-          className="relative w-full max-w-2xl bg-[var(--card-bg)] border border-[var(--color-border)] rounded-3xl shadow-2xl overflow-hidden z-10 flex flex-col max-h-[88vh]"
+          ref={dialogRef}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="pitch-title"
+          className="relative w-full max-w-2xl bg-[var(--color-bg)] border border-[var(--color-border)] rounded-3xl shadow-2xl overflow-hidden z-10 flex flex-col max-h-[88vh]"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header Bar */}
           <div className="p-4 sm:p-6 border-b border-[var(--color-border)] flex items-center justify-between bg-[var(--color-line)]/40">
             <div className="flex items-center gap-2.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-[var(--color-crimson)] animate-pulse" />
-              <span className="font-mono text-xs font-bold text-[var(--color-paper)] tracking-wider uppercase">
-                ⚡ 60-SECOND RECRUITER PITCH
-              </span>
+              <span className="w-2.5 h-2.5 rounded-full bg-[var(--color-accent-fill)] animate-pulse" />
+              <h2 id="pitch-title" className="font-mono text-xs font-bold text-[var(--color-paper)] tracking-wider uppercase">
+                60-second recruiter pitch
+              </h2>
             </div>
             <button
               onClick={onClose}
-              className="w-8 h-8 rounded-full border border-[var(--color-border)] bg-[var(--card-bg)] hover:bg-[var(--color-crimson)] hover:text-white flex items-center justify-center text-xs font-mono text-[var(--color-muted)] transition-all"
-              aria-label="Close modal"
+              className="w-10 h-10 rounded-full border border-[var(--color-border)] bg-[var(--card-bg)] hover:bg-[var(--color-accent-fill)] hover:text-white flex items-center justify-center text-xs font-mono text-[var(--color-muted)] transition-all"
+              aria-label="Close pitch"
             >
               ✕
             </button>
@@ -75,18 +86,18 @@ export default function RecruiterPitchModal({ isOpen, onClose, data }) {
                   Software & Full-Stack Developer
                 </p>
                 <div className="flex flex-wrap items-center gap-2 mt-2 text-[11px] font-mono text-[var(--color-muted)]">
-                  <span>📍 {aboutData.location || "Indonesia • Remote"}</span>
+                  <span>{aboutData.location || "Indonesia • Remote"}</span>
                   <span>•</span>
-                  <span className="text-emerald-500 font-semibold">● {aboutData.availability || "Available for hire"}</span>
+                  <span className="text-[var(--color-success)] font-semibold">● {aboutData.availability || "Available for hire"}</span>
                 </div>
               </div>
 
               {/* Action: Copy Email */}
               <button
                 onClick={handleCopyEmail}
-                className="self-start sm:self-center px-4 py-2 rounded-xl bg-[var(--color-crimson)] text-white font-mono text-xs font-bold shadow-md hover:opacity-90 transition-all flex items-center gap-1.5"
+                className="self-start sm:self-center px-4 py-2 rounded-xl bg-[var(--color-accent-fill)] text-white font-mono text-xs font-bold shadow-md hover:opacity-90 transition-all flex items-center gap-1.5"
               >
-                <span>{copied ? "✓ Copied!" : "📋 Copy Email"}</span>
+                <span aria-live="polite">{copied ? "✓ Copied" : "Copy email"}</span>
               </button>
             </div>
 
@@ -97,15 +108,15 @@ export default function RecruiterPitchModal({ isOpen, onClose, data }) {
               </span>
               <ul className="space-y-2 text-xs sm:text-sm text-[var(--color-paper)]">
                 <li className="flex items-start gap-2.5">
-                  <span className="text-[var(--color-crimson)] font-bold">✦</span>
+                  <span aria-hidden="true" className="text-[var(--color-crimson)] font-bold">✦</span>
                   <span><strong>Full-Stack Versatility:</strong> Experienced in building end-to-end web applications with React, Node.js, Express, and MongoDB.</span>
                 </li>
                 <li className="flex items-start gap-2.5">
-                  <span className="text-[var(--color-crimson)] font-bold">✦</span>
+                  <span aria-hidden="true" className="text-[var(--color-crimson)] font-bold">✦</span>
                   <span><strong>Performance & UX Focused:</strong> Builds snappy, responsive layouts with clean typography, fast rendering, and zero layout shifts.</span>
                 </li>
                 <li className="flex items-start gap-2.5">
-                  <span className="text-[var(--color-crimson)] font-bold">✦</span>
+                  <span aria-hidden="true" className="text-[var(--color-crimson)] font-bold">✦</span>
                   <span><strong>Clean Architecture:</strong> Writes maintainable code, RESTful APIs, and secure authentication workflows.</span>
                 </li>
               </ul>
@@ -117,7 +128,7 @@ export default function RecruiterPitchModal({ isOpen, onClose, data }) {
                 CORE TOOLKIT
               </span>
               <div className="flex flex-wrap gap-1.5">
-                {["React", "Node.js", "JavaScript", "TypeScript", "Tailwind CSS", "Express", "MongoDB", "REST APIs", "Git"].map((tech, i) => (
+                {toolkit.map((tech, i) => (
                   <span
                     key={i}
                     className="px-3 py-1 rounded-lg font-mono text-xs border border-[var(--color-border)] bg-[var(--card-bg)] text-[var(--color-paper)] font-medium"
@@ -153,13 +164,13 @@ export default function RecruiterPitchModal({ isOpen, onClose, data }) {
                       className="p-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-line)]/40 hover:border-[var(--color-crimson)] transition-all group"
                     >
                       <div className="flex items-center justify-between mb-1">
-                        <span className="font-mono text-[9px] text-[var(--color-crimson)] font-bold">#{i + 1}</span>
-                        <span className="text-[10px] text-[var(--color-muted)] group-hover:text-[var(--color-crimson)]">↗</span>
+                        <span className="font-mono text-[11px] text-[var(--color-crimson)] font-bold">#{i + 1}</span>
+                        <span className="text-[11px] text-[var(--color-muted)] group-hover:text-[var(--color-crimson)]">↗</span>
                       </div>
                       <h4 className="font-display text-xs font-bold text-[var(--color-paper)] truncate group-hover:text-[var(--color-crimson)]">
                         {p.name}
                       </h4>
-                      <p className="font-mono text-[10px] text-[var(--color-muted)] truncate mt-0.5">
+                      <p className="font-mono text-[11px] text-[var(--color-muted)] truncate mt-0.5">
                         {p.technologies?.slice(0, 2).join(" • ") || "Web App"}
                       </p>
                     </Link>

@@ -93,7 +93,10 @@ const normalizeData = (data) => {
     linkedin: normalized.contact.linkedin || "",
     github: normalized.contact.github || "",
     instagram: normalized.contact.instagram || "",
-    twitter: normalized.contact.twitter || ""
+    twitter: normalized.contact.twitter || "",
+    // Optional channels rendered on the Contact page when present
+    whatsapp: normalized.contact.whatsapp || "",
+    telegram: normalized.contact.telegram || ""
   };
 
   normalized.home = {
@@ -261,10 +264,15 @@ export const handler = async (event) => {
         };
       }
 
-      const newData = JSON.parse(event.body);
+      let newData;
+      try {
+        newData = JSON.parse(event.body || '');
+      } catch {
+        return { statusCode: 400, headers, body: JSON.stringify({ message: "Invalid JSON body" }) };
+      }
       const normalizedData = normalizeData(newData);
       
-      const updated = await PortfolioModel.findOneAndUpdate(
+      await PortfolioModel.findOneAndUpdate(
         { identifier: 'main_portfolio' },
         { data: normalizedData },
         { new: true, upsert: true }
@@ -289,7 +297,8 @@ export const handler = async (event) => {
     return { 
       statusCode: 500, 
       headers, 
-      body: JSON.stringify({ error: error.message }) 
+      // Don't leak internals (connection strings, stack details) to the public
+      body: JSON.stringify({ error: "Internal server error" })
     };
   }
 };

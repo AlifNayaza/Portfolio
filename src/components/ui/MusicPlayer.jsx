@@ -73,13 +73,22 @@ export default function MusicPlayer({ playlist }) {
     };
   }, []);
 
-  const togglePlay = () => {
+  const togglePlay = async () => {
+    const audio = audioRef.current;
+    if (!audio) return;
     if (isPlaying) {
-      audioRef.current.pause();
-    } else {
-      audioRef.current.play();
+      audio.pause();
+      setIsPlaying(false);
+      return;
     }
-    setIsPlaying(!isPlaying);
+    try {
+      await audio.play();
+      setIsPlaying(true);
+    } catch (e) {
+      // Broken URL or blocked autoplay: keep the UI in sync instead of showing a fake 'playing' state
+      console.error('Playback failed:', e);
+      setIsPlaying(false);
+    }
   };
 
   const handleNext = () => {
@@ -189,7 +198,7 @@ export default function MusicPlayer({ playlist }) {
               onClick={() => setIsMinimized(true)}
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
-              className="absolute -top-2 -right-2 w-7 h-7 rounded-full border border-[var(--color-border)] bg-[var(--color-bg)] text-[var(--color-muted)] hover:text-white hover:bg-[var(--color-crimson)] hover:border-[var(--color-crimson)] flex items-center justify-center transition-all z-10 shadow-md"
+              className="absolute -top-2 -right-2 w-7 h-7 rounded-full border border-[var(--color-border)] bg-[var(--color-bg)] text-[var(--color-muted)] hover:text-white hover:bg-[var(--color-accent-fill)] hover:border-[var(--color-crimson)] flex items-center justify-center transition-all z-10 shadow-md"
               aria-label="Minimize player"
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -234,7 +243,7 @@ export default function MusicPlayer({ playlist }) {
                   {/* Track count */}
                   {playlist.length > 1 && (
                     <div 
-                      className="mt-0.5 text-[9px] font-mono text-[var(--color-muted)]/70"
+                      className="mt-0.5 text-[11px] font-mono text-[var(--color-muted)]/70"
                     >
                       Track {currentIndex + 1} of {playlist.length}
                     </div>
@@ -268,7 +277,7 @@ export default function MusicPlayer({ playlist }) {
               />
               {/* Time stamps */}
               <div 
-                className="flex justify-between mt-1 text-[9px] font-mono text-[var(--color-muted)]"
+                className="flex justify-between mt-1 text-[11px] font-mono text-[var(--color-muted)]"
               >
                 <span>{formatTime(currentTime)}</span>
                 <span>{formatTime(duration)}</span>

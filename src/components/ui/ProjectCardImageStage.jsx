@@ -1,18 +1,28 @@
 /* eslint-disable no-unused-vars */
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { ImageOff } from "lucide-react";
+import { optimizeImage } from "../../lib/utils";
 
-export default function ProjectCardImageStage({ images = [], fallbackImage = "", title = "Project" }) {
+/**
+ * Image stage used inside project cards. Cards are links, so the in-card
+ * controls are pointer/touch conveniences rendered as non-focusable spans
+ * (no interactive content nested inside <a>). Keyboard and screen-reader
+ * users get the full gallery on the case-study page.
+ */
+export default function ProjectCardImageStage({ images = [], fallbackImage = "", title = "Project", priority = false }) {
   const [currentIdx, setCurrentIdx] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
+  const [failed, setFailed] = useState({});
 
   // Normalize images array
-  const validImages = Array.isArray(images) && images.length > 0 
-    ? images.filter(img => typeof img === "string" && img.trim() !== "") 
+  const validImages = Array.isArray(images) && images.length > 0
+    ? images.filter(img => typeof img === "string" && img.trim() !== "")
     : (fallbackImage ? [fallbackImage] : []);
 
   const total = validImages.length;
   const currentImage = validImages[currentIdx] || fallbackImage || "";
+  const showImage = currentImage && !failed[currentIdx];
 
   // Auto-slide on hover when there are multiple images
   useEffect(() => {
@@ -23,37 +33,46 @@ export default function ProjectCardImageStage({ images = [], fallbackImage = "",
     return () => clearInterval(interval);
   }, [isHovered, total]);
 
-  const handlePrev = (e) => {
+  const stop = (e) => {
     e.preventDefault();
     e.stopPropagation();
+  };
+
+  const handlePrev = (e) => {
+    stop(e);
     setCurrentIdx((prev) => (prev - 1 + total) % total);
   };
 
   const handleNext = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
+    stop(e);
     setCurrentIdx((prev) => (prev + 1) % total);
   };
 
   const handleSelectDot = (e, index) => {
-    e.preventDefault();
-    e.stopPropagation();
+    stop(e);
     setCurrentIdx(index);
   };
 
+  const arrowClass =
+    "pointer-events-auto cursor-pointer w-8 h-8 rounded-full bg-black/70 hover:bg-[var(--color-accent-fill)] text-white border border-white/20 flex items-center justify-center text-sm opacity-0 group-hover/img:opacity-100 [@media(hover:none)]:opacity-90 transition-all active:scale-90 shadow-md";
+
   return (
-    <div 
+    <div
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       className="aspect-[4/3] sm:aspect-[16/10] overflow-hidden rounded-xl sm:rounded-2xl bg-[var(--color-line)] relative mb-3 sm:mb-4 select-none group/img"
     >
-      {/* Current Image */}
-      {currentImage ? (
+      {showImage ? (
         <AnimatePresence initial={false} mode="wait">
           <motion.img
             key={currentIdx}
-            src={currentImage}
+            src={optimizeImage(currentImage, 800)}
             alt={`${title} preview ${currentIdx + 1}`}
+            loading={priority ? "eager" : "lazy"}
+            decoding="async"
+            width={800}
+            height={500}
+            onError={() => setFailed((f) => ({ ...f, [currentIdx]: true }))}
             initial={{ opacity: 0.8 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0.8 }}
@@ -62,71 +81,59 @@ export default function ProjectCardImageStage({ images = [], fallbackImage = "",
           />
         </AnimatePresence>
       ) : (
-        <div className="w-full h-full flex items-center justify-center font-display text-2xl sm:text-4xl text-[var(--color-muted)]">
-          ⚡
+        <div className="w-full h-full flex flex-col items-center justify-center gap-2 bg-dot-pattern text-[var(--color-muted)]">
+          <ImageOff size={22} aria-hidden="true" />
+          <span className="font-mono text-[11px] uppercase tracking-wider">No preview</span>
         </div>
       )}
 
       {/* Subtle Gradient Shadow */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
 
-      {/* Multiple Image Badge / Counter */}
+      {/* Multiple Image Counter */}
       {total > 1 && (
         <div className="absolute top-2.5 right-2.5 z-20 pointer-events-none">
-          <span className="px-2 py-0.5 rounded-full text-[9px] font-mono font-bold bg-black/75 backdrop-blur-md text-white border border-white/20 shadow-md">
-            📷 {currentIdx + 1}/{total}
+          <span className="px-2 py-0.5 rounded-full text-[11px] font-mono font-bold bg-black/75 backdrop-blur-md text-white border border-white/20 shadow-md">
+            {currentIdx + 1}/{total}
           </span>
         </div>
       )}
 
-      {/* Interactive Left & Right Navigation Arrows */}
+      {/* Pointer-only navigation (hidden from assistive tech, see note above) */}
       {total > 1 && (
-        <div className="absolute inset-y-0 inset-x-1.5 flex items-center justify-between z-20 pointer-events-none">
-          <button
-            type="button"
-            onClick={handlePrev}
-            className="w-7 h-7 rounded-full bg-black/70 hover:bg-[var(--color-crimson)] text-white border border-white/20 flex items-center justify-center text-xs opacity-0 group-hover/img:opacity-100 transition-all pointer-events-auto active:scale-90 shadow-md"
-            aria-label="Previous image"
-            title="Previous image"
-          >
-            ‹
-          </button>
-          <button
-            type="button"
-            onClick={handleNext}
-            className="w-7 h-7 rounded-full bg-black/70 hover:bg-[var(--color-crimson)] text-white border border-white/20 flex items-center justify-center text-xs opacity-0 group-hover/img:opacity-100 transition-all pointer-events-auto active:scale-90 shadow-md"
-            aria-label="Next image"
-            title="Next image"
-          >
-            ›
-          </button>
+        <div aria-hidden="true" className="absolute inset-y-0 inset-x-1.5 flex items-center justify-between z-20 pointer-events-none">
+          <span role="presentation" onClick={handlePrev} className={arrowClass}>‹</span>
+          <span role="presentation" onClick={handleNext} className={arrowClass}>›</span>
         </div>
       )}
 
-      {/* Interactive Indicator Dots at Bottom Center */}
       {total > 1 && (
-        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 px-2 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/10 opacity-80 group-hover/img:opacity-100 transition-opacity">
+        <div
+          aria-hidden="true"
+          className="absolute bottom-1.5 left-1/2 -translate-x-1/2 z-20 flex items-center rounded-full bg-black/60 backdrop-blur-md border border-white/10 px-1"
+        >
           {validImages.map((_, i) => (
-            <button
+            <span
               key={i}
-              type="button"
+              role="presentation"
               onClick={(e) => handleSelectDot(e, i)}
-              className={`transition-all rounded-full ${
-                i === currentIdx
-                  ? "w-3.5 h-1.5 bg-[var(--color-crimson)]"
-                  : "w-1.5 h-1.5 bg-white/50 hover:bg-white"
-              }`}
-              aria-label={`Go to image ${i + 1}`}
-            />
+              className="cursor-pointer p-1.5 flex items-center"
+            >
+              <span
+                className={`block rounded-full transition-all ${
+                  i === currentIdx ? "w-3.5 h-1.5 bg-[var(--color-crimson)]" : "w-1.5 h-1.5 bg-white/60 hover:bg-white"
+                }`}
+              />
+            </span>
           ))}
         </div>
       )}
 
-      {/* Quick Case Study Pill (Hidden on Mobile) */}
+      {/* Case-study hint (desktop hover only) */}
       {total === 1 && (
         <div className="absolute bottom-2.5 left-2.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 hidden sm:block pointer-events-none">
-          <span className="px-2.5 py-1 rounded-full text-[9px] font-mono font-bold bg-black/60 backdrop-blur-md text-white border border-white/20">
-            VIEW CASE STUDY
+          <span className="px-2.5 py-1 rounded-full text-[11px] font-mono font-bold bg-black/60 backdrop-blur-md text-white border border-white/20">
+            View case study
           </span>
         </div>
       )}

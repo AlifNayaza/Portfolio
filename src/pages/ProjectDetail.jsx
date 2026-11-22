@@ -4,14 +4,18 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { usePortfolio } from "../context/PortfolioContext";
 import PageTransition from "../components/layout/PageTransition";
 import { motion, AnimatePresence } from "framer-motion";
-import toast from "react-hot-toast";
+import { createPortal } from "react-dom";
+import { ArrowLeft, ArrowUpRight, Maximize2, Share2, X } from "lucide-react";
+import { useDialog } from "../lib/useDialog";
+import { copyText, optimizeImage, parseIndexParam } from "../lib/utils";
 
 // === LIGHTBOX MULTI-IMAGE MODAL ===
 const ImageModal = ({ isOpen, onClose, images = [], activeIndex = 0, onNavigate, alt }) => {
+  const dialogRef = useDialog(isOpen, onClose);
+
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e) => {
-      if (e.key === "Escape") onClose();
       if (e.key === "ArrowLeft" && onNavigate && images.length > 1) {
         onNavigate((activeIndex - 1 + images.length) % images.length);
       }
@@ -27,22 +31,27 @@ const ImageModal = ({ isOpen, onClose, images = [], activeIndex = 0, onNavigate,
 
   const currentImage = images[activeIndex] || images[0];
 
-  return (
+  // Portal to <body> so the lightbox sits above the fixed navbar (main has its own stacking context)
+  return createPortal(
     <motion.div
+      ref={dialogRef}
+      role="dialog"
+      aria-modal="true"
+      aria-label={`${alt || "Project"} screenshots`}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[200] flex items-center justify-center p-3 sm:p-6 bg-black/92 backdrop-blur-md cursor-zoom-out select-none"
+      className="fixed inset-0 z-[200] flex items-center justify-center p-3 sm:p-6 bg-black/90 backdrop-blur-md cursor-zoom-out select-none"
       onClick={onClose}
     >
       {/* Top Header Bar */}
       <div className="absolute top-4 left-4 right-4 flex items-center justify-between text-white z-20 pointer-events-none">
         <div className="flex items-center gap-2.5 bg-black/60 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/10 pointer-events-auto">
           <span className="font-mono text-xs font-bold text-[var(--color-crimson)]">
-            📷 {activeIndex + 1} / {images.length}
+            {activeIndex + 1} / {images.length}
           </span>
           {images.length > 1 && (
-            <span className="text-[10px] font-mono text-zinc-400 hidden sm:inline">
+            <span className="text-[11px] font-mono text-zinc-400 hidden sm:inline">
               (Use ← → keys to navigate)
             </span>
           )}
@@ -50,10 +59,10 @@ const ImageModal = ({ isOpen, onClose, images = [], activeIndex = 0, onNavigate,
 
         <button
           onClick={onClose}
-          className="w-9 h-9 rounded-full bg-black/60 hover:bg-[var(--color-crimson)] border border-white/10 text-white flex items-center justify-center font-mono text-base transition-colors pointer-events-auto shadow-lg"
-          aria-label="Close image modal"
+          className="w-11 h-11 rounded-full bg-black/60 hover:bg-[var(--color-accent-fill)] border border-white/10 text-white flex items-center justify-center transition-colors pointer-events-auto shadow-lg"
+          aria-label="Close image viewer"
         >
-          ✕
+          <X size={18} aria-hidden="true" />
         </button>
       </div>
 
@@ -64,7 +73,7 @@ const ImageModal = ({ isOpen, onClose, images = [], activeIndex = 0, onNavigate,
             e.stopPropagation();
             onNavigate((activeIndex - 1 + images.length) % images.length);
           }}
-          className="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-black/60 hover:bg-[var(--color-crimson)] text-white border border-white/15 flex items-center justify-center text-lg transition-all shadow-xl active:scale-90"
+          className="absolute left-3 sm:left-6 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-black/60 hover:bg-[var(--color-accent-fill)] text-white border border-white/15 flex items-center justify-center text-lg transition-all shadow-xl active:scale-90"
           aria-label="Previous screenshot"
         >
           ←
@@ -78,8 +87,8 @@ const ImageModal = ({ isOpen, onClose, images = [], activeIndex = 0, onNavigate,
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.96 }}
         transition={{ duration: 0.2 }}
-        src={currentImage}
-        alt={alt || "Project showcase"}
+        src={optimizeImage(currentImage, 2000)}
+        alt={`${alt || "Project"} screenshot ${activeIndex + 1} of ${images.length}`}
         className="max-w-full max-h-[82vh] object-contain rounded-2xl shadow-2xl cursor-default"
         onClick={(e) => e.stopPropagation()}
       />
@@ -91,13 +100,14 @@ const ImageModal = ({ isOpen, onClose, images = [], activeIndex = 0, onNavigate,
             e.stopPropagation();
             onNavigate((activeIndex + 1) % images.length);
           }}
-          className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-black/60 hover:bg-[var(--color-crimson)] text-white border border-white/15 flex items-center justify-center text-lg transition-all shadow-xl active:scale-90"
+          className="absolute right-3 sm:right-6 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-black/60 hover:bg-[var(--color-accent-fill)] text-white border border-white/15 flex items-center justify-center text-lg transition-all shadow-xl active:scale-90"
           aria-label="Next screenshot"
         >
           →
         </button>
       )}
-    </motion.div>
+    </motion.div>,
+    document.body
   );
 };
 
@@ -165,8 +175,13 @@ const parseProjectStory = (text = "") => {
   };
 };
 
-export default function ProjectDetail() {
+// Remount the page per project so gallery index / mode never leak between projects
+export default function ProjectDetailRoute() {
   const { id } = useParams();
+  return <ProjectDetail key={id} id={id} />;
+}
+
+function ProjectDetail({ id }) {
   const navigate = useNavigate();
   const { data, loading } = usePortfolio();
   
@@ -175,7 +190,7 @@ export default function ProjectDetail() {
   const [galleryMode, setGalleryMode] = useState("slider"); // "slider" | "grid"
   const [direction, setDirection] = useState(0);
 
-  const projectIndex = parseInt(id);
+  const projectIndex = parseIndexParam(id);
   const projects = data?.projects || [];
   const project = projects[projectIndex];
 
@@ -217,7 +232,6 @@ export default function ProjectDetail() {
   if (!project) {
     return (
       <div className="text-center py-24 p-8 rounded-3xl border border-[var(--color-border)] bg-[var(--card-bg)] my-12 max-w-2xl mx-auto">
-        <span className="text-5xl mb-4 block">🔍</span>
         <h1 className="font-display text-3xl font-bold text-[var(--color-paper)] mb-3">
           Project Not Found
         </h1>
@@ -226,7 +240,7 @@ export default function ProjectDetail() {
         </p>
         <button
           onClick={() => navigate("/projects")}
-          className="px-6 py-3 rounded-full bg-[var(--color-crimson)] text-white font-mono text-xs font-bold"
+          className="px-6 py-3 rounded-full bg-[var(--color-accent-fill)] text-white font-mono text-xs font-bold"
         >
           Return to Projects
         </button>
@@ -249,8 +263,10 @@ export default function ProjectDetail() {
     setActiveImageIdx((prev) => (prev + 1) % projectImages.length);
   };
 
+  const wordCount = (project.description || "").split(/\s+/).filter(Boolean).length;
+  const readMinutes = Math.max(1, Math.round(wordCount / 200));
+
   const handleShare = async () => {
-    if (navigator.vibrate) navigator.vibrate(25);
     if (navigator.share) {
       try {
         await navigator.share({
@@ -262,8 +278,7 @@ export default function ProjectDetail() {
         // User dismissed share dialog
       }
     } else {
-      navigator.clipboard.writeText(window.location.href);
-      toast.success("Project link copied to clipboard!", { id: "share-proj" });
+      copyText(window.location.href, "Project link copied to clipboard!", "share-proj");
     }
   };
 
@@ -289,18 +304,17 @@ export default function ProjectDetail() {
         <div className="pt-2 pb-5 flex items-center justify-between">
           <Link
             to="/projects"
-            className="inline-flex items-center gap-1.5 font-mono text-xs font-semibold text-[var(--color-muted)] hover:text-[var(--color-crimson)] transition-colors"
+            className="inline-flex items-center gap-1.5 py-2 font-mono text-xs font-semibold text-[var(--color-muted)] hover:text-[var(--color-crimson)] transition-colors"
           >
-            <span>←</span>
+            <ArrowLeft size={14} aria-hidden="true" />
             <span>All Projects</span>
           </Link>
 
           <button
             onClick={handleShare}
-            className="inline-flex items-center gap-1.5 font-mono text-xs text-[var(--color-muted)] hover:text-[var(--color-crimson)] transition-colors"
-            title="Share project"
+            className="inline-flex items-center gap-1.5 py-2 font-mono text-xs text-[var(--color-muted)] hover:text-[var(--color-crimson)] transition-colors"
           >
-            <span>🔗</span>
+            <Share2 size={14} aria-hidden="true" />
             <span>Share</span>
           </button>
         </div>
@@ -308,18 +322,20 @@ export default function ProjectDetail() {
         {/* === HERO PROJECT INFO === */}
         <section className="mb-8">
           <div className="flex flex-wrap items-center gap-2 mb-3">
-            <span className="px-3 py-1 rounded-full font-mono text-[10px] font-bold bg-[var(--color-line)] text-[var(--color-crimson)] border border-[var(--color-border)]">
+            <span className="px-3 py-1 rounded-full font-mono text-[11px] font-bold bg-[var(--color-line)] text-[var(--color-crimson)] border border-[var(--color-border)]">
               PROJECT #{projectIndex + 1}
             </span>
-            <span className="px-3 py-1 rounded-full font-mono text-[10px] text-[var(--color-muted)] border border-[var(--color-border)] bg-[var(--card-bg)]">
-              Web Application
-            </span>
-            <span className="px-3 py-1 rounded-full font-mono text-[10px] text-[var(--color-muted)] border border-[var(--color-border)] bg-[var(--card-bg)]">
-              ⏱️ ~2 min case study
+            {project.technologies?.[0] && (
+              <span className="px-3 py-1 rounded-full font-mono text-[11px] text-[var(--color-muted)] border border-[var(--color-border)] bg-[var(--card-bg)]">
+                Built with {project.technologies[0]}
+              </span>
+            )}
+            <span className="px-3 py-1 rounded-full font-mono text-[11px] text-[var(--color-muted)] border border-[var(--color-border)] bg-[var(--card-bg)]">
+              {readMinutes} min read
             </span>
             {projectImages.length > 1 && (
-              <span className="px-3 py-1 rounded-full font-mono text-[10px] text-[var(--color-crimson)] border border-[var(--color-border)] bg-[var(--card-bg)] font-bold">
-                📷 {projectImages.length} Screenshots
+              <span className="px-3 py-1 rounded-full font-mono text-[11px] text-[var(--color-crimson)] border border-[var(--color-border)] bg-[var(--card-bg)] font-bold">
+                {projectImages.length} screenshots
               </span>
             )}
           </div>
@@ -342,10 +358,10 @@ export default function ProjectDetail() {
                 href={project.link}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-6 py-3 rounded-full bg-[var(--color-crimson)] text-white font-mono text-xs font-bold tracking-wider hover:opacity-90 transition-all shadow-md flex items-center gap-2"
+                className="px-6 py-3 rounded-full bg-[var(--color-accent-fill)] text-white font-mono text-xs font-bold tracking-wider hover:opacity-90 transition-all shadow-md flex items-center gap-2"
               >
-                <span>Visit Live Application</span>
-                <span>↗</span>
+                <span>Visit live app</span>
+                <ArrowUpRight size={14} aria-hidden="true" />
               </a>
             )}
 
@@ -353,8 +369,8 @@ export default function ProjectDetail() {
               onClick={handleShare}
               className="px-5 py-3 rounded-full border border-[var(--color-border)] bg-[var(--card-bg)] text-[var(--color-paper)] font-mono text-xs font-semibold tracking-wider hover:border-[var(--color-crimson)] hover:bg-[var(--color-line)] transition-all flex items-center gap-2"
             >
-              <span>🔗</span>
-              <span>Share Project</span>
+              <Share2 size={14} aria-hidden="true" />
+              <span>Share project</span>
             </button>
           </div>
         </section>
@@ -367,7 +383,7 @@ export default function ProjectDetail() {
             <div className="flex flex-wrap items-center justify-between gap-3 px-1">
               <div className="flex items-center gap-2">
                 <span className="font-mono text-xs font-bold text-[var(--color-crimson)] uppercase tracking-wider">
-                  PROJECT SCREENSHOTS & DEMO
+                  Screenshots
                 </span>
                 <span className="font-mono text-xs text-[var(--color-muted)]">
                   ({projectImages.length} images)
@@ -376,26 +392,28 @@ export default function ProjectDetail() {
 
               {/* View Switcher: Slider vs Grid */}
               {projectImages.length > 1 && (
-                <div className="flex items-center p-1 rounded-full border border-[var(--color-border)] bg-[var(--card-bg)] shadow-sm">
+                <div role="group" aria-label="Gallery layout" className="flex items-center p-1 rounded-full border border-[var(--color-border)] bg-[var(--card-bg)] shadow-sm">
                   <button
                     onClick={() => setGalleryMode("slider")}
-                    className={`px-3 py-1 rounded-full font-mono text-xs transition-all ${
+                    aria-pressed={galleryMode === "slider"}
+                    className={`px-3 py-1.5 rounded-full font-mono text-xs transition-all ${
                       galleryMode === "slider"
-                        ? "bg-[var(--color-crimson)] text-white font-bold"
+                        ? "bg-[var(--color-accent-fill)] text-white font-bold"
                         : "text-[var(--color-muted)] hover:text-[var(--color-paper)]"
                     }`}
                   >
-                    🖼️ Slider
+                    Slider
                   </button>
                   <button
                     onClick={() => setGalleryMode("grid")}
-                    className={`px-3 py-1 rounded-full font-mono text-xs transition-all ${
+                    aria-pressed={galleryMode === "grid"}
+                    className={`px-3 py-1.5 rounded-full font-mono text-xs transition-all ${
                       galleryMode === "grid"
-                        ? "bg-[var(--color-crimson)] text-white font-bold"
+                        ? "bg-[var(--color-accent-fill)] text-white font-bold"
                         : "text-[var(--color-muted)] hover:text-[var(--color-paper)]"
                     }`}
                   >
-                    ⊞ All ({projectImages.length})
+                    Grid ({projectImages.length})
                   </button>
                 </div>
               )}
@@ -413,7 +431,9 @@ export default function ProjectDetail() {
                     <AnimatePresence initial={false} custom={direction} mode="wait">
                       <motion.img
                         key={activeImageIdx}
-                        src={projectImages[activeImageIdx]}
+                        src={optimizeImage(projectImages[activeImageIdx], 1600)}
+                        width={1600}
+                        height={900}
                         alt={`${project.name} screenshot ${activeImageIdx + 1}`}
                         initial={{ opacity: 0, scale: 0.98 }}
                         animate={{ opacity: 1, scale: 1 }}
@@ -431,7 +451,7 @@ export default function ProjectDetail() {
                             e.stopPropagation();
                             handlePrevImage();
                           }}
-                          className="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/60 hover:bg-[var(--color-crimson)] text-white border border-white/20 flex items-center justify-center text-sm opacity-90 sm:opacity-0 group-hover:opacity-100 transition-all shadow-lg active:scale-90"
+                          className="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/60 hover:bg-[var(--color-accent-fill)] text-white border border-white/20 flex items-center justify-center text-sm opacity-90 sm:opacity-0 group-hover:opacity-100 transition-all shadow-lg active:scale-90"
                           aria-label="Previous screenshot"
                         >
                           ←
@@ -441,7 +461,7 @@ export default function ProjectDetail() {
                             e.stopPropagation();
                             handleNextImage();
                           }}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/60 hover:bg-[var(--color-crimson)] text-white border border-white/20 flex items-center justify-center text-sm opacity-90 sm:opacity-0 group-hover:opacity-100 transition-all shadow-lg active:scale-90"
+                          className="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-black/60 hover:bg-[var(--color-accent-fill)] text-white border border-white/20 flex items-center justify-center text-sm opacity-90 sm:opacity-0 group-hover:opacity-100 transition-all shadow-lg active:scale-90"
                           aria-label="Next screenshot"
                         >
                           →
@@ -458,12 +478,19 @@ export default function ProjectDetail() {
                   {/* Bottom Action Footer */}
                   <div className="p-3.5 sm:p-4 border-t border-[var(--color-border)] flex items-center justify-between font-mono text-xs text-[var(--color-muted)] bg-[var(--card-bg)]">
                     <span className="text-[11px] sm:text-xs">
-                      Tap image to expand full resolution lightbox
+                      Tap the image to view full size
                     </span>
-                    <span className="text-[var(--color-crimson)] font-bold flex items-center gap-1">
-                      <span>🔍</span>
-                      <span>ZOOM FULLSCREEN</span>
-                    </span>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsZoomed(true);
+                      }}
+                      className="text-[var(--color-crimson)] font-bold flex items-center gap-1.5 py-1.5"
+                    >
+                      <Maximize2 size={13} aria-hidden="true" />
+                      <span>Fullscreen</span>
+                    </button>
                   </div>
                 </div>
 
@@ -473,6 +500,8 @@ export default function ProjectDetail() {
                     {projectImages.map((imgUrl, i) => (
                       <button
                         key={i}
+                        aria-label={`Show screenshot ${i + 1}`}
+                        aria-current={i === activeImageIdx ? "true" : undefined}
                         onClick={() => {
                           setDirection(i > activeImageIdx ? 1 : -1);
                           setActiveImageIdx(i);
@@ -484,11 +513,13 @@ export default function ProjectDetail() {
                         }`}
                       >
                         <img
-                          src={imgUrl}
-                          alt={`Thumbnail ${i + 1}`}
+                          src={optimizeImage(imgUrl, 240)}
+                          alt=""
+                          loading="lazy"
+                          decoding="async"
                           className="w-full h-full object-cover"
                         />
-                        <span className="absolute bottom-1 right-1 font-mono text-[9px] px-1 py-0.2 rounded bg-black/70 text-white">
+                        <span className="absolute bottom-1 right-1 font-mono text-[11px] px-1 py-0.2 rounded bg-black/70 text-white">
                           #{i + 1}
                         </span>
                       </button>
@@ -500,8 +531,10 @@ export default function ProjectDetail() {
               /* Mode 2: Multi-Image Grid View */
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                 {projectImages.map((imgUrl, idx) => (
-                  <motion.div
+                  <motion.button
+                    type="button"
                     key={idx}
+                    aria-label={`Open screenshot ${idx + 1} full size`}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: idx * 0.05 }}
@@ -512,16 +545,18 @@ export default function ProjectDetail() {
                     className="group relative aspect-[16/10] rounded-2xl overflow-hidden border border-[var(--color-border)] bg-[var(--card-bg)] shadow-md hover:border-[var(--color-crimson)] cursor-zoom-in transition-all"
                   >
                     <img
-                      src={imgUrl}
-                      alt={`${project.name} screenshot ${idx + 1}`}
+                      src={optimizeImage(imgUrl, 800)}
+                      alt=""
+                      loading="lazy"
+                      decoding="async"
                       className="w-full h-full object-cover group-hover:scale-104 transition-transform duration-500"
                     />
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                       <span className="font-mono text-xs font-bold text-white bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/20">
-                        🔍 View #{idx + 1}
+                        View #{idx + 1}
                       </span>
                     </div>
-                  </motion.div>
+                  </motion.button>
                 ))}
               </div>
             )}
@@ -532,9 +567,9 @@ export default function ProjectDetail() {
         {/* === PROBLEM & BACKGROUND CONTEXT === */}
         {parsedStory.contextParagraphs.length > 0 && (
           <section className="my-10 space-y-4">
-            <span className="font-mono text-xs font-bold text-[var(--color-crimson)] uppercase tracking-wider block">
-              💡 BACKGROUND & PROBLEM STATEMENT
-            </span>
+            <h2 className="font-mono text-xs font-bold text-[var(--color-crimson)] uppercase tracking-wider block">
+              Background & problem
+            </h2>
             <div className="p-6 sm:p-8 rounded-2xl sm:rounded-3xl border border-[var(--color-border)] bg-[var(--card-bg)] shadow-sm space-y-4">
               {parsedStory.contextParagraphs.map((para, i) => (
                 <p key={i} className="text-sm sm:text-base text-[var(--color-muted)] leading-relaxed font-normal">
@@ -548,9 +583,9 @@ export default function ProjectDetail() {
         {/* === STRUCTURED KEY FEATURES & CAPABILITIES === */}
         {parsedStory.features.length > 0 && (
           <section className="my-10 space-y-4">
-            <span className="font-mono text-xs font-bold text-[var(--color-crimson)] uppercase tracking-wider block">
-              ⚡ KEY FEATURES & SYSTEM CAPABILITIES
-            </span>
+            <h2 className="font-mono text-xs font-bold text-[var(--color-crimson)] uppercase tracking-wider block">
+              Key features
+            </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {parsedStory.features.map((feat, idx) => (
@@ -580,9 +615,9 @@ export default function ProjectDetail() {
         {/* === EXTRA STORY PARAGRAPHS (IF ANY) === */}
         {parsedStory.extraParagraphs.length > 0 && (
           <section className="my-10 space-y-4">
-            <span className="font-mono text-xs font-bold text-[var(--color-crimson)] uppercase tracking-wider block">
-              📖 SYSTEM OVERVIEW
-            </span>
+            <h2 className="font-mono text-xs font-bold text-[var(--color-crimson)] uppercase tracking-wider block">
+              System overview
+            </h2>
             <div className="p-6 sm:p-8 rounded-2xl sm:rounded-3xl border border-[var(--color-border)] bg-[var(--card-bg)] shadow-sm space-y-4">
               {parsedStory.extraParagraphs.map((para, i) => (
                 <p key={i} className="text-xs sm:text-sm text-[var(--color-muted)] leading-relaxed font-normal">
@@ -596,9 +631,9 @@ export default function ProjectDetail() {
         {/* === TECH STACK CHIPS === */}
         {project.technologies && project.technologies.length > 0 && (
           <section className="my-10 p-6 sm:p-8 rounded-2xl sm:rounded-3xl border border-[var(--color-border)] bg-[var(--card-bg)] shadow-sm">
-            <span className="font-mono text-xs font-bold text-[var(--color-crimson)] uppercase tracking-wider block mb-4">
-              TECHNOLOGIES USED
-            </span>
+            <h2 className="font-mono text-xs font-bold text-[var(--color-crimson)] uppercase tracking-wider block mb-4">
+              Technologies used
+            </h2>
             <div className="flex flex-wrap gap-2">
               {project.technologies.map((tech, i) => (
                 <span
@@ -619,12 +654,12 @@ export default function ProjectDetail() {
               to={`/project/${prevIndex}`}
               className="p-3.5 sm:p-5 rounded-2xl border border-[var(--color-border)] bg-[var(--card-bg)] hover:border-[var(--color-crimson)] transition-all group"
             >
-              <span className="font-mono text-[9px] sm:text-[10px] text-[var(--color-muted)] uppercase tracking-wider block mb-1">
-                ← PREVIOUS
+              <span className="font-mono text-[11px] sm:text-[11px] text-[var(--color-muted)] uppercase tracking-wider block mb-1">
+                Previous
               </span>
-              <h4 className="font-display font-bold text-xs sm:text-sm text-[var(--color-paper)] group-hover:text-[var(--color-crimson)] transition-colors truncate">
+              <span className="block font-display font-bold text-xs sm:text-sm text-[var(--color-paper)] group-hover:text-[var(--color-crimson)] transition-colors truncate">
                 {projects[prevIndex].name}
-              </h4>
+              </span>
             </Link>
           ) : <div />}
 
@@ -633,12 +668,12 @@ export default function ProjectDetail() {
               to={`/project/${nextIndex}`}
               className="p-3.5 sm:p-5 rounded-2xl border border-[var(--color-border)] bg-[var(--card-bg)] hover:border-[var(--color-crimson)] transition-all text-right group col-start-2"
             >
-              <span className="font-mono text-[9px] sm:text-[10px] text-[var(--color-muted)] uppercase tracking-wider block mb-1">
-                NEXT →
+              <span className="font-mono text-[11px] sm:text-[11px] text-[var(--color-muted)] uppercase tracking-wider block mb-1">
+                Next
               </span>
-              <h4 className="font-display font-bold text-xs sm:text-sm text-[var(--color-paper)] group-hover:text-[var(--color-crimson)] transition-colors truncate">
+              <span className="block font-display font-bold text-xs sm:text-sm text-[var(--color-paper)] group-hover:text-[var(--color-crimson)] transition-colors truncate">
                 {projects[nextIndex].name}
-              </h4>
+              </span>
             </Link>
           ) : <div />}
         </section>
