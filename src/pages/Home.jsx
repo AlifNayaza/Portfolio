@@ -426,7 +426,17 @@ export default function Home() {
               transition={{ duration: 0.7, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
               className="font-display text-4xl sm:text-6xl md:text-7xl lg:text-8xl 2xl:text-9xl font-extrabold tracking-tight text-[var(--color-paper)] leading-[1.05]"
             >
-              {homeData.headline || "Alif Haikal Nayaza"}
+              {(() => {
+                // Last word in the accent colour gives the hero a signature focal point
+                const words = (homeData.headline || "Alif Haikal Nayaza").trim().split(/s+/);
+                const last = words.pop();
+                return (
+                  <>
+                    {words.length > 0 && <>{words.join(" ")} </>}
+                    <span className="text-[var(--color-crimson)]">{last}</span>
+                  </>
+                );
+              })()}
             </motion.h1>
 
             <motion.p
