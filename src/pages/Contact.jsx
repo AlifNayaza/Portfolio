@@ -89,11 +89,11 @@ export default function Contact() {
           </div>
 
           <h1 className="font-display text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-tight text-[var(--color-paper)] leading-[1.05] max-w-5xl">
-            Let's connect.
+            Tell me what you're building.
           </h1>
 
           <p className="text-base sm:text-lg text-[var(--color-muted)] mt-3 max-w-3xl font-normal">
-            Got a question, project idea, or just want to say hi? Feel free to drop a message.
+            A rough idea is enough. Share the goal and timeline, and I'll reply with next steps within 24 hours.
           </p>
         </section>
 

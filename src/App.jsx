@@ -146,7 +146,7 @@ function Layout() {
       >
         <div className="max-w-[1920px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 font-mono text-xs">
           <p className="tracking-wide">
-            © {new Date().getFullYear()} <span className="text-[var(--color-paper)] font-bold">{data?.home?.logoName || "Alraf"}</span>. Crafted with precision & code.
+            © {new Date().getFullYear()} <span className="text-[var(--color-paper)] font-bold">{data?.home?.logoName || "Alraf"}</span>. Designed and built in Indonesia.
           </p>
           <div className="flex items-center gap-3 text-[11px] uppercase tracking-widest text-[var(--color-muted)]">
             <span>DESIGN & ENGINEERING</span>

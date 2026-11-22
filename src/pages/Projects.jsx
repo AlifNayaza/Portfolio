@@ -59,11 +59,11 @@ export default function Projects() {
           </div>
 
           <h1 className="font-display text-4xl sm:text-6xl md:text-7xl font-black tracking-tight text-[var(--color-paper)] leading-[1.08] max-w-3xl">
-            Things I've Built.
+            Shipped work, with receipts.
           </h1>
 
           <p className="text-sm sm:text-base text-[var(--color-muted)] mt-3 max-w-2xl font-normal">
-            A collection of web applications, client work, and personal projects.
+            Every card opens a short case study: the problem, what I built, and the stack behind it.
           </p>
         </section>
 

@@ -489,7 +489,7 @@ export default function Home() {
                     ABOUT ME
                   </span>
                   <h2 className="font-display text-xl sm:text-2xl font-bold text-[var(--color-paper)] mb-3">
-                    Developer who enjoys building practical tools and smooth interfaces.
+                    I build tools people actually keep open in a tab.
                   </h2>
                   <p className="text-sm text-[var(--color-muted)] leading-relaxed line-clamp-4 font-normal">
                     {data?.profile?.about ||
@@ -605,10 +605,10 @@ export default function Home() {
               03 / CONTACT
             </span>
             <h2 className="font-display text-2xl sm:text-4xl md:text-5xl font-black text-[var(--color-paper)] tracking-tight max-w-xl mx-auto relative z-10">
-              Got an idea or want to work together?
+              Have a problem worth solving?
             </h2>
             <p className="text-xs sm:text-sm md:text-base text-[var(--color-muted)] mt-2.5 max-w-md mx-auto leading-relaxed relative z-10 font-normal">
-              My inbox is always open. Let's talk about projects, opportunities, or tech.
+              Send the short version. I'll ask the right questions and reply within a day.
             </p>
             <div className="mt-6 flex flex-wrap justify-center gap-3 relative z-10">
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>

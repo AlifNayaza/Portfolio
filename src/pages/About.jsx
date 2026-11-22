@@ -170,7 +170,7 @@ export default function About() {
           </div>
 
           <h1 className="font-display text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-tight text-[var(--color-paper)] leading-[1.05] max-w-5xl">
-            A little bit about who I am and what I do.
+            I turn messy requirements into calm, fast software.
           </h1>
 
           <div className="mt-5 flex flex-wrap items-center gap-3 text-xs font-mono text-[var(--color-muted)]">
