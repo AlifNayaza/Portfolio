@@ -314,7 +314,9 @@ const InteractiveProjectCard = ({ project, index }) => {
 const SectionHeader = ({ index, title, description, linkTo, linkText }) => (
   <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-10 gap-3 border-b border-[var(--color-border)] pb-5">
     <div>
-      <span className="font-mono text-xs font-bold text-[var(--color-crimson)] tracking-widest uppercase block mb-1">
+      {/* Editorial index marker: short accent rule + section number */}
+      <span className="font-mono text-xs font-bold text-[var(--color-crimson)] tracking-widest uppercase flex items-center gap-3 mb-2">
+        <span aria-hidden="true" className="w-8 h-px bg-[var(--color-crimson)]" />
         {index}
       </span>
       <h2 className="font-display text-2xl sm:text-4xl font-extrabold text-[var(--color-paper)] tracking-tight">
